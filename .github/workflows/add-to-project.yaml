@@ -20,4 +20,4 @@ jobs:
           # to the issue
           project-url: https://github.com/orgs/zaphiro-technologies/projects/2
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
-          labeled: bug, ci, dependencies, documentation, feature, refactor, security
+          labeled: bug, ci, dependencies, documentation, feature, refactor, security, customer
