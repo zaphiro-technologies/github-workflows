@@ -1,0 +1,23 @@
+name: Project Management
+on:
+  issues:
+    types:
+      - labeled
+  pull_request:
+    branches: [ main ]
+    types:
+      - labeled
+  workflow_call:
+
+jobs:
+  add-to-project:
+    name: Add issue/PR to SynchroHub platform project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@0.5.0
+        with:
+          # You can target a project in a different organization
+          # to the issue
+          project-url: https://github.com/orgs/zaphiro-technologies/projects/2
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          labeled: bug, ci, dependencies, documentation, feature, refactor, security
