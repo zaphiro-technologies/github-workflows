@@ -5,6 +5,9 @@
         },
         {
             "pattern": "^https://localhost"
+        },
+        {
+            "pattern": "^https://github.com/orgs/zaphiro-technologies/"
         }
     ]
 }
