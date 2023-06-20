@@ -37,7 +37,7 @@ jobs:
     - name: Lint
       uses: docker://avtodev/markdown-lint:v1 # fastest way
       with:
-        config: ${{ inputs. config-lint-path }}
+        config: ${{ inputs.config-lint-path }}
         args: '--fix  **/*.md'
     - name: Commit markdown-lint changes
       run: |
@@ -49,5 +49,5 @@ jobs:
     - name: Check links
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
-        config-file: ${{ inputs. config-link-path }}
+        config-file: ${{ inputs.config-link-path }}
         use-verbose-mode: 'yes'
