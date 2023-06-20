@@ -1,13 +1,13 @@
 {
     "ignorePatterns": [
         {
-            "pattern": "^https://github.com/zaphiro-technologies/"
+            "pattern": "^github.com/zaphiro-technologies/"
         },
         {
             "pattern": "^https://localhost"
         },
         {
-            "pattern": "^https://github.com/orgs/zaphiro-technologies/projects/2"
+            "pattern": "^github.com/orgs/zaphiro-technologies/projects/2"
         }
     ]
 }
