@@ -1,0 +1,53 @@
+name: Markdown Lint
+
+concurrency:
+  group: ${{ github.ref_name }}-markdown
+  cancel-in-progress: true
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+  # Replace pull_request with pull_request_target if you
+  # plan to use this action with forks, see the Limitations section
+  pull_request:
+    branches:
+      - main
+  workflow_call:
+    inputs:
+      config-links-path:
+        required: true
+        default: '.github/config/md-link-config.json'
+        type: string
+      config-lint-path:
+        default: '.github/config/md-lint-config.json'
+        required: true
+        type: string
+jobs:
+  markdown:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.REPO_PAT }}
+        ref: ${{github.event.pull_request.head.ref}}
+        repository: ${{github.event.pull_request.head.repo.full_name}}
+    - name: Lint
+      uses: docker://avtodev/markdown-lint:v1 # fastest way
+      with:
+        config: ${{ inputs. config-lint-path }}
+        args: '--fix  **/*.md'
+    - name: Commit markdown-lint changes
+      run: |
+        git config --global user.name 'Bot'
+        git config --global user.email 'bot@zaphiro.ch'
+        git commit -am "Automated markdown-lint fixes" || echo "No changes to commit"
+        git push
+    # Checks the status of hyperlinks in .md files in verbose mode
+    - name: Check links
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        config-file: ${{ inputs. config-link-path }}
+        use-verbose-mode: 'yes'
