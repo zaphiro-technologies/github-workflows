@@ -18,12 +18,12 @@ on:
   workflow_call:
     inputs:
       config-links-path:
-        required: true
+        required: false
         default: '.github/config/md-link-config.json'
         type: string
       config-lint-path:
         default: '.github/config/md-lint-config.json'
-        required: true
+        required: false
         type: string
 jobs:
   markdown:
