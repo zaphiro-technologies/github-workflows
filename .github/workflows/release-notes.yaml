@@ -57,21 +57,17 @@ jobs:
         more .github/config/release-config-temp.json
     - name: Select configuration
       if: ${{ github.event_name == ' workflow_call' }}
-      run: |
-        echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
-        echo ${{ env.CONFIGURATION }}
-        echo $CONFIGURATION
+      run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
     - name: Select configuration
       if: ${{ github.event_name != ' workflow_call' }}
-      run: |
-        echo "CONFIGURATION='.github/config/release-config-temp.json'" >> $GITHUB_ENV
-        echo ${{ env.CONFIGURATION }}
-        echo $CONFIGURATION
+      run: echo "CONFIGURATION='.github/config/release-config-temp.json'" >> $GITHUB_ENV
+    - name: test
+      run: echo ${{env.CONFIGURATION}}
     - name: "Build Changelog"
       id: build_changelog
       uses: mikepenz/release-changelog-builder-action@v3.7.2
       with:
-        configuration: $CONFIGURATION
+        configuration: ${{env.CONFIGURATION}}
         failOnError: true
         includeOpen: true
         fromTag: ${{ steps.previoustag.outputs.tag }}
@@ -139,19 +135,17 @@ jobs:
           fetch-depth: 0
       - name: Select configuration
         if: ${{ github.event_name == ' workflow_call' }}
-        run: |
-          echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
-          echo $CONFIGURATION
+        run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
       - name: Select configuration
         if: ${{ github.event_name != ' workflow_call' }}
-        run: |
-          echo "CONFIGURATION=.github/config/release-config-temp.json" >> $GITHUB_ENV
-          echo $CONFIGURATION
+        run: echo "CONFIGURATION='.github/config/release-config-temp.json'" >> $GITHUB_ENV
+      - name: test
+        run: echo ${{env.CONFIGURATION}}
       - name: "Build Changelog"
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v3.7.2
         with:
-          configuration: $CONFIGURATION
+          configuration: ${{env.CONFIGURATION}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
