@@ -2,7 +2,9 @@
 
 ## 0.0.2-dev - 2023-06-21
 
-- no changes
+### Documentation
+
+- Update README.md (PR #4 by @chicco785)
 
 ## 0.0.1 - 2023-06-21
 
