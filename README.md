@@ -28,7 +28,7 @@ the actions page.
 
     ```yaml
     on:
-    workflow_call:
+        workflow_call:
     ```
 
     This type of trigger can also be used to specify input parameters as
@@ -47,9 +47,9 @@ the actions page.
 
     ```yaml
     jobs:
-    add-to-project:
-        uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
-        secrets: inherit
+        add-to-project:
+            uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
+            secrets: inherit
     ```
 
     Of course, you can also test it from a branch, in which case you can replace
@@ -66,19 +66,19 @@ developers in the `new action` page:
     ```yaml
     name: Project Management
     on:
-    issues:
-        types:
-        - labeled
-    pull_request:
-        branches: [ $default-branch ]
-        types:
-        - labeled
-    workflow_call:
+        issues:
+            types:
+            - labeled
+        pull_request:
+            branches: [ $default-branch ]
+            types:
+            - labeled
+        workflow_call:
 
     jobs:
-    add-to-project:
-        uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
-        secrets: inherit
+        add-to-project:
+            uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
+            secrets: inherit
     ```
 
 1. You need to create a linked `.properties.json` file including the related
