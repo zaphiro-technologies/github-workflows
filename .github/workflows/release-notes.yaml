@@ -163,8 +163,6 @@ jobs:
       - name: Select configuration
         if: ${{ github.event_name != ' workflow_call' }}
         run: echo "CONFIGURATION='.github/config/release-config.json'" >> $GITHUB_ENV
-      - name: test
-        run: echo ${{env.CONFIGURATION}}
       - name: "Build Changelog"
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v3.7.2
@@ -193,4 +191,3 @@ jobs:
           if [[ -z "${line_start}" ]]; then echo "Empty"; else sed -i -e $PATTERN RELEASE_NOTES.md; fi
           echo "cleaned release note:"
           more RELEASE_NOTES.md
-          rm .github/config/release-config-temp.json
