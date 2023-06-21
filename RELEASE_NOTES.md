@@ -4,4 +4,4 @@
 
 ### Documentation
 
-- list workflows in readme.md (PR #2 by @chicco785)
+- fix workflows to work correctly also on `github-workflows` repository (PR #2 by @chicco785)
