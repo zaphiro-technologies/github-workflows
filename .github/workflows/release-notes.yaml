@@ -101,8 +101,7 @@ jobs:
           more RELEASE_NOTES.md
           rm .github/config/release-config-temp.json
         else
-          echo '# ${GITHUB_REPOSITORY#*/} Release Notes' > RELEASE_NOTES.md
-          echo -en '\n' >> RELEASE_NOTES.md
+          echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
         fi
     - name: Update Changelog (tag / pr)
       uses: stefanzweifel/changelog-updater-action@v1
