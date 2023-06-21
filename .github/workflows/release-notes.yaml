@@ -58,18 +58,20 @@ jobs:
     - name: Select configuration
       if: ${{ github.event_name == ' workflow_call' }}
       run: |
-        echo "GITHUB_CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
-        echo ${{ env.GITHUB_CONFIGURATION }}
+        echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
+        echo ${{ env.CONFIGURATION }}
+        echo $CONFIGURATION
     - name: Select configuration
       if: ${{ github.event_name != ' workflow_call' }}
       run: |
         echo "GITHUB_CONFIGURATION='.github/config/release-config-temp.json'" >> $GITHUB_ENV
-        echo ${{ env.GITHUB_CONFIGURATION }}
+        echo ${{ env.CONFIGURATION }}
+        echo $CONFIGURATION
     - name: "Build Changelog"
       id: build_changelog
       uses: mikepenz/release-changelog-builder-action@v3.7.2
       with:
-        configuration: ${{ env.GITHUB_CONFIGURATION }}
+        configuration: $CONFIGURATION
         failOnError: true
         includeOpen: true
         fromTag: ${{ steps.previoustag.outputs.tag }}
@@ -139,19 +141,17 @@ jobs:
         if: ${{ github.event_name == ' workflow_call' }}
         run: |
           echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
-          echo ${{ env.CONFIGURATION }}
           echo $CONFIGURATION
       - name: Select configuration
         if: ${{ github.event_name != ' workflow_call' }}
         run: |
           echo "CONFIGURATION=.github/config/release-config-temp.json" >> $GITHUB_ENV
-          echo ${{ env.CONFIGURATION }}
           echo $CONFIGURATION
       - name: "Build Changelog"
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v3.7.2
         with:
-          configuration: ${{ env.CONFIGURATION }}
+          configuration: $CONFIGURATION
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
