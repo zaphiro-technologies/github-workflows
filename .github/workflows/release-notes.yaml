@@ -13,7 +13,7 @@ on:
     inputs:
       config-release-path:
         required: false
-        default: '.github/config/release-config-temp.json'
+        default: '.github/config/release-config.json'
         type: string
 
 concurrency:
@@ -46,6 +46,12 @@ jobs:
       uses: "WyriHaximus/github-action-next-semvers@v1"
       with:
         version: ${{ steps.previoustag.outputs.tag }}
+    - name: Select configuration
+      if: ${{ github.event_name == ' workflow_call' }}
+      run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
+    - name: Select configuration
+      if: ${{ github.event_name != ' workflow_call' }}
+      run: echo "CONFIGURATION='.github/config/release-config.json'" >> $GITHUB_ENV
     - name: "Update changelog config"
       id: update_changelog_config
       env:
@@ -53,21 +59,13 @@ jobs:
       run : |
         jq --arg match "myPR" \
           --arg replace "$PR" \
-          'walk(if . == $match then $replace else . end)' < .github/config/release-config.json > .github/config/release-config-temp.json
+          'walk(if . == $match then $replace else . end)' < ${{ env.CONFIGURATION }} > .github/config/release-config-temp.json
         more .github/config/release-config-temp.json
-    - name: Select configuration
-      if: ${{ github.event_name == ' workflow_call' }}
-      run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
-    - name: Select configuration
-      if: ${{ github.event_name != ' workflow_call' }}
-      run: echo "CONFIGURATION='.github/config/release-config-temp.json'" >> $GITHUB_ENV
-    - name: test
-      run: echo ${{env.CONFIGURATION}}
     - name: "Build Changelog"
       id: build_changelog
       uses: mikepenz/release-changelog-builder-action@v3.7.2
       with:
-        configuration: ${{env.CONFIGURATION}}
+        configuration: .github/config/release-config-temp.json
         failOnError: true
         includeOpen: true
         fromTag: ${{ steps.previoustag.outputs.tag }}
@@ -138,7 +136,7 @@ jobs:
         run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
       - name: Select configuration
         if: ${{ github.event_name != ' workflow_call' }}
-        run: echo "CONFIGURATION='.github/config/release-config-temp.json'" >> $GITHUB_ENV
+        run: echo "CONFIGURATION='.github/config/release-config.json'" >> $GITHUB_ENV
       - name: test
         run: echo ${{env.CONFIGURATION}}
       - name: "Build Changelog"
