@@ -62,13 +62,25 @@ jobs:
           'walk(if . == $match then $replace else . end)' < ${{ env.CONFIGURATION }} > .github/config/release-config-temp.json
         more .github/config/release-config-temp.json
     - name: "Build Changelog"
-      id: build_changelog
+      id: build_changelog_1
       uses: mikepenz/release-changelog-builder-action@v3.7.2
+      if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
       with:
-        configuration: .github/config/release-config-temp.json
+        configuration: '.github/config/release-config-temp.json'
         failOnError: true
         includeOpen: true
         fromTag: ${{ steps.previoustag.outputs.tag }}
+        toTag: ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: "Build Changelog"
+      id: build_changelog_2
+      uses: mikepenz/release-changelog-builder-action@v3.7.2
+      if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
+      with:
+        configuration: '.github/config/release-config-temp.json'
+        failOnError: true
+        includeOpen: true
         toTag: ${{ github.sha }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,19 +103,33 @@ jobs:
         else
           echo "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
         fi
-    - name: Update Changelog
-      if: startsWith(github.ref, 'refs/tags/') == false
+    - name: Update Changelog (tag / pr)
       uses: stefanzweifel/changelog-updater-action@v1
+      if: ${{ steps.previoustag.outputs.tag != '0.0.0' && startsWith(github.ref, 'refs/tags/') == false }}
       with:
         latest-version: ${{ steps.semvers.outputs.patch }}-dev
-        release-notes:  ${{ steps.build_changelog.outputs.changelog }}
+        release-notes:  ${{ steps.build_changelog_1.outputs.changelog }}
         path-to-changelog: RELEASE_NOTES.md
-    - name: Update Changelog
-      if: startsWith(github.ref, 'refs/tags/')
+    - name: Update Changelog (tag / release)
       uses: stefanzweifel/changelog-updater-action@v1
+      if: ${{ steps.previoustag.outputs.tag != '0.0.0' && startsWith(github.ref, 'refs/tags/') }}
       with:
         latest-version: ${{ steps.semvers.outputs.patch }}
-        release-notes:  ${{ steps.build_changelog.outputs.changelog }}
+        release-notes:  ${{ steps.build_changelog_1.outputs.changelog }}
+        path-to-changelog: RELEASE_NOTES.md
+    - name: Update Changelog (no tag / pr)
+      uses: stefanzweifel/changelog-updater-action@v1
+      if: ${{ steps.previoustag.outputs.tag == '0.0.0' && startsWith(github.ref, 'refs/tags/') == false }}
+      with:
+        latest-version: ${{ steps.semvers.outputs.patch }}-dev
+        release-notes:  ${{ steps.build_changelog_2.outputs.changelog }}
+        path-to-changelog: RELEASE_NOTES.md
+    - name: Update Changelog (no tag / release)
+      uses: stefanzweifel/changelog-updater-action@v1
+      if: ${{ steps.previoustag.outputs.tag == '0.0.0' && startsWith(github.ref, 'refs/tags/') }}
+      with:
+        latest-version: ${{ steps.semvers.outputs.patch }}
+        release-notes:  ${{ steps.build_changelog_2.outputs.changelog }}
         path-to-changelog: RELEASE_NOTES.md
     - name: Commit updated CHANGELOG
       if: startsWith(github.ref, 'refs/tags/') == false
