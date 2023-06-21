@@ -64,7 +64,7 @@ jobs:
     - name: Select configuration
       if: ${{ github.event_name != ' workflow_call' }}
       run: |
-        echo "GITHUB_CONFIGURATION='.github/config/release-config-temp.json'" >> $GITHUB_ENV
+        echo "CONFIGURATION='.github/config/release-config-temp.json'" >> $GITHUB_ENV
         echo ${{ env.CONFIGURATION }}
         echo $CONFIGURATION
     - name: "Build Changelog"
