@@ -58,14 +58,12 @@ jobs:
     - name: Select configuration
       if: ${{ github.event_name == ' workflow_call' }}
       run: |
-        echo "GITHUB_CONFIGURATION=${{ inputs.config-release-path }}" >>
-        $GITHUB_ENV
+        echo "GITHUB_CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
         echo ${{ env.GITHUB_CONFIGURATION }}
     - name: Select configuration
       if: ${{ github.event_name != ' workflow_call' }}
       run: |
-        echo "GITHUB_CONFIGURATION='.github/config/release-config-temp.json'" >>
-        $GITHUB_ENV
+        echo "GITHUB_CONFIGURATION='.github/config/release-config-temp.json'" >> $GITHUB_ENV
         echo ${{ env.GITHUB_CONFIGURATION }}
     - name: "Build Changelog"
       id: build_changelog
