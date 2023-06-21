@@ -55,11 +55,23 @@ jobs:
           --arg replace "$PR" \
           'walk(if . == $match then $replace else . end)' < .github/config/release-config.json > .github/config/release-config-temp.json
         more .github/config/release-config-temp.json
+    - name: Select configuration
+      if: ${{ github.event_name == ' workflow_call' }}
+      run: |
+        echo "GITHUB_CONFIGURATION=${{ inputs.config-release-path }}" >>
+        $GITHUB_ENV
+        echo ${{ env.GITHUB_CONFIGURATION }}
+    - name: Select configuration
+      if: ${{ github.event_name != ' workflow_call' }}
+      run: |
+        echo "GITHUB_CONFIGURATION='.github/config/release-config-temp.json'" >>
+        $GITHUB_ENV
+        echo ${{ env.GITHUB_CONFIGURATION }}
     - name: "Build Changelog"
       id: build_changelog
       uses: mikepenz/release-changelog-builder-action@v3.7.2
       with:
-        configuration: ${{ inputs.config-release-path }}
+        configuration: ${{ env.GITHUB_CONFIGURATION }}
         failOnError: true
         includeOpen: true
         fromTag: ${{ steps.previoustag.outputs.tag }}
