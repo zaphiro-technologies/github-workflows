@@ -13,7 +13,7 @@ on:
     inputs:
       config-release-path:
         required: false
-        default: '.github/config/release-config-temp.json'
+        default: '.github/config/release-config.json'
         type: string
 
 concurrency:
@@ -46,6 +46,12 @@ jobs:
       uses: "WyriHaximus/github-action-next-semvers@v1"
       with:
         version: ${{ steps.previoustag.outputs.tag }}
+    - name: Select configuration
+      if: ${{ github.event_name == ' workflow_call' }}
+      run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
+    - name: Select configuration
+      if: ${{ github.event_name != ' workflow_call' }}
+      run: echo "CONFIGURATION='.github/config/release-config.json'" >> $GITHUB_ENV
     - name: "Update changelog config"
       id: update_changelog_config
       env:
@@ -53,20 +59,33 @@ jobs:
       run : |
         jq --arg match "myPR" \
           --arg replace "$PR" \
-          'walk(if . == $match then $replace else . end)' < .github/config/release-config.json > .github/config/release-config-temp.json
+          'walk(if . == $match then $replace else . end)' < ${{ env.CONFIGURATION }} > .github/config/release-config-temp.json
         more .github/config/release-config-temp.json
     - name: "Build Changelog"
-      id: build_changelog
-      uses: mikepenz/release-changelog-builder-action@v3.7.2
+      id: build_changelog_1
+      uses: mikepenz/release-changelog-builder-action@v4
+      if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
       with:
-        configuration: ${{ inputs.config-release-path }}
+        configuration: '.github/config/release-config-temp.json'
         failOnError: true
         includeOpen: true
         fromTag: ${{ steps.previoustag.outputs.tag }}
         toTag: ${{ github.sha }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: "Build Changelog"
+      id: build_changelog_2
+      uses: mikepenz/release-changelog-builder-action@v4
+      if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
+      with:
+        configuration: '.github/config/release-config-temp.json'
+        failOnError: true
+        includeOpen: true
+        toTag: ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Clean log
+      if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
       run: |
         if [ -f "RELEASE_NOTES.md" ]; then
           # more RELEASE_NOTES.md
@@ -83,21 +102,37 @@ jobs:
           more RELEASE_NOTES.md
           rm .github/config/release-config-temp.json
         else
-          echo "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
+          echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
         fi
-    - name: Update Changelog
-      if: startsWith(github.ref, 'refs/tags/') == false
+    - name: Clean log
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      run: |
+        if [ -f "RELEASE_NOTES.md" ]; then
+          more RELEASE_NOTES.md
+          TAG=${{ steps.previoustag.outputs.tag }}
+          echo "VERSION=${TAG#v}"
+          export SEARCH=$VERSION-dev
+          export REPLACE=$VERSION
+          sed -i "s/$SEARCH/$REPLACE/g" RELEASE_NOTES.md
+          echo "cleaned release note:"
+          more RELEASE_NOTES.md
+          rm .github/config/release-config-temp.json
+        else
+          echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
+        fi
+    - name: Update Changelog (tag)
       uses: stefanzweifel/changelog-updater-action@v1
+      if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
       with:
         latest-version: ${{ steps.semvers.outputs.patch }}-dev
-        release-notes:  ${{ steps.build_changelog.outputs.changelog }}
+        release-notes:  ${{ steps.build_changelog_1.outputs.changelog }}
         path-to-changelog: RELEASE_NOTES.md
-    - name: Update Changelog
-      if: startsWith(github.ref, 'refs/tags/')
+    - name: Update Changelog (no tag)
       uses: stefanzweifel/changelog-updater-action@v1
+      if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
       with:
-        latest-version: ${{ steps.semvers.outputs.patch }}
-        release-notes:  ${{ steps.build_changelog.outputs.changelog }}
+        latest-version: ${{ steps.semvers.outputs.patch }}-dev
+        release-notes:  ${{ steps.build_changelog_2.outputs.changelog }}
         path-to-changelog: RELEASE_NOTES.md
     - name: Commit updated CHANGELOG
       if: startsWith(github.ref, 'refs/tags/') == false
@@ -125,11 +160,17 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Select configuration
+        if: ${{ github.event_name == ' workflow_call' }}
+        run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
+      - name: Select configuration
+        if: ${{ github.event_name != ' workflow_call' }}
+        run: echo "CONFIGURATION=.github/config/release-config.json" >> $GITHUB_ENV
       - name: "Build Changelog"
         id: github_release
-        uses: mikepenz/release-changelog-builder-action@v3.7.2
+        uses: mikepenz/release-changelog-builder-action@v4
         with:
-          configuration: ${{ inputs.config-release-path }}
+          configuration: ${{env.CONFIGURATION}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
@@ -139,18 +180,3 @@ jobs:
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-b') || contains(github.ref, '-a') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Clean log
-        run: |
-          # more RELEASE_NOTES.md
-          export line_start=$(grep -m1 -n "## ${{ steps.semvers.outputs.patch }}" RELEASE_NOTES.md | head -n1 |sed 's/:.*//')
-          # echo $line_start
-          export line_end=$(grep -m2 -n "^## " RELEASE_NOTES.md | head -2 | tail -1 | sed 's/:.*//')
-          # echo $line_end
-          if [[ $line_end -eq $line_start ]] || [[ -z "${line_end}" ]]; then export line_end=$(wc -l < RELEASE_NOTES.md); else export line_end=$(echo $line_end-1 | bc); fi
-          # echo $line_end
-          export PATTERN=${line_start},${line_end}d
-          # echo $PATTERN
-          if [[ -z "${line_start}" ]]; then echo "Empty"; else sed -i -e $PATTERN RELEASE_NOTES.md; fi
-          echo "cleaned release note:"
-          more RELEASE_NOTES.md
-          rm .github/config/release-config-temp.json
