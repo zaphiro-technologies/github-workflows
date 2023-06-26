@@ -2,6 +2,10 @@
 
 ## 0.0.2-dev - 2023-06-26
 
+### Bug Fixes
+
+- Add jq to artefact clean up script (PR #12 by @chicco785)
+
 ### Continuous Integration
 
 - Add job to clean up artefacts on pr closure (PR #9 by @chicco785)
