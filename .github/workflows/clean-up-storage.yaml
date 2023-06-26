@@ -4,6 +4,7 @@ on:
     types:
       - closed
   workflow_call:
+  workflow_dispatch:
 
 jobs:
   cleanup-action-cache:
