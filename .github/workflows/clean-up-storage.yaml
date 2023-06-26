@@ -58,9 +58,9 @@ jobs:
 
             # Loop through the artifacts on this page and delete the old ones
             for ARTIFACT_ID in $ARTIFACTS; do
-              ARTIFACT_NAME=$(gh api repos/$1/actions/artifacts/$ARTIFACT_ID | jq -r '.name')
+              ARTIFACT_NAME=$(gh api repos/$REPO/actions/artifacts/$ARTIFACT_ID | jq -r '.name')
               echo "Deleting artifact $ARTIFACT_NAME (ID: $ARTIFACT_ID)..."
-              gh api repos/$1/actions/artifacts/$ARTIFACT_ID -X DELETE
+              gh api repos/$REPO/actions/artifacts/$ARTIFACT_ID -X DELETE
             done
 
             # Increment the page counter
