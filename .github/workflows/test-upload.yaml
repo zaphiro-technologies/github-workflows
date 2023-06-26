@@ -1,0 +1,21 @@
+name: Test artifact
+
+concurrency:
+  group: ${{ github.ref_name }}-test
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-upload:
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        echo "Test artifact" >> test.txt
+    - uses: actions/upload-artifact@v3
+      with:
+        name: test-upload
+        path: test.txt

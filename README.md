@@ -11,8 +11,8 @@ The repository includes:
 - [check-pr](.github/workflows/check-pr.yaml) workflow: when a new
   PR is added to a repository or any change occurs to the pr, the pr is
   validated to be sure that labels are valid.
-- [clean-up-cache](.github/workflows/clean-up-cache.yaml) workflow: when a new
-  PR is closed, related cache is deleted.
+- [clean-up-storage](.github/workflows/clean-up-storage.yaml) workflow: when a new
+  PR is closed, related cache and artefact are deleted.
 - [markdown](.github/workflows/markdown.yaml) workflow: lint all markdown
   documents and checks that links referenced in the documents are valid.
 - [release-notes](.github/workflows/release-notes.yaml) workflow: automatically

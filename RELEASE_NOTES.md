@@ -4,6 +4,7 @@
 
 ### Continuous Integration
 
+- Add job to clean up artefacts on pr closure (PR #9 by @chicco785)
 - Add workflow to clean-up action cache on PR closure (PR #8 by @chicco785)
 
 ### Documentation
