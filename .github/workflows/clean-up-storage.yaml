@@ -47,6 +47,8 @@ jobs:
           while true; do
             # Retrieve a page of artifacts
             ART_EXIST=$(gh api repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE | jq -r '.artifacts[]')
+            gh api repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE | jq -r '.artifacts[]'
+            gh api repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE | jq -r '.artifacts[] | select(.workflow_run.head_branch =="'"$GITHUB_HEAD_REF"'" ) | .id'
             ARTIFACTS=$(gh api repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE | jq -r '.artifacts[] | select(.workflow_run.head_branch =="'"$GITHUB_HEAD_REF"'" ) | .id')
             echo "page: $PAGE"
             # If there are no more artifacts, exit the loop
