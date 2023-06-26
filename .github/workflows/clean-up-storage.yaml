@@ -42,12 +42,12 @@ jobs:
       - name: Cleanup
         run: |
           REPO=${{ github.repository }}
-          echo "cleaning up repo: $REPO branch: $GITHUB_BASE_REF"
+          echo "cleaning up repo: $REPO branch: $GITHUB_HEAD_REF"
           sudo apt install -y jq
           while true; do
             # Retrieve a page of artifacts
             ART_EXIST=$(gh api repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE | jq -r '.artifacts[]')
-            ARTIFACTS=$(gh api repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE | jq -r '.artifacts[] | select(.workflow_run.head_branch =="$GITHUB_BASE_REF") | .id')
+            ARTIFACTS=$(gh api repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE | jq -r '.artifacts[] | select(.workflow_run.head_branch =="$GITHUB_HEAD_REF") | .id')
             echo "page: $PAGE"
             # If there are no more artifacts, exit the loop
             if [[ -z "$ART_EXIST" ]]; then
