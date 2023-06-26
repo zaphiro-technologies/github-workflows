@@ -42,7 +42,7 @@ jobs:
       - name: Cleanup
         run: |
           REPO=${{ github.repository }}
-          echo "cleaning up repo: $REPO"
+          echo "cleaning up repo: $REPO branch: $GITHUB_HEAD_REF"
           sudo apt install -y jq
           while true; do
             # Retrieve a page of artifacts
