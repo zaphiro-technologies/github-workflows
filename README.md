@@ -4,18 +4,18 @@ This repository hosts [re-usable github workflows][re-usable-github-workflows].
 
 The repository includes:
 
--   [add-to-project](.github/workflows/add-to-project.yaml) workflow: when a new
+- [add-to-project](.github/workflows/add-to-project.yaml) workflow: when a new
     issue or PR is added to a repository, it is also added to the
     [SynchroHub platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
     with status `new`.
--   [check-pr](.github/workflows/check-pr.yaml) workflow: when a new PR is added
+- [check-pr](.github/workflows/check-pr.yaml) workflow: when a new PR is added
     to a repository or any change occurs to the pr, the pr is validated to be
     sure that labels are valid.
--   [clean-up-storage](.github/workflows/clean-up-storage.yaml) workflow: when a
+- [clean-up-storage](.github/workflows/clean-up-storage.yaml) workflow: when a
     new PR is closed, related cache and artefact are deleted.
--   [markdown](.github/workflows/markdown.yaml) workflow: lint all markdown
+- [markdown](.github/workflows/markdown.yaml) workflow: lint all markdown
     documents and checks that links referenced in the documents are valid.
--   [release-notes](.github/workflows/release-notes.yaml) workflow:
+- [release-notes](.github/workflows/release-notes.yaml) workflow:
     automatically updates release notes using PR titles and labels.
 
 Some of this workflows are configured as [starter workflows][starter-workflows]
@@ -103,10 +103,10 @@ documentation.
 
 ## References
 
--   [re-usable github workflows][re-usable-github-workflows]
--   [octicon icons][octicon]
--   [`.github` repository][.github]
--   [starter workflows][starter-workflows]
+- [re-usable github workflows][re-usable-github-workflows]
+- [octicon icons][octicon]
+- [`.github` repository][.github]
+- [starter workflows][starter-workflows]
 
 [re-usable-github-workflows]:
     https://docs.github.com/en/actions/using-workflows/reusing-workflows
