@@ -1,6 +1,6 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-06-26
+## 0.0.2-dev - 2023-06-27
 
 ### Bug Fixes
 
@@ -8,6 +8,7 @@
 
 ### Continuous Integration
 
+- use new action for markdown (PR #15 by @chicco785)
 - Add job to clean up artefacts on pr closure (PR #9 by @chicco785)
 - Add workflow to clean-up action cache on PR closure (PR #8 by @chicco785)
 
