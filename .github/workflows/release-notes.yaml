@@ -134,6 +134,10 @@ jobs:
         latest-version: ${{ steps.semvers.outputs.patch }}-dev
         release-notes:  ${{ steps.build_changelog_2.outputs.changelog }}
         path-to-changelog: RELEASE_NOTES.md
+    - name: Prettify RELEASE_NOTES.md
+      uses: creyD/prettier_action@v4.3
+      with:
+          prettier_options: --write RELEASE_NOTES.md
     - name: Commit updated CHANGELOG
       if: startsWith(github.ref, 'refs/tags/') == false
       uses: stefanzweifel/git-auto-commit-action@v4
