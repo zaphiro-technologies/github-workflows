@@ -5,14 +5,14 @@ This repository hosts [re-usable github workflows][re-usable-github-workflows].
 The repository includes:
 
 - [add-to-project](.github/workflows/add-to-project.yaml) workflow: when a new
-  issue or PR is added to a repository, it is also added to the [SynchroHub
-  platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
+  issue or PR is added to a repository, it is also added to the
+  [SynchroHub platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
   with status `new`.
-- [check-pr](.github/workflows/check-pr.yaml) workflow: when a new
-  PR is added to a repository or any change occurs to the pr, the pr is
-  validated to be sure that labels are valid.
-- [clean-up-storage](.github/workflows/clean-up-storage.yaml) workflow: when a new
-  PR is closed, related cache and artefact are deleted.
+- [check-pr](.github/workflows/check-pr.yaml) workflow: when a new PR is added
+  to a repository or any change occurs to the pr, the pr is validated to be sure
+  that labels are valid.
+- [clean-up-storage](.github/workflows/clean-up-storage.yaml) workflow: when a
+  new PR is closed, related cache and artefact are deleted.
 - [markdown](.github/workflows/markdown.yaml) workflow: lint all markdown
   documents and checks that links referenced in the documents are valid.
 - [release-notes](.github/workflows/release-notes.yaml) workflow: automatically
@@ -37,12 +37,12 @@ the actions page.
    discussed in [re-usable github workflows][re-usable-github-workflows]
    documentation. In which case we recommend to also include default values.
 
-1. Ideally the workflow should be tested in this repository itself before
-   being used in other repositories. In relation to this, it is then important
-   that you trigger it with events such as `issues` or `pull_request` and that,
-   for these events, that do not support input parameters, you find a way to
-   pass default values. See [markdown](.github/workflows/markdown.yaml) workflow
-   for one of the possible way to solve the issue.
+1. Ideally the workflow should be tested in this repository itself before being
+   used in other repositories. In relation to this, it is then important that
+   you trigger it with events such as `issues` or `pull_request` and that, for
+   these events, that do not support input parameters, you find a way to pass
+   default values. See [markdown](.github/workflows/markdown.yaml) workflow for
+   one of the possible way to solve the issue.
 
 1. Once the new workflow is available in the main branch, you can call it using
    something like:
@@ -63,7 +63,8 @@ Should you wish to advertise the re-usable workflow to your organization
 developers in the `new action` page:
 
 1. You need to create a template in the [`.github` repository][.github] in the
-   folder [`workflow-templates`](https://github.com/zaphiro-technologies/.github/tree/main/workflow-templates):
+   folder
+   [`workflow-templates`](https://github.com/zaphiro-technologies/.github/tree/main/workflow-templates):
 
    ```yaml
    name: Project Management
@@ -107,7 +108,9 @@ documentation.
 - [`.github` repository][.github]
 - [starter workflows][starter-workflows]
 
-[re-usable-github-workflows]: https://docs.github.com/en/actions/using-workflows/reusing-workflows
+[re-usable-github-workflows]:
+  https://docs.github.com/en/actions/using-workflows/reusing-workflows
 [octicon]: https://primer.style/design/foundations/icons/
 [.github]: https://github.com/zaphiro-technologies/.github
-[starter-workflows]: https://docs.github.com/en/actions/using-workflows/creating-starter-workflows-for-your-organization
+[starter-workflows]:
+  https://docs.github.com/en/actions/using-workflows/creating-starter-workflows-for-your-organization
