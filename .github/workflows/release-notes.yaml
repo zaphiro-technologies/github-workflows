@@ -145,7 +145,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       uses: creyD/prettier_action@v4.3
       with:
-          prettier_options: --prose-wrap always --write RELEASE_NOTES.md
+          prettier_options: --print-width 75 --prose-wrap always --write RELEASE_NOTES.md
           push_options: HEAD:main
     - name: Commit updated CHANGELOG
       if: startsWith(github.ref, 'refs/tags/') == false
