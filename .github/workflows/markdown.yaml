@@ -34,12 +34,10 @@ jobs:
         token: ${{ secrets.REPO_PAT }}
         ref: ${{github.event.pull_request.head.ref}}
         repository: ${{github.event.pull_request.head.repo.full_name}}
-    - run: mv RELEASE_NOTES.md RELEASE_NOTES.tmp
     - name: Prettify MD files
       uses: creyD/prettier_action@v4.3
       with:
           prettier_options: --prose-wrap always --write **/*.md
-    - run: mv RELEASE_NOTES.tmp RELEASE_NOTES.md
     - name: Lint
       if: ${{ github.event_name == ' workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
