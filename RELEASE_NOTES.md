@@ -4,8 +4,7 @@
 
 ### Bug Fixes
 
-- test RELEASE_NOTES.md exclusion from markdown prettying very long title to see
-  if issue is present or not (PR #17 by @chicco785)
+- test RELEASE_NOTES.md exclusion from markdown prettying very long title to see if issue is present or not (PR #17 by @chicco785)
 - Add jq to artefact clean up script (PR #12 by @chicco785)
 
 ### Continuous Integration
