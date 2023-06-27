@@ -22,7 +22,7 @@ on:
         default: '.github/config/md-link-config.json'
         type: string
       config-lint-path:
-        default: '.github/config/md-lint-config.json'
+        default: '.github/config/.markdownlint.json'
         required: false
         type: string
 jobs:
@@ -46,7 +46,7 @@ jobs:
       uses: DavidAnson/markdownlint-cli2-action@v11
       with:
         fix: true
-        config: '.github/config/md-lint-config.json'
+        config: '.github/config/.markdownlint.json'
         globs: '**/*.md'
     - name: Commit markdown-lint changes
       run: |
