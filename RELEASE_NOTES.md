@@ -4,6 +4,7 @@
 
 ### Bug Fixes
 
+- test RELEASE_NOTES.md exclusion from markdown prettying (PR #17 by @chicco785)
 - Add jq to artefact clean up script (PR #12 by @chicco785)
 
 ### Continuous Integration
