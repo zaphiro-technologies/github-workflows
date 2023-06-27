@@ -4,6 +4,8 @@
 
 ### Bug Fixes
 
+- test .prettierignore what happens with very long pr title is a mess we don't
+  wont to deal (PR #18 by @chicco785)
 - Add jq to artefact clean up script (PR #12 by @chicco785)
 
 ### Continuous Integration
