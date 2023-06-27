@@ -22,7 +22,7 @@ on:
         default: '.github/config/md-link-config.json'
         type: string
       config-lint-path:
-        default: '.github/config/md-lint-config.json'
+        default: '.github/config/.markdownlint.json'
         required: false
         type: string
 jobs:
@@ -34,18 +34,24 @@ jobs:
         token: ${{ secrets.REPO_PAT }}
         ref: ${{github.event.pull_request.head.ref}}
         repository: ${{github.event.pull_request.head.repo.full_name}}
+    - name: Prettify MD files
+      uses: creyD/prettier_action@v4.3
+      with:
+          prettier_options: --prose-wrap always --write **/*.md
     - name: Lint
       if: ${{ github.event_name == ' workflow_call' }}
-      uses: docker://avtodev/markdown-lint:v1 # fastest way
+      uses: DavidAnson/markdownlint-cli2-action@v11
       with:
+        fix: true
         config: ${{ inputs.config-lint-path }}
-        args: '--fix  **/*.md'
+        globs: '**/*.md'
     - name: Lint
       if: ${{ github.event_name != ' workflow_call' }}
-      uses: docker://avtodev/markdown-lint:v1 # fastest way
+      uses: DavidAnson/markdownlint-cli2-action@v11
       with:
-        config: '.github/config/md-lint-config.json'
-        args: '--fix  **/*.md'
+        fix: true
+        config: '.github/config/.markdownlint.json'
+        globs: '**/*.md'
     - name: Commit markdown-lint changes
       run: |
         git config --global user.name 'Bot'
