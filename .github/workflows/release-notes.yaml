@@ -34,6 +34,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
+        ref: ${{ github.head_ref }}
         token: ${{ secrets.REPO_PAT }}
         fetch-depth: 0
     - name: 'Get Previous tag'
@@ -138,7 +139,6 @@ jobs:
       uses: creyD/prettier_action@v4.3
       with:
           prettier_options: --prose-wrap always --write RELEASE_NOTES.md
-          dry: true
     - name: Commit updated CHANGELOG
       if: startsWith(github.ref, 'refs/tags/') == false
       uses: stefanzweifel/git-auto-commit-action@v4
