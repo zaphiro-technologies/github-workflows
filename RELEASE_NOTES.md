@@ -21,5 +21,4 @@
 
 ### Documentation
 
-- fix workflows to work on `github-workflows` repository (PR #2 by
-  @chicco785)
+- fix workflows to work on `github-workflows` repository (PR #2 by @chicco785)
