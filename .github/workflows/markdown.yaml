@@ -36,16 +36,18 @@ jobs:
         repository: ${{github.event.pull_request.head.repo.full_name}}
     - name: Lint
       if: ${{ github.event_name == ' workflow_call' }}
-      uses: docker://avtodev/markdown-lint:v1 # fastest way
+      uses: DavidAnson/markdownlint-cli2-action@v11
       with:
+        fix: true
         config: ${{ inputs.config-lint-path }}
-        args: '--fix  **/*.md'
+        globs: '**/*.md'
     - name: Lint
       if: ${{ github.event_name != ' workflow_call' }}
-      uses: docker://avtodev/markdown-lint:v1 # fastest way
+      uses: DavidAnson/markdownlint-cli2-action@v11
       with:
+        fix: true
         config: '.github/config/md-lint-config.json'
-        args: '--fix  **/*.md'
+        globs: '**/*.md'
     - name: Commit markdown-lint changes
       run: |
         git config --global user.name 'Bot'
