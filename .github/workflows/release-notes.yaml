@@ -138,6 +138,7 @@ jobs:
       uses: creyD/prettier_action@v4.3
       with:
           prettier_options: --prose-wrap always --write RELEASE_NOTES.md
+          dry: true
     - name: Commit updated CHANGELOG
       if: startsWith(github.ref, 'refs/tags/') == false
       uses: stefanzweifel/git-auto-commit-action@v4
