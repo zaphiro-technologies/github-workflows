@@ -28,14 +28,14 @@ the actions page.
 
 1. The new workflow need to be callable, i.e., include:
 
-    ```yaml
-    on:
-        workflow_call:
-    ```
+   ```yaml
+   on:
+     workflow_call:
+   ```
 
-    This type of trigger can also be used to specify input parameters as
-    discussed in [re-usable github workflows][re-usable-github-workflows]
-    documentation. In which case we recommend to also include default values.
+   This type of trigger can also be used to specify input parameters as
+   discussed in [re-usable github workflows][re-usable-github-workflows]
+   documentation. In which case we recommend to also include default values.
 
 1. Ideally the workflow should be tested in this repository itself before
    being used in other repositories. In relation to this, it is then important
@@ -47,15 +47,15 @@ the actions page.
 1. Once the new workflow is available in the main branch, you can call it using
    something like:
 
-    ```yaml
-    jobs:
-        add-to-project:
-            uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
-            secrets: inherit
-    ```
+   ```yaml
+   jobs:
+     add-to-project:
+       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
+       secrets: inherit
+   ```
 
-    Of course, you can also test it from a branch, in which case you can replace
-    `main` with the branch name.
+   Of course, you can also test it from a branch, in which case you can replace
+   `main` with the branch name.
 
 ## How to add a starter workflow to `.github` repository
 
@@ -65,40 +65,37 @@ developers in the `new action` page:
 1. You need to create a template in the [`.github` repository][.github] in the
    folder [`workflow-templates`](https://github.com/zaphiro-technologies/.github/tree/main/workflow-templates):
 
-    ```yaml
-    name: Project Management
-    on:
-        issues:
-            types:
-            - labeled
-        pull_request:
-            branches: [ $default-branch ]
-            types:
-            - labeled
-        workflow_call:
+   ```yaml
+   name: Project Management
+   on:
+     issues:
+       types:
+         - labeled
+     pull_request:
+       branches: [$default-branch]
+       types:
+         - labeled
+     workflow_call:
 
-    jobs:
-        add-to-project:
-            uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
-            secrets: inherit
-    ```
+   jobs:
+     add-to-project:
+       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
+       secrets: inherit
+   ```
 
 1. You need to create a linked `.properties.json` file including the related
    metadata:
 
-    ```yaml
-    {
-        "name": "Zaphiro Project Management",
-        "description": "Zaphiro Project Management starter workflow.",
-        "iconName": "octicon project",
-        "categories": [
-            "Automation",
-            "utilities"
-        ]
-    }
-    ```
+   ```yaml
+   {
+     "name": "Zaphiro Project Management",
+     "description": "Zaphiro Project Management starter workflow.",
+     "iconName": "octicon project",
+     "categories": ["Automation", "utilities"],
+   }
+   ```
 
-    For icons we leverage [octicon icons][octicon].
+   For icons we leverage [octicon icons][octicon].
 
 You can find more information in [starter workflows][starter-workflows]
 documentation.
