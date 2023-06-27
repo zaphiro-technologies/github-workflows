@@ -37,7 +37,7 @@ jobs:
     - name: Prettify MD files
       uses: creyD/prettier_action@v4.3
       with:
-          prettier_options:  --prose-wrap always --tab-width 4 --write **/*.md
+          prettier_options: --prose-wrap always --write **/*.md
     - name: Lint
       if: ${{ github.event_name == ' workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
