@@ -8,6 +8,8 @@
 
 ### Bug Fixes
 
+- include a step using a sed script to remove the added `-` by
+  `stefanzweifel/changelog-updater-action@v1. (PR #20 by @chicco785)
 - Add jq to artefact clean up script (PR #12 by @chicco785)
 
 ### Continuous Integration
