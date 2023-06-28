@@ -137,7 +137,7 @@ jobs:
         path-to-changelog: RELEASE_NOTES.md
     - name: Fix RELEASE_NOTES.md
       run: |
-        sed 's/- @/  @/g' RELEASE_NOTES.md > RELEASE_NOTES.md
+        sed -i "s/- @/  @/g" RELEASE_NOTES.md
     - name: Prettify RELEASE_NOTES.md
       uses: zaphiro-technologies/prettier_action@main
       with:
