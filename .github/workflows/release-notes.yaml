@@ -135,6 +135,10 @@ jobs:
         latest-version: ${{ steps.semvers.outputs.patch }}-dev
         release-notes:  ${{ steps.build_changelog_2.outputs.changelog }}
         path-to-changelog: RELEASE_NOTES.md
+    - name: Print RELEASE_NOTES.md
+      run: |
+        cat RELEASE_NOTES.md
+        cp RELEASE_NOTES.md RELEASE_NOTES.tmp
     - name: Prettify RELEASE_NOTES.md
       uses: zaphiro-technologies/prettier_action@main
       with:
