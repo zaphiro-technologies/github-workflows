@@ -26,4 +26,5 @@
 ### Documentation
 
 - fix workflows to work on `github-workflows` repository (PR #2 by @chicco785)
-- Add workflow to clean-up action cache on PR closure xxxxxxxxxxx (PR #8 by @chicco785)
+- Add workflow to clean-up action cache on PR closure xxxxxxxxxxx (PR #8 by
+  @chicco785)
