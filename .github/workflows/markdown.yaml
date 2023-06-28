@@ -35,9 +35,11 @@ jobs:
         ref: ${{github.event.pull_request.head.ref}}
         repository: ${{github.event.pull_request.head.repo.full_name}}
     - name: Prettify MD files
-      uses: creyD/prettier_action@v4.3
+      uses: zaphiro-technologies/prettier_action@main
       with:
           prettier_options: --ignore-path .github/config/.prettierignore --prose-wrap always --write **/*.md
+          dry: true
+          dry_no_fail: true
     - name: Lint
       if: ${{ github.event_name == ' workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
