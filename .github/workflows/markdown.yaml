@@ -53,7 +53,9 @@ jobs:
       with:
         fix: true
         config: '.github/config/.markdownlint.json'
-        globs: '**/*.md'
+        globs: |
+          **/*.md
+          #.github
     - name: Commit markdown-lint changes
       run: |
         git config --global user.name 'Bot'
