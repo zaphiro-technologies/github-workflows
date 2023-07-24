@@ -16,7 +16,12 @@ on:
       - labeled
       - unlabeled
   workflow_call:
-  
+    inputs:
+      labels:
+        description: 'Labels to be checked'
+        default: 'feature,bug,ci,refactor,security,documentation,dependencies,skip-changelog'
+        required: false
+        type: string
 jobs:
   # pr-title-lint:
   #   runs-on: ubuntu-latest
@@ -33,5 +38,5 @@ jobs:
       - uses: docker://agilepathway/pull-request-label-checker:latest
         with:
           github_enterprise_graphql_url: https://api.github.com/graphql
-          one_of: feature,bug,ci,refactor,security,documentation,dependencies,skip-changelog
+          one_of: ${{ inputs.labels }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
