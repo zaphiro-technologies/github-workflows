@@ -37,7 +37,7 @@ jobs:
     - name: Prettify MD files
       uses: zaphiro-technologies/prettier_action@main
       with:
-          prettier_options: --ignore-path .github/config/.prettierignore --prose-wrap always --write **/*.md **/*.MD
+          prettier_options: --ignore-path .github/config/.prettierignore --prose-wrap always --write "**/*.md" "**/*.MD"
           dry: true
           dry_no_fail: true
     - name: Lint
@@ -46,7 +46,9 @@ jobs:
       with:
         fix: true
         config: ${{ inputs.config-lint-path }}
-        globs: '**/*.md'
+        globs: |
+          **/*.md
+          **/*.MD
     - name: Lint
       if: ${{ github.event_name != ' workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
@@ -55,6 +57,7 @@ jobs:
         config: '.github/config/.markdownlint.json'
         globs: |
           **/*.md
+          **/*.MD
           #.github
     - name: Commit markdown-lint changes
       run: |
