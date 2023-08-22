@@ -66,17 +66,29 @@ jobs:
         git commit -am "Automated markdown-lint fixes" || echo "No changes to commit"
         git push
     # Checks the status of hyperlinks in .md files in verbose mode
-    - name: Check links
+    - name: Check links (.md)
       if: ${{ github.event_name == ' workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
         config-file: ${{ inputs.config-link-path }}
         use-verbose-mode: 'yes'
-        file-path: '**/*.md, **/*.MD'
-    - name: Check links
+    - name: Check links (.md)
       if: ${{ github.event_name != ' workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
         config-file: '.github/config/md-link-config.json'
         use-verbose-mode: 'yes'
-        file-path: '**/*.md, **/*.MD'
+    - name: Check links (.MD)
+      if: ${{ github.event_name == ' workflow_call' }}
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        config-file: ${{ inputs.config-link-path }}
+        use-verbose-mode: 'yes'
+        file-extension: '.MD'
+    - name: Check links (.MD)
+      if: ${{ github.event_name != ' workflow_call' }}
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        config-file: '.github/config/md-link-config.json'
+        use-verbose-mode: 'yes'
+        file-extension: '.MD'
