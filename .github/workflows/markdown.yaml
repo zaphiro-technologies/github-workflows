@@ -72,6 +72,7 @@ jobs:
       with:
         config-file: ${{ inputs.config-link-path }}
         use-verbose-mode: 'yes'
+        file-path: '**/*.md, **/*.MD'
     - name: Check links
       if: ${{ github.event_name != ' workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
