@@ -8,7 +8,11 @@ on:
     types:
       - labeled
   workflow_call:
-
+    inputs:
+      labeled:
+        required: false
+        default: bug, ci, dependencies, documentation, feature, refactor, security, customer
+        type: string
 jobs:
   add-to-project:
     name: Add issue/PR to SynchroHub platform project
@@ -20,4 +24,4 @@ jobs:
           # to the issue
           project-url: ${{ secrets.PLATFORM_PROJECT_URL }}
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
-          labeled: bug, ci, dependencies, documentation, feature, refactor, security, customer
+          labeled: ${{ inputs.labeled }}
