@@ -28,6 +28,11 @@
 - Fake pr 2 (PR #5 by @chicco785)
 - fake pr 1 (PR #4 by @chicco785)
 
+### Refactoring
+
+- release notes workflow: remove work around to fix broken lists (PR #28 by
+  @chicco785)
+
 ## 0.0.1 - 2023-06-21
 
 ### Documentation
