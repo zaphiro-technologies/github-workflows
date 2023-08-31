@@ -30,7 +30,7 @@
 
 ### Refactoring
 
-- release notes workflows: remove work around to fix broken lists (PR #28 by
+- release notes workflow: remove work around to fix broken lists (PR #28 by
   @chicco785)
 
 ## 0.0.1 - 2023-06-21
