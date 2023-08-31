@@ -4,6 +4,8 @@
 
 ### Features
 
+- add-to-project workflow: make labels configurable as inputs (PR #27 by
+  @chicco785)
 - Markdown workflow: use customized prettier action (PR #19 by @chicco785)
 
 ### Bug Fixes
