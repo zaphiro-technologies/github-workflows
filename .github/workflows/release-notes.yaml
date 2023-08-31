@@ -136,11 +136,11 @@ jobs:
         release-notes:  ${{ steps.build_changelog_2.outputs.changelog }}
         path-to-changelog: RELEASE_NOTES.md
     - name: Prettify RELEASE_NOTES.md
-      uses: zaphiro-technologies/prettier_action@main
+      uses: creyD/prettier_action@dev
       with:
           prettier_options: --prose-wrap always --write RELEASE_NOTES.md
           dry: true
-          dry_no_fail: true
+          no_commit: true
     - name: Commit updated CHANGELOG
       if: startsWith(github.ref, 'refs/tags/') == false
       uses: stefanzweifel/git-auto-commit-action@v4
