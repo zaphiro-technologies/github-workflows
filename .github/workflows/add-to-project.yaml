@@ -13,15 +13,18 @@ on:
         required: false
         default: bug, ci, dependencies, documentation, feature, refactor, security, customer
         type: string
+      project-url:
+        required: false
+        type: string
 jobs:
   add-to-project:
-    name: Add issue/PR to SynchroHub platform project
+    name: Add issue/PR to a project
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@v0.5.0
         with:
           # You can target a project in a different organization
           # to the issue
-          project-url: ${{ secrets.PLATFORM_PROJECT_URL }}
+          project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
           labeled: ${{ inputs.labeled }}
