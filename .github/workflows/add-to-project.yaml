@@ -25,6 +25,6 @@ jobs:
         with:
           # You can target a project in a different organization
           # to the issue
-          project-url: ${{ inputs.project-url != "" && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
+          project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
           labeled: ${{ inputs.labeled }}
