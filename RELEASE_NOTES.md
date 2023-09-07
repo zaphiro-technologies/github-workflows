@@ -1,9 +1,11 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-08-31
+## 0.0.2-dev - 2023-09-07
 
 ### Features
 
+- add-to-project workflow: make project url configurable as input parameter (PR
+  #33 by @chicco785)
 - add-to-project workflow: make labels configurable as inputs (PR #27 by
   @chicco785)
 - Markdown workflow: use customized prettier action (PR #19 by @chicco785)
