@@ -4,6 +4,8 @@
 
 ### Features
 
+- add-to-project workflow: automatically add reviewers without need of
+  CODEOWNERS (PR #37 by @chicco785)
 - add-to-project workflow: automatically assign pr to its creator (PR #36 by
   @chicco785)
 - add-to-project workflow: make project url configurable as input parameter (PR
