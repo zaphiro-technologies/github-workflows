@@ -48,6 +48,7 @@ jobs:
   add-reviewer-to-pr:
     name: Assign Reviewer to PR
     runs-on: ubuntu-latest
+    permissions: read-all|write-all
     steps:
      - if: github.event_name == 'pull_request'
        uses: rowi1de/auto-assign-review-teams@v1.1.3
