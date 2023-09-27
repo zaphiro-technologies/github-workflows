@@ -16,6 +16,10 @@ on:
       project-url:
         required: false
         type: string
+      reviewers:
+        required: false
+        default: zaphiro-technologies/backend-devs
+        type: string
 jobs:
   add-to-project:
     name: Add issue/PR to a project
@@ -37,3 +41,11 @@ jobs:
       if: github.event_name == 'pull_request'
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
+  add-reviewer-to-pr:
+    name: Add Pull Request Reviewer
+    runs-on: ubuntu-latest
+    steps:
+    - uses: AveryCameronUofR/add-reviewer-gh-action@1.0.3
+      with: 
+        reviewers: ${{ inputs.reviewers }}
+        token: ${{ secrets.GITHUB_TOKEN }}
