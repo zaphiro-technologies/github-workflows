@@ -50,4 +50,4 @@ jobs:
        uses: hkusu/review-assign-action@v1
        with:
          reviewers: ${{ inputs.reviewers != '' && inputs.reviewers || '@zaphiro-technologies/backend-devs' }}
-         token: ${{ secrets.GITHUB_TOKEN }}
+         github-token: ${{ secrets.GITHUB_TOKEN }}
