@@ -51,6 +51,19 @@ jobs:
     permissions: write-all
     steps:
      - if: github.event_name == 'pull_request'
+       run: |
+          gh api \
+            --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /orgs/$OWNER/teams/$TEAM/repos/$OWNER/$REPO \
+            -f permission='push' 
+       env:
+          GITHUB_TOKEN: ${{ secrets.REPO_PAT }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          TEAM: ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs' }}
+     - if: github.event_name == 'pull_request'
        uses: rowi1de/auto-assign-review-teams@v1.1.3
        with:
         repo-token: ${{ secrets.REPO_PAT }}
