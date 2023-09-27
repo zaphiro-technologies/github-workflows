@@ -43,7 +43,7 @@ jobs:
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
   add-reviewer-to-pr:
-    name: Add Pull Request Reviewer
+    name: Assign Reviewer to PR
     runs-on: ubuntu-latest
     steps:
      - if: github.event_name == 'pull_request'
@@ -51,3 +51,5 @@ jobs:
        with:
          reviewers: ${{ inputs.reviewers != '' && inputs.reviewers || '@zaphiro-technologies/backend-devs' }}
          github-token: ${{ secrets.GITHUB_TOKEN }}
+         ready-comment: 'Ready for review :ok: <reviewers>'
+         merged-comment: 'It was merged. Thanks for your review :wink: <reviewers>'
