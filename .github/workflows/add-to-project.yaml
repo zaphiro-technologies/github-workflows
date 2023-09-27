@@ -17,9 +17,12 @@ on:
       project-url:
         required: false
         type: string
-      reviewers:
+      reviewers-team:
         required: false
-        default: 'zaphiro-technologies/backend-devs'
+        default: '@zaphiro-technologies/backend-devs'
+        type: string
+      reviewers-individuals:
+        required: false
         type: string
 jobs:
   add-to-project:
@@ -47,9 +50,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
      - if: github.event_name == 'pull_request'
-       uses: hkusu/review-assign-action@v1
+       uses: rowi1de/auto-assign-review-teams@v1.1.3
        with:
-         reviewers: ${{ inputs.reviewers != '' && inputs.reviewers || 'zaphiro-technologies/backend-devs' }}
-         github-token: ${{ secrets.GITHUB_TOKEN }}
-         ready-comment: 'Ready for review :ok: <reviewers>'
-         merged-comment: 'It was merged. Thanks for your review :wink: <reviewers>'
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        teams:  ${{ inputs.reviewers-team != '' && inputs.reviewers-team || '@zaphiro-technologies/backend-devs' }} # only works for GitHub Organisation/Teams
+        persons:  ${{ inputs.reviewers-individuals }} # add individual persons here
+        include-draft: false # Draft PRs will be skipped (default: false)
+        skip-with-manual-reviewers: 1 # Skip this action, if the number of reviwers was already assigned (default: 0)
