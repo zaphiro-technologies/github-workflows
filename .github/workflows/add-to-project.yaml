@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
      - if: github.event_name == 'pull_request'
-       uses: rhs/add-reviewer-gh-action@1.0.6
-       with: 
+       uses: hkusu/review-assign-action@v1
+       with:
          reviewers: ${{ inputs.reviewers != '' && inputs.reviewers || '@zaphiro-technologies/backend-devs' }}
          token: ${{ secrets.GITHUB_TOKEN }}
