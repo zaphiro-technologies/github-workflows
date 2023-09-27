@@ -19,7 +19,7 @@ on:
         type: string
       reviewers:
         required: false
-        default: '@zaphiro-technologies/backend-devs'
+        default: 'zaphiro-technologies/backend-devs'
         type: string
 jobs:
   add-to-project:
@@ -49,7 +49,7 @@ jobs:
      - if: github.event_name == 'pull_request'
        uses: hkusu/review-assign-action@v1
        with:
-         reviewers: ${{ inputs.reviewers != '' && inputs.reviewers || '@zaphiro-technologies/backend-devs' }}
+         reviewers: ${{ inputs.reviewers != '' && inputs.reviewers || 'zaphiro-technologies/backend-devs' }}
          github-token: ${{ secrets.GITHUB_TOKEN }}
          ready-comment: 'Ready for review :ok: <reviewers>'
          merged-comment: 'It was merged. Thanks for your review :wink: <reviewers>'
