@@ -9,7 +9,7 @@ The repository includes:
   [SynchroHub platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
   or to the project defined by `project-url` input parameter with status `new`.
   When a new PR is added, the PR is assigned to its creator.
-  When a PR is set to ready, reviewers from `reviewers-team` inpute parameter (default value 'backend-devs')
+  When a PR is set to ready, reviewers from `reviewers-team` input parameter (default value 'backend-devs')
  or `reviewers-individuals` (comma separated) are added.
 - [check-pr](.github/workflows/check-pr.yaml) workflow: when a new PR is added
   to a repository or any change occurs to the pr, the pr is validated to be sure
