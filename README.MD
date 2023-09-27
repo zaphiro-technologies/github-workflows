@@ -5,10 +5,10 @@ This repository hosts [re-usable github workflows][re-usable-github-workflows].
 The repository includes:
 
 - [add-to-project](.github/workflows/add-to-project.yaml) workflow: when a new
-  issue or PR is added to a repository, it is also added to the
-  [SynchroHub platform project](https://github.com/orgs/zaphiro-technologies/projects/2) -
-  by default - or to the specified project with status `new`. When a new PR is
-  added, the PR is assigned to its creator.
+  issue or PR is added to a repository, it is also added - by default - to the
+  [SynchroHub platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
+  or to the project defined by `project-url` input parameter with status `new`.
+  When a new PR is added, the PR is assigned to its creator.
 - [check-pr](.github/workflows/check-pr.yaml) workflow: when a new PR is added
   to a repository or any change occurs to the pr, the pr is validated to be sure
   that labels are valid.
