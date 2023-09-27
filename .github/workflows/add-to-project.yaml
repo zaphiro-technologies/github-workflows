@@ -28,3 +28,12 @@ jobs:
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
           labeled: ${{ inputs.labeled }}
+  assing-pr-to-creator:
+    name: Assign PR to creator
+    runs-on: ubuntu-latest
+    steps:
+    - name: Assign PR to creator
+      uses: thomaseizinger/assign-pr-creator-action@v1.0.0
+      if: github.event_name == 'pull_request'
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}

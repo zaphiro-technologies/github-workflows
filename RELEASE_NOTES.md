@@ -1,9 +1,11 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-09-13
+## 0.0.2-dev - 2023-09-27
 
 ### Features
 
+- add-to-project workflow: automatically assign pr to its creator (PR #36 by
+  @chicco785)
 - add-to-project workflow: make project url configurable as input parameter (PR
   #33 by @chicco785)
 - add-to-project workflow: make labels configurable as inputs (PR #27 by
