@@ -52,14 +52,11 @@ jobs:
      - if: github.event_name == 'pull_request'
        uses: actions/github-script@v6
        with:
-         script: |
-            const team = 'backend-devs';
-            const token = process.env.GITHUB_TOKEN;
-
-            const response = await github.rest.pulls.addReviewers({
-              pull_id: context.payload.pull_id,
-              team_reviewers: [team],
-              token
-            });
-
-            console.log(response);
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          github.rest.pulls.requestReviewers({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.payload.pull_request.number,
+            team_reviewers: ["backend-devs"] # replace this with any team existing in your Github org
+          });
