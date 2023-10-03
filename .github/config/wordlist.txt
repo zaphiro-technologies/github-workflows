@@ -7,3 +7,4 @@ octicon
 dev
 url
 PRs
+SynchroGuard

@@ -6,7 +6,7 @@ The repository includes:
 
 - [add-to-project](.github/workflows/add-to-project.yaml) workflow: when a new
   issue or PR is added to a repository, it is also added - by default - to the
-  [SynchroHub platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
+  [SynchroGuard platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
   or to the project defined by `project-url` input parameter with status `new`.
   When a new PR is added, the PR is assigned to its creator. When a PR is set to
   ready, reviewers from `reviewers-team` input parameter (default value
