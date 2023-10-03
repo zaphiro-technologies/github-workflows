@@ -69,5 +69,6 @@ jobs:
         repo-token: ${{ secrets.REPO_PAT }}
         teams:  ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs' }} # only works for GitHub Organisation/Teams
         persons:  ${{ inputs.reviewers-individuals }} # add individual persons here
-        include-draft: false # Draft PRs will be skipped (default: false)
+        include-draft: true # Draft PRs will be skipped (default: false)
         skip-with-manual-reviewers: 1 # Skip this action, if the number of reviwers was already assigned (default: 0)
+#test #39

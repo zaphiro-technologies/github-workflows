@@ -1,6 +1,6 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-09-27
+## 0.0.2-dev - 2023-10-03
 
 ### Features
 
@@ -16,6 +16,7 @@
 
 ### Bug Fixes
 
+- Update add-to-project.yaml (PR #40 by @chicco785)
 - Release-notes wf: fix default configuration to include only current PR among
   open PRs (PR #34 by @chicco785)
 - Markdown workflow: support both .md and .MD extension for markdown files (PR
