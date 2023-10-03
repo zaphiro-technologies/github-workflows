@@ -4,7 +4,7 @@
 
 ### Features
 
-- add-to-project workflow: add support for assign multiple teams as reviewers
+- add-to-project workflow: add support to assign multiple teams as reviewers
   (comma separated without space) (PR #42 by @chicco785)
 - add-to-project workflow: automatically add reviewers without need of
   CODEOWNERS (PR #37 by @chicco785)
@@ -14,19 +14,19 @@
   #33 by @chicco785)
 - add-to-project workflow: make labels configurable as inputs (PR #27 by
   @chicco785)
-- Markdown workflow: use customized prettier action (PR #19 by @chicco785)
+- Markdown workflow: use customised prettier action (PR #19 by @chicco785)
 
 ### Bug Fixes
 
 - add-to-project workflow: Fix assignment of reviewers also when PR is still in
   draft mode (PR #40 by @chicco785)
-- Release-notes wf: fix default configuration to include only current PR among
-  open PRs (PR #34 by @chicco785)
-- Markdown workflow: support both .md and .MD extension for markdown files (PR
-  #24 by @chicco785)
-- Markdown workflow: include a step using a sed script to remove the added `-`
+- Release-notes workflow: fix default configuration to include only current PR
+  among open PRs (PR #34 by @chicco785)
+- Markdown workflow: support both `.md` and `.MD` extension for markdown files
+  (PR #24 by @chicco785)
+- Markdown workflow: include a step using a `sed` script to remove the added `-`
   by `stefanzweifel/changelog-updater-action@v1` (PR #20 by @chicco785)
-- Clean up storage workflow: Add jq to artefact clean up script (PR #12 by
+- Clean up storage workflow: Add `jq` to artefact clean up script (PR #12 by
   @chicco785)
 
 ### Continuous Integration
