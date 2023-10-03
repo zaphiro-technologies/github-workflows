@@ -40,34 +40,34 @@ jobs:
     name: Assign PR to creator
     runs-on: ubuntu-latest
     steps:
-    - name: Assign PR to creator
-      uses: thomaseizinger/assign-pr-creator-action@v1.0.0
-      if: github.event_name == 'pull_request'
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Assign PR to creator
+        uses: thomaseizinger/assign-pr-creator-action@v1.0.0
+        if: github.event_name == 'pull_request'
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
   add-reviewer-to-pr:
     name: Assign Reviewer to PR
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-     - if: github.event_name == 'pull_request'
-       run: |
+      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false }}
+        run: |
           gh api \
             --method PUT \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /orgs/$OWNER/teams/$TEAM/repos/$OWNER/$REPO \
             -f permission='push' 
-       env:
+        env:
           GITHUB_TOKEN: ${{ secrets.REPO_PAT }}
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
           TEAM: ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs' }}
-     - if: github.event_name == 'pull_request'
-       uses: rowi1de/auto-assign-review-teams@v1.1.3
-       with:
-        repo-token: ${{ secrets.REPO_PAT }}
-        teams:  ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs' }} # only works for GitHub Organisation/Teams
-        persons:  ${{ inputs.reviewers-individuals }} # add individual persons here
-        include-draft: false # Draft PRs will be skipped (default: false)
-        skip-with-manual-reviewers: 1 # Skip this action, if the number of reviwers was already assigned (default: 0)
+      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false }}
+        uses: rowi1de/auto-assign-review-teams@v1.1.3
+        with:
+          repo-token: ${{ secrets.REPO_PAT }}
+          teams:  ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs' }} # only works for GitHub Organisation/Teams
+          persons:  ${{ inputs.reviewers-individuals }} # add individual persons here
+          include-draft: false # Draft PRs will be skipped (default: false)
+          skip-with-manual-reviewers: 1 # Skip this action, if the number of reviwers was already assigned (default: 0)
