@@ -4,6 +4,8 @@
 
 ### Features
 
+- add support for assign multiple teams as reviewers (comma separated without
+  space) (PR #42 by @chicco785)
 - add-to-project workflow: automatically add reviewers without need of
   CODEOWNERS (PR #37 by @chicco785)
 - add-to-project workflow: automatically assign pr to its creator (PR #36 by
