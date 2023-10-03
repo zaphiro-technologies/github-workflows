@@ -16,7 +16,8 @@
 
 ### Bug Fixes
 
-- Update add-to-project.yaml (PR #40 by @chicco785)
+- Fix assignment of reviewers also when PR is still in draft mode (PR #40 by
+  @chicco785)
 - Release-notes wf: fix default configuration to include only current PR among
   open PRs (PR #34 by @chicco785)
 - Markdown workflow: support both .md and .MD extension for markdown files (PR
