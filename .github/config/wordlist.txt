@@ -1,5 +1,4 @@
 github
-chicco
 CODEOWNERS
 zaphiro
 yaml
@@ -8,4 +7,3 @@ dev
 url
 PRs
 SynchroGuard
-tejo

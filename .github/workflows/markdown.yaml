@@ -78,6 +78,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - run: |
+        export credits=$(gh repo credits)
+        echo $credits
+        for credit in $credits; 
+        do
+          echo $credit
+        done
+      env:
+        GH_TOKEN: ${{ github.token }}
     - uses: rojopolis/spellcheck-github-actions@v0
       name: Spellcheck
       with:

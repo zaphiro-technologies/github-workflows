@@ -11,10 +11,14 @@ matrix:
   pipeline:
   - pyspelling.filters.markdown:
   - pyspelling.filters.html:
-      comments: false
+      comments: true
+      attributes:
+      - title
+      - alt
       ignores:
-      - code
-      - pre
+      - ':matches(code, pre)'
+      - 'code'
+      - 'pre'
   sources:
   - '**/*.{md,MD}'
   default_encoding: utf-8
