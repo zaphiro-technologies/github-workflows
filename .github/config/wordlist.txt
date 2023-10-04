@@ -7,3 +7,5 @@ dev
 url
 PRs
 SynchroGuard
+chicco
+tejo
