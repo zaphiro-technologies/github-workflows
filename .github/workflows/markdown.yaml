@@ -45,20 +45,10 @@ jobs:
           dry: true
           dry_no_fail: true
     - name: Lint
-      if: ${{ github.event_name == 'workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
       with:
         fix: true
-        config: ${{ inputs.config-lint-path }}
-        globs: |
-          **/*.md
-          **/*.MD
-    - name: Lint
-      if: ${{ github.event_name != 'workflow_call' }}
-      uses: DavidAnson/markdownlint-cli2-action@v11
-      with:
-        fix: true
-        config: '.github/config/.markdownlint.json'
+        config: ${{ github.event_name == 'workflow_call' && inputs.config-lint-path || '.github/config/.markdownlint.json' }}
         globs: |
           **/*.md
           **/*.MD
@@ -71,33 +61,19 @@ jobs:
         git commit -am "Automated markdown-lint fixes" || echo "No changes to commit"
         git push
         rm -fr vendor
-    # Checks the status of hyperlinks in .md files in verbose mode
+    # Checks the status of hyperlinks in .md and .MD files in verbose mode (the action is case sensitive and .{MD,md})
     - name: Check links (.md)
-      if: ${{ github.event_name == 'workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
-        config-file: ${{ inputs.config-link-path }}
-        use-verbose-mode: 'yes'
-    - name: Check links (.md)
-      if: ${{ github.event_name != 'workflow_call' }}
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        config-file: '.github/config/md-link-config.json'
+        config-file: ${{ github.event_name == 'workflow_call' && inputs.config-link-path || '.github/config/md-link-config.json' }}
         use-verbose-mode: 'yes'
     - name: Check links (.MD)
       if: ${{ github.event_name == 'workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
-        config-file: ${{ inputs.config-link-path }}
+        config-file: ${{ github.event_name == 'workflow_call' && inputs.config-link-path || '.github/config/md-link-config.json' }}
         use-verbose-mode: 'yes'
-        file-extension: '.MD'
-    - name: Check links (.MD)
-      if: ${{ github.event_name != 'workflow_call' }}
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        config-file: '.github/config/md-link-config.json'
-        use-verbose-mode: 'yes'
-        file-extension: '.MD'
+        file-extension: '.{MD,md}'
   markdown-spellchecker:
     if: ${{ (github.event_name == 'workflow_call' && inputs.enable-spell-check) || github.event_name != 'workflow_call' }}
     runs-on: ubuntu-latest
