@@ -72,7 +72,7 @@ jobs:
       with:
         config-file: ${{ github.event_name == 'workflow_call' && inputs.config-link-path || '.github/config/md-link-config.json' }}
         use-verbose-mode: 'yes'
-        file-extension: '.{MD,md}'
+        file-extension: '.MD'
   markdown-spellchecker:
     if: ${{ (github.event_name == 'workflow_call' && inputs.enable-spell-check) || github.event_name != 'workflow_call' }}
     runs-on: ubuntu-latest
