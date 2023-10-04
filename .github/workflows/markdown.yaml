@@ -78,13 +78,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - run: |
-        export credits=$(gh repo credits)
-        echo $credits
-        for credit in $credits; 
+      with:
+        token: ${{ secrets.REPO_PAT }}
+        ref: ${{github.event.pull_request.head.ref}}
+        repository: ${{github.event.pull_request.head.repo.full_name}}
+    - name: Update wordlist.txt with users
+      shell: bash
+      run: |
+        export CREDITS=$(gh repo credits)
+        for CREDIT in $CREDITS;
         do
-          echo $credit
+          CREDIT=$(printf '%s' "$CREDIT" | sed 's/[0-9]//g')
+          export TEST=$(grep -c $CREDIT .github/config/wordlist.txt)
+          if [ $TEST -eq 0 ]; then
+            echo "not found"
+            echo "$CREDIT" >> .github/config/wordlist.txt
+          else
+            echo "$CREDIT: found"
+          fi
         done
+        git config --global user.name 'Bot'
+        git config --global user.email 'bot@zaphiro.ch'
+        git commit -am "Automated wordlist update with user names" || echo "No changes to commit"
+        git push
       env:
         GH_TOKEN: ${{ github.token }}
     - uses: rojopolis/spellcheck-github-actions@v0
