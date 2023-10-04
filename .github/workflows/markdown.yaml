@@ -45,7 +45,7 @@ jobs:
           dry: true
           dry_no_fail: true
     - name: Lint
-      if: ${{ github.event_name == ' workflow_call' }}
+      if: ${{ github.event_name == 'workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
       with:
         fix: true
@@ -54,7 +54,7 @@ jobs:
           **/*.md
           **/*.MD
     - name: Lint
-      if: ${{ github.event_name != ' workflow_call' }}
+      if: ${{ github.event_name != 'workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
       with:
         fix: true
@@ -73,26 +73,26 @@ jobs:
         rm -fr vendor
     # Checks the status of hyperlinks in .md files in verbose mode
     - name: Check links (.md)
-      if: ${{ github.event_name == ' workflow_call' }}
+      if: ${{ github.event_name == 'workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
         config-file: ${{ inputs.config-link-path }}
         use-verbose-mode: 'yes'
     - name: Check links (.md)
-      if: ${{ github.event_name != ' workflow_call' }}
+      if: ${{ github.event_name != 'workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
         config-file: '.github/config/md-link-config.json'
         use-verbose-mode: 'yes'
     - name: Check links (.MD)
-      if: ${{ github.event_name == ' workflow_call' }}
+      if: ${{ github.event_name == 'workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
         config-file: ${{ inputs.config-link-path }}
         use-verbose-mode: 'yes'
         file-extension: '.MD'
     - name: Check links (.MD)
-      if: ${{ github.event_name != ' workflow_call' }}
+      if: ${{ github.event_name != 'workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
         config-file: '.github/config/md-link-config.json'
