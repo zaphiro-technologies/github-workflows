@@ -4,6 +4,8 @@
 
 ### Features
 
+- markdown workflow: exclude vendor folder from links check (PR #47 by @tejo)
+- markdown workflow: exclude vendor folder from checks (PR #46 by @tejo)
 - add-to-project workflow: automatically add reviewers without need of
   CODEOWNERS (PR #37 by @chicco785)
 - add-to-project workflow: automatically assign pr to its creator (PR #36 by
