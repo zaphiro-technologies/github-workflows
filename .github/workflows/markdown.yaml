@@ -59,6 +59,7 @@ jobs:
           **/*.md
           **/*.MD
           #.github
+          #vendor
     - name: Commit markdown-lint changes
       run: |
         git config --global user.name 'Bot'
