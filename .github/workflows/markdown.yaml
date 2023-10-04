@@ -19,77 +19,79 @@ on:
     inputs:
       config-links-path:
         required: false
-        default: '.github/config/md-link-config.json'
+        default: ".github/config/md-link-config.json"
         type: string
       config-lint-path:
-        default: '.github/config/.markdownlint.json'
+        default: ".github/config/.markdownlint.json"
         required: false
         type: string
 jobs:
   markdown:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.REPO_PAT }}
-        ref: ${{github.event.pull_request.head.ref}}
-        repository: ${{github.event.pull_request.head.repo.full_name}}
-    - name: Prettify MD files
-      uses: zaphiro-technologies/prettier_action@main
-      with:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+      - name: Remove vendor directory
+        run: |
+          rm -rf vendor
+      - name: Prettify MD files
+        uses: zaphiro-technologies/prettier_action@main
+        with:
           prettier_options: --ignore-path .github/config/.prettierignore --prose-wrap always --write **/*.{md,MD}
           dry: true
           dry_no_fail: true
-    - name: Lint
-      if: ${{ github.event_name == ' workflow_call' }}
-      uses: DavidAnson/markdownlint-cli2-action@v11
-      with:
-        fix: true
-        config: ${{ inputs.config-lint-path }}
-        globs: |
-          **/*.md
-          **/*.MD
-    - name: Lint
-      if: ${{ github.event_name != ' workflow_call' }}
-      uses: DavidAnson/markdownlint-cli2-action@v11
-      with:
-        fix: true
-        config: '.github/config/.markdownlint.json'
-        globs: |
-          **/*.md
-          **/*.MD
-          #.github
-          #vendor
-    - name: Commit markdown-lint changes
-      run: |
-        git config --global user.name 'Bot'
-        git config --global user.email 'bot@zaphiro.ch'
-        git commit -am "Automated markdown-lint fixes" || echo "No changes to commit"
-        git push
-    # Checks the status of hyperlinks in .md files in verbose mode
-    - name: Check links (.md)
-      if: ${{ github.event_name == ' workflow_call' }}
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        config-file: ${{ inputs.config-link-path }}
-        use-verbose-mode: 'yes'
-    - name: Check links (.md)
-      if: ${{ github.event_name != ' workflow_call' }}
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        config-file: '.github/config/md-link-config.json'
-        use-verbose-mode: 'yes'
-    - name: Check links (.MD)
-      if: ${{ github.event_name == ' workflow_call' }}
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        config-file: ${{ inputs.config-link-path }}
-        use-verbose-mode: 'yes'
-        file-extension: '.MD'
-    - name: Check links (.MD)
-      if: ${{ github.event_name != ' workflow_call' }}
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        config-file: '.github/config/md-link-config.json'
-        use-verbose-mode: 'yes'
-        file-extension: '.MD'
+      - name: Lint
+        if: ${{ github.event_name == ' workflow_call' }}
+        uses: DavidAnson/markdownlint-cli2-action@v11
+        with:
+          fix: true
+          config: ${{ inputs.config-lint-path }}
+          globs: |
+            **/*.md
+            **/*.MD
+      - name: Lint
+        if: ${{ github.event_name != ' workflow_call' }}
+        uses: DavidAnson/markdownlint-cli2-action@v11
+        with:
+          fix: true
+          config: ".github/config/.markdownlint.json"
+          globs: |
+            **/*.md
+            **/*.MD
+            #.github
+      - name: Commit markdown-lint changes
+        run: |
+          git config --global user.name 'Bot'
+          git config --global user.email 'bot@zaphiro.ch'
+          git commit -am "Automated markdown-lint fixes" || echo "No changes to commit"
+          git push
+      # Checks the status of hyperlinks in .md files in verbose mode
+      - name: Check links (.md)
+        if: ${{ github.event_name == ' workflow_call' }}
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: ${{ inputs.config-link-path }}
+          use-verbose-mode: "yes"
+      - name: Check links (.md)
+        if: ${{ github.event_name != ' workflow_call' }}
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: ".github/config/md-link-config.json"
+          use-verbose-mode: "yes"
+      - name: Check links (.MD)
+        if: ${{ github.event_name == ' workflow_call' }}
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: ${{ inputs.config-link-path }}
+          use-verbose-mode: "yes"
+          file-extension: ".MD"
+      - name: Check links (.MD)
+        if: ${{ github.event_name != ' workflow_call' }}
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: ".github/config/md-link-config.json"
+          use-verbose-mode: "yes"
+          file-extension: ".MD"
