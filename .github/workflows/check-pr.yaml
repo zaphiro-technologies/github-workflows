@@ -38,5 +38,5 @@ jobs:
       - uses: docker://agilepathway/pull-request-label-checker:latest
         with:
           github_enterprise_graphql_url: https://api.github.com/graphql
-          one_of: ${{ inputs.labels }}
+          one_of: ${{ github.event_name == 'workflow_call' && inputs.labels || 'feature,bug,ci,refactor,security,documentation,dependencies,skip-changelog' }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
