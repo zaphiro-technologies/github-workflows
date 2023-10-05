@@ -26,7 +26,28 @@ on:
         required: false
         type: string
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      files-changed: ${{ steps.filter.outputs.markdown }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            markdown:
+              - '*.{md,MD}'
+              - '**/*.{md,MD}'
+              - '.github/config/.markdownlint.json'
+              - '.github/config/.prettierignore'
+              - '.github/config/md-link-config.json'
+              - '.github/config/spellcheck.yml'
+              - '.github/config/wordlist.txt'
+              - '.github/workflows/*.yaml'
   markdown:
+    needs: changes
+    if: ${{ needs.changes.outputs.files-changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
