@@ -30,12 +30,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@v0.5.0
+        id: addItem
         with:
           # You can target a project in a different organization
           # to the issue
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
           labeled: ${{ inputs.labeled }}
+      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == true }}
+        uses: kalgurn/update-project-item-status@main
+        with:
+          project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          item-id: ${{ steps.addItem.outputs.itemId }}
+          status: "🏗 In progress"
+      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false }}
+        uses: kalgurn/update-project-item-status@main
+        with:
+          project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          item-id: ${{ steps.addItem.outputs.itemId }}
+          status: "🔖 Ready"
   assing-pr-to-creator:
     name: Assign PR to creator
     runs-on: ubuntu-latest
