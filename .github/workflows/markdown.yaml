@@ -59,12 +59,14 @@ jobs:
           **/*.md
           **/*.MD
           #.github
+          #vendor
     - name: Commit markdown-lint changes
       run: |
         git config --global user.name 'Bot'
         git config --global user.email 'bot@zaphiro.ch'
         git commit -am "Automated markdown-lint fixes" || echo "No changes to commit"
         git push
+        rm -fr vendor
     # Checks the status of hyperlinks in .md files in verbose mode
     - name: Check links (.md)
       if: ${{ github.event_name == ' workflow_call' }}
