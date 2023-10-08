@@ -54,14 +54,14 @@ jobs:
       with:
         fix: true
         config: ${{ inputs.config-lint-path }}
-        globs: ${{ inputs.md-lint-globs }}
+        globs: ${{ inputs.md-lint-globs || '**/*.{md,MD}' }}
     - name: Lint
       if: ${{ github.event_name != ' workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
       with:
         fix: true
         config: '.github/config/.markdownlint.json'
-        globs: ${{ inputs.md-lint-globs }}
+        globs: ${{ inputs.md-lint-globs || '**/*.{md,MD}' }}
     - name: Commit markdown-lint changes
       run: |
         git config --global user.name 'Bot'
