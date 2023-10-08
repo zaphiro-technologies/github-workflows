@@ -25,6 +25,14 @@ on:
         default: '.github/config/.markdownlint.json'
         required: false
         type: string
+      md-lint-globs:
+        required: false
+        type: string
+        default: |
+          **/*.md
+          **/*.MD
+          #.github
+          #vendor
 jobs:
   markdown:
     runs-on: ubuntu-latest
@@ -46,20 +54,14 @@ jobs:
       with:
         fix: true
         config: ${{ inputs.config-lint-path }}
-        globs: |
-          **/*.md
-          **/*.MD
+        globs: ${{ inputs.md-lint-globs }}
     - name: Lint
       if: ${{ github.event_name != ' workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
       with:
         fix: true
         config: '.github/config/.markdownlint.json'
-        globs: |
-          **/*.md
-          **/*.MD
-          #.github
-          #vendor
+        globs: ${{ inputs.md-lint-globs }}
     - name: Commit markdown-lint changes
       run: |
         git config --global user.name 'Bot'
