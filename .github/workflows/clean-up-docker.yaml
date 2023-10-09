@@ -3,6 +3,10 @@ name: Clean up Docker Images on PR closure
 on:
   workflow_call:
 
+# Permissions needed
+# permissions:
+#   packages: write
+
 jobs:
   purge-image-storer:
     name: Delete image from ghcr.io
