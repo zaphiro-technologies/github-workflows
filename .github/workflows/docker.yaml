@@ -15,7 +15,6 @@ on:
 
 jobs:
   build:
-    needs: changes
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
