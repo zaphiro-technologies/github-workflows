@@ -14,9 +14,6 @@ concurrency:
 on:
   workflow_call:
     inputs:
-      go-version:
-        required: true
-        type: string
       skip-benchmark:
         required: false
         default: false
@@ -38,7 +35,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ inputs.go-version }}
+          go-version-file: go.mod
       - name: Golines
         run: |
           go install github.com/segmentio/golines@latest
@@ -66,7 +63,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ inputs.go-version }}
+          go-version-file: go.mod
       - name: Install gcov2lcov
         run: |
           go install github.com/jandelgado/gcov2lcov@latest
@@ -109,7 +106,7 @@ jobs:
       - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
       - uses: actions/setup-go@v4
         with:
-          go-version: ${{ inputs.go-version }}
+          go-version-file: go.mod
       - name: Run benchmark
         run: make ci-bench | tee output.txt
       # Download previous benchmark result from cache (if exists)
