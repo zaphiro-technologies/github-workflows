@@ -45,7 +45,7 @@ jobs:
     - name: Prettify MD files
       uses: zaphiro-technologies/prettier_action@main
       with:
-          prettier_options: --ignore-path .github/config/.prettierignore --prose-wrap always --write **/*.{md,MD}
+          prettier_options: --prose-wrap always --write **/*.{md,MD}
           dry: true
           dry_no_fail: true
     - name: Lint
