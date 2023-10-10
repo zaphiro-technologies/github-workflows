@@ -6,13 +6,13 @@ The repository includes:
 
 - [add-to-project](.github/workflows/add-to-project.yaml) workflow: when a new
   issue or PR is added to a repository, it is also added - by default - to the
-  [SynchroHub platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
+  [SynchroGuard platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
   or to the project defined by `project-url` input parameter with status `new`.
   When a new PR is added, the PR is assigned to its creator. When a PR is set to
   ready, reviewers from `reviewers-team` input parameter (default value
-  'backend-devs') or `reviewers-individuals` (comma separated) are added.
+  `backend-devs`) or `reviewers-individuals` (comma separated) are added.
 - [check-pr](.github/workflows/check-pr.yaml) workflow: when a new PR is added
-  to a repository or any change occurs to the pr, the pr is validated to be sure
+  to a repository or any change occurs to the PR, the PR is validated to be sure
   that labels are valid.
 - [clean-up-storage](.github/workflows/clean-up-storage.yaml) workflow: when a
   new PR is closed, related cache and artefact are deleted.
@@ -67,7 +67,7 @@ the actions page.
 
 ## How to add a starter workflow to `.github` repository
 
-Should you wish to advertise the re-usable workflow to your organization
+Should you wish to advertise the re-usable workflow to your organisation
 developers in the `new action` page:
 
 1. You need to create a template in the [`.github` repository][.github] in the

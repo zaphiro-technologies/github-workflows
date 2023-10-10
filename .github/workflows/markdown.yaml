@@ -17,6 +17,10 @@ on:
       - main
   workflow_call:
     inputs:
+      enable-spell-check:
+        required: false
+        default: false
+        type: boolean
       config-links-path:
         required: false
         default: '.github/config/md-link-config.json'
@@ -70,18 +74,10 @@ jobs:
           dry: true
           dry_no_fail: true
     - name: Lint
-      if: ${{ github.event_name == ' workflow_call' }}
       uses: DavidAnson/markdownlint-cli2-action@v11
       with:
         fix: true
-        config: ${{ inputs.config-lint-path }}
-        globs: ${{ inputs.md-lint-globs || '**/*.{md,MD}' }}
-    - name: Lint
-      if: ${{ github.event_name != ' workflow_call' }}
-      uses: DavidAnson/markdownlint-cli2-action@v11
-      with:
-        fix: true
-        config: '.github/config/.markdownlint.json'
+        config: ${{ github.event_name == 'workflow_call' && inputs.config-lint-path || '.github/config/.markdownlint.json' }}
         globs: ${{ inputs.md-lint-globs || '**/*.{md,MD}' }}
     - name: Commit markdown-lint changes
       run: |
@@ -90,30 +86,51 @@ jobs:
         git commit -am "Automated markdown-lint fixes" || echo "No changes to commit"
         git push
         rm -fr vendor
-    # Checks the status of hyperlinks in .md files in verbose mode
+    # Checks the status of hyperlinks in .md and .MD files in verbose mode (the action is case sensitive and .{MD,md})
     - name: Check links (.md)
-      if: ${{ github.event_name == ' workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
-        config-file: ${{ inputs.config-link-path }}
-        use-verbose-mode: 'yes'
-    - name: Check links (.md)
-      if: ${{ github.event_name != ' workflow_call' }}
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        config-file: '.github/config/md-link-config.json'
+        config-file: ${{ github.event_name == 'workflow_call' && inputs.config-link-path || '.github/config/md-link-config.json' }}
         use-verbose-mode: 'yes'
     - name: Check links (.MD)
-      if: ${{ github.event_name == ' workflow_call' }}
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
-        config-file: ${{ inputs.config-link-path }}
+        config-file: ${{ github.event_name == 'workflow_call' && inputs.config-link-path || '.github/config/md-link-config.json' }}
         use-verbose-mode: 'yes'
         file-extension: '.MD'
-    - name: Check links (.MD)
-      if: ${{ github.event_name != ' workflow_call' }}
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
+  markdown-spellchecker:
+    if: ${{ (github.event_name == 'workflow_call' && inputs.enable-spell-check) || github.event_name != 'workflow_call' }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
       with:
-        config-file: '.github/config/md-link-config.json'
-        use-verbose-mode: 'yes'
-        file-extension: '.MD'
+        token: ${{ secrets.REPO_PAT }}
+        ref: ${{github.event.pull_request.head.ref}}
+        repository: ${{github.event.pull_request.head.repo.full_name}}
+    - name: Update wordlist.txt with users
+      shell: bash
+      run: |
+        export CREDITS=$(gh repo credits)
+        for CREDIT in $CREDITS;
+        do
+          CREDIT=$(printf '%s' "$CREDIT" | sed 's/[0-9]//g')
+          export TEST=$(grep -c $CREDIT .github/config/wordlist.txt)
+          if [ $TEST -eq 0 ]; then
+            echo "not found"
+            echo "$CREDIT" >> .github/config/wordlist.txt
+          else
+            echo "$CREDIT: found"
+          fi
+        done
+        git config --global user.name 'Bot'
+        git config --global user.email 'bot@zaphiro.ch'
+        git commit -am "Automated wordlist update with user names" || echo "No changes to commit"
+        git push
+      env:
+        GH_TOKEN: ${{ github.token }}
+    - uses: rojopolis/spellcheck-github-actions@v0
+      name: Spellcheck
+      with:
+        config_path: .github/config/spellcheck.yml
+        output_file: spellcheck-output.txt
+        task_name: Markdown
