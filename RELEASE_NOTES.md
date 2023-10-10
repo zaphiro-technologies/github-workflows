@@ -27,10 +27,10 @@
 
 ### Bug Fixes
 
-- markdown workflow: fix check to enable/disable spellchecker (PR #55 by
-  @chicco785)
 - golang workflow: add shell configuration to enable `pipefail` for benchmark
   job (PR #56 by @cosimomeli)
+- markdown workflow: fix check to enable/disable spellchecker (PR #55 by
+  @chicco785)
 - add-to-project workflow: Fix assignment of reviewers also when PR is still in
   draft mode (PR #40 by @chicco785)
 - Release-notes workflow: fix default configuration to include only current PR
