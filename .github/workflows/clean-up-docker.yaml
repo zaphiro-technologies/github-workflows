@@ -2,13 +2,18 @@ name: Clean up Docker Images on PR closure
 
 on:
   workflow_call:
+    inputs:
+      image-name:
+        required: false
+        description: Override default image name which is the repo name
+        type: string
 
 # Permissions needed
 # permissions:
 #   packages: write
 
 jobs:
-  purge-image-storer:
+  purge-image:
     name: Delete image from ghcr.io
     runs-on: ubuntu-latest
     steps:
@@ -16,7 +21,7 @@ jobs:
         uses: bots-house/ghcr-delete-image-action@v1.1.0
         with:
           owner: ${{ github.repository_owner }}
-          name: ${{ github.event.repository.name }}
+          name: ${{ inputs.image-name || github.event.repository.name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: pr-${{ github.event.pull_request.number }}
   clean-untagged-api:
@@ -34,5 +39,5 @@ jobs:
           owner-type: org # or user
           token: ${{ secrets.PACKAGE_DELETE_PAT }}
           repository-owner: ${{ github.repository_owner }}
-          package-name: ${{ github.event.repository.name }}
+          package-name: ${{ inputs.image-name || github.event.repository.name }}
           delete-untagged: true
