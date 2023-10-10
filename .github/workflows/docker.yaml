@@ -37,9 +37,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Run pre-build
+        run: |
+          if test -f "Makefile"; then
+              make ci-pre-build
+          fi
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
