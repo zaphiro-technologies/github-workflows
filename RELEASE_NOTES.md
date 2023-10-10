@@ -4,6 +4,7 @@
 
 ### Features
 
+- Add Docker, Go lang and Docker Clean Up workflows (PR #54 by @cosimomeli)
 - markdown workflow: run jobs only when there are changes to markdown related
   files (PR #52 by @chicco785)
 - add-to-project workflow: set PR on creation to `🏗 In progress` and when ready
@@ -11,6 +12,8 @@
 - markdown workflow: exclude `vendor` folder from links check (PR #47 by @tejo)
 - markdown workflow: exclude `vendor` folder from checks (PR #46 by @tejo)
 - markdown workflow: add optional spell checker (PR #44 by @chicco785)
+- add-to-project workflow: add support to assign multiple teams as reviewers
+  (comma separated without space) (PR #42 by @chicco785)
 - add-to-project workflow: automatically add reviewers without need of
   CODEOWNERS (PR #37 by @chicco785)
 - add-to-project workflow: automatically assign pr to its creator (PR #36 by
