@@ -20,9 +20,11 @@ The repository includes:
   documents and checks that links referenced in the documents are valid.
 - [release-notes](.github/workflows/release-notes.yaml) workflow: automatically
   updates release notes using PR titles and labels.
-- [golang](.github/workflows/golang.yaml) workflow: lint, test and benchmark Go Applications
+- [golang](.github/workflows/golang.yaml) workflow: lint, test and benchmark Go
+  Applications
 - [docker](.github/workflows/docker.yaml) workflow: build and push Docker images
-- [clean-up-docker](.github/workflows/clean-up-docker.yaml) workflow: when a PR is closed, related docker images and untagged ones are deleted
+- [clean-up-docker](.github/workflows/clean-up-docker.yaml) workflow: when a PR
+  is closed, related docker images and untagged ones are deleted
 
 Some of this workflows are configured as [starter workflows][starter-workflows]
 in [`.github` repository][.github], so that you can add them at any time from
