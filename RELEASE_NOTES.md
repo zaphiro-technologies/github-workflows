@@ -4,7 +4,7 @@
 
 ### Features
 
-- Add pre-build step in docker workflow (PR #57 by @cosimomeli)
+- Add `pre-build` step in docker workflow (PR #57 by @cosimomeli)
 - markdown workflow: add optional spell checker (PR #44 by @chicco785)
 - add-to-project workflow: add support to assign multiple teams as reviewers
   (comma separated without space) (PR #42 by @chicco785)
