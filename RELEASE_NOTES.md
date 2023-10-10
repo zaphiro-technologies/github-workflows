@@ -6,6 +6,7 @@
 
 - markdown workflow: run jobs only when there are changes to markdown related
   files (PR #52 by @chicco785)
+- Add Docker, Go lang and Docker Clean Up workflows (PR #54 by @cosimomeli)
 - add-to-project workflow: set PR on creation to `🏗 In progress` and when ready
   to `🔖 Ready` (PR #50 by @chicco785)
 - markdown workflow: exclude `vendor` folder from links check (PR #47 by @tejo)
@@ -35,7 +36,6 @@
 
 ### Continuous Integration
 
-- Add Docker, Go lang and Docker Clean Up workflows (PR #54 by @cosimomeli)
 - use new action for markdown (PR #15 by @chicco785)
 - Add job to clean up artefacts on pr closure (PR #9 by @chicco785)
 - Add workflow to clean-up action cache on PR closure (PR #8 by @chicco785)
