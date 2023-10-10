@@ -4,6 +4,7 @@
 
 ### Features
 
+- markdown workflow: add optional spell checker (PR #44 by @chicco785)
 - add-to-project workflow: add support to assign multiple teams as reviewers
   (comma separated without space) (PR #42 by @chicco785)
 - Add Docker, Golang and Docker Clean Up workflows (PR #54 by @cosimomeli)
@@ -13,7 +14,6 @@
   to `🔖 Ready` (PR #50 by @chicco785)
 - markdown workflow: exclude `vendor` folder from links check (PR #47 by @tejo)
 - markdown workflow: exclude `vendor` folder from checks (PR #46 by @tejo)
-- markdown workflow: add optional spell checker (PR #44 by @chicco785)
 - add-to-project workflow: automatically add reviewers without need of
   CODEOWNERS (PR #37 by @chicco785)
 - add-to-project workflow: automatically assign pr to its creator (PR #36 by
@@ -26,6 +26,7 @@
 
 ### Bug Fixes
 
+- Add shell config to enable pipefail for benchmark job (PR #56 by @cosimomeli)
 - add-to-project workflow: Fix assignment of reviewers also when PR is still in
   draft mode (PR #40 by @chicco785)
 - Release-notes workflow: fix default configuration to include only current PR
