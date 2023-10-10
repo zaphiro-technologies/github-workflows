@@ -1,0 +1,144 @@
+name: Golang Lint & Test
+
+concurrency:
+  group: ${{github.repository}}-${{ github.ref_name }}-go
+  cancel-in-progress: true
+
+# Permissions needed
+# permissions:
+#   # Give the default GITHUB_TOKEN write permission to commit and push the
+#   # updated CHANGELOG back to the repository.
+#   # https://github.blog/changelog/2023-02-02-github-actions-updating-the-default-github_token-permissions-to-read-only/
+#   contents: write
+
+on:
+  workflow_call:
+    inputs:
+      skip-benchmark:
+        required: false
+        default: false
+        type: boolean
+        description: True to skip benchmark exec
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request }}
+    env:
+      GOPRIVATE: github.com/zaphiro-technologies/*
+      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Golines
+        run: |
+          go install github.com/segmentio/golines@latest
+          golines . -w
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          args: --fix
+          version: latest
+          skip-pkg-cache: true
+      - name: Commit golines & golangci-lint changes
+        run: |
+          git config --global user.name 'Bot'
+          git config --global user.email 'bot@zaphiro.ch'
+          git commit -am "Automated lint fixes" || echo "No changes to commit"
+          git push
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GOPRIVATE: github.com/zaphiro-technologies/*
+      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Install gcov2lcov
+        run: |
+          go install github.com/jandelgado/gcov2lcov@latest
+      - name: Test
+        run: |
+          make ci-test
+      - name: Download code coverage report from base branch
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          name: cov-result
+          github_token: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          branch: ${{github.base_ref}}
+          if_no_artifact_found: warn
+      - name: Generate Code Coverage report
+        id: code-coverage
+        uses: barecheck/code-coverage-action@v1
+        with:
+          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
+          lcov-file: "./coverage/lcov.info"
+          base-lcov-file: ${{ hashFiles('./lcov.info') != ''  && './lcov.info' || null }}
+          minimum-ratio: 70
+          send-summary-comment: true
+          show-annotations: "warning"
+      - name: Upload code coverage for ref branch
+        if: ${{ ! github.event.pull_request }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: cov-result
+          path: ./coverage/lcov.info
+          retention-days: 400
+      
+  benchmark:
+    runs-on: ubuntu-latest
+    if: ${{ ! inputs.skip-benchmark}}
+    env:
+      GOPRIVATE: github.com/zaphiro-technologies/*
+      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Run benchmark
+        run: make ci-bench | tee output.txt
+      # Download previous benchmark result from cache (if exists)
+      - name: Download benchmark report from base branch
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          name: benchmark-result
+          github_token: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          branch: ${{github.base_ref}}
+          if_no_artifact_found: warn
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          # What benchmark tool the output.txt came from
+          tool: "go"
+          # Where the output from the benchmark tool is stored
+          output-file-path: output.txt
+          # Where the previous data file is stored
+          external-data-json-path: benchmark-data.json
+          # Workflow will fail when an alert happens
+          fail-on-alert: true
+          # Enable alert commit comment
+          comment-on-alert: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          alert-threshold: 150%
+          summary-always: true
+      - name: Upload code coverage for ref branch
+        if: ${{ ! github.event.pull_request }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-result
+          path: benchmark-data.json
+          retention-days: 400
+      
