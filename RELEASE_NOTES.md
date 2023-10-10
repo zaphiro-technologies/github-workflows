@@ -26,7 +26,8 @@
 
 ### Bug Fixes
 
-- markdown workflow: fix test on usage of spellchecker (PR #55 by @chicco785)
+- markdown workflow: fix check to enable/disable spellchecker (PR #55 by
+  @chicco785)
 - add-to-project workflow: Fix assignment of reviewers also when PR is still in
   draft mode (PR #40 by @chicco785)
 - Release-notes workflow: fix default configuration to include only current PR
