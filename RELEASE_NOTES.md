@@ -27,6 +27,8 @@
 
 ### Bug Fixes
 
+- golang workflow: add shell configuration to enable `pipefail` for benchmark
+  job (PR #56 by @cosimomeli)
 - add-to-project workflow: Fix assignment of reviewers also when PR is still in
   draft mode (PR #40 by @chicco785)
 - Release-notes workflow: fix default configuration to include only current PR
