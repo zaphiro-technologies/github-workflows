@@ -4,11 +4,7 @@
 
 ### Features
 
-- markdown workflow: run jobs only when there are changes to markdown related
-  files (PR #52 by @chicco785)
 - Add Docker, Go lang and Docker Clean Up workflows (PR #54 by @cosimomeli)
-- add-to-project workflow: set PR on creation to `🏗 In progress` and when ready
-  to `🔖 Ready` (PR #50 by @chicco785)
 - markdown workflow: run jobs only when there are changes to markdown related
   files (PR #52 by @chicco785)
 - add-to-project workflow: set PR on creation to `🏗 In progress` and when ready
