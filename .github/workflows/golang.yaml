@@ -108,6 +108,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Run benchmark
+        shell: bash
         run: make ci-bench | tee output.txt
       # Download previous benchmark result from cache (if exists)
       - name: Download benchmark report from base branch
