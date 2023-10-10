@@ -1,9 +1,13 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-10-04
+## 0.0.2-dev - 2023-10-10
 
 ### Features
 
+- add-to-project workflow: set PR on creation to `🏗 In progress` and when ready
+  to `🔖 Ready` (PR #50 by @chicco785)
+- markdown workflow: run jobs only when there are changes to markdown related
+  files (PR #52 by @chicco785)
 - markdown workflow: exclude `vendor` folder from links check (PR #47 by @tejo)
 - markdown workflow: exclude `vendor` folder from checks (PR #46 by @tejo)
 - markdown workflow: add optional spell checker (PR #44 by @chicco785)

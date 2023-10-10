@@ -30,12 +30,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@v0.5.0
+        id: add-project
         with:
           # You can target a project in a different organization
           # to the issue
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
           labeled: ${{ inputs.labeled }}
+      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == true }}
+        uses: titoportas/update-project-fields@v0.1.0
+        with:
+          project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
+          field-keys: Status
+          field-values: 🏗 In progress
+      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false }}
+        uses: titoportas/update-project-fields@v0.1.0
+        with:
+          project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
+          field-keys: Status
+          field-values: 🔖 Ready
   assing-pr-to-creator:
     name: Assign PR to creator
     runs-on: ubuntu-latest
