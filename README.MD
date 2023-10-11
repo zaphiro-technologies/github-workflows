@@ -17,7 +17,8 @@ The repository includes:
 - [clean-up-storage](.github/workflows/clean-up-storage.yaml) workflow: when a
   new PR is closed, related cache and artefact are deleted.
 - [markdown](.github/workflows/markdown.yaml) workflow: lint all markdown
-  documents and checks that links referenced in the documents are valid.
+  documents and checks that links referenced in the documents are valid. If
+  `skip-spell-check: false`, also a spell checker is executed.
 - [release-notes](.github/workflows/release-notes.yaml) workflow: automatically
   updates release notes using PR titles and labels.
 - [golang](.github/workflows/golang.yaml) workflow: lint, test and benchmark Go
