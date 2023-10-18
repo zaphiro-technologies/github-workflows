@@ -26,6 +26,8 @@ The repository includes:
 - [docker](.github/workflows/docker.yaml) workflow: build and push Docker images
 - [clean-up-docker](.github/workflows/clean-up-docker.yaml) workflow: when a PR
   is closed, related docker images and untagged ones are deleted
+- [license](.github/workflows/license.yaml) workflow: add license in file
+  headers and the license of dependencies.
 
 Some of this workflows are configured as [starter workflows][starter-workflows]
 in [`.github` repository][.github], so that you can add them at any time from
