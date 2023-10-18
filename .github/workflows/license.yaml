@@ -13,6 +13,11 @@
 # limitations under the License.
 
 name: License Management
+
+concurrency:
+  group: ${{github.repository}}-${{ github.ref_name }}-license
+  cancel-in-progress: true
+
 on:
   pull_request:
     branches: [ main ]
