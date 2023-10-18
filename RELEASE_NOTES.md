@@ -1,9 +1,10 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-10-10
+## 0.0.2-dev - 2023-10-18
 
 ### Features
 
+- add workflow to support license management (PR #58 by @chicco785)
 - docker workflow: add `pre-build` step (PR #57 by @cosimomeli)
 - markdown workflow: add optional spell checker (PR #44 by @chicco785)
 - add-to-project workflow: add support to assign multiple teams as reviewers
@@ -27,10 +28,10 @@
 
 ### Bug Fixes
 
-- golang workflow: add shell configuration to enable `pipefail` for benchmark
-  job (PR #56 by @cosimomeli)
 - markdown workflow: fix check to enable/disable spellchecker (PR #55 by
   @chicco785)
+- golang workflow: add shell configuration to enable `pipefail` for benchmark
+  job (PR #56 by @cosimomeli)
 - add-to-project workflow: Fix assignment of reviewers also when PR is still in
   draft mode (PR #40 by @chicco785)
 - Release-notes workflow: fix default configuration to include only current PR
