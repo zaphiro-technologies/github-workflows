@@ -51,7 +51,7 @@ jobs:
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
           labeled: ${{ inputs.labeled }}
-      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == true }}
+      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == true && steps.add-project.outputs.itemId }}
         uses: titoportas/update-project-fields@v0.1.0
         with:
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
@@ -59,7 +59,7 @@ jobs:
           item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
           field-keys: Status
           field-values: 🏗 In progress
-      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false }}
+      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
         uses: titoportas/update-project-fields@v0.1.0
         with:
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
