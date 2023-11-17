@@ -4,7 +4,8 @@
 
 ### Features
 
-- Add Git and Build information as Docker Build Args (PR #63 by @cosimomeli)
+- docker workflow: add git and build information as build arguments (PR #63 by
+  @cosimomeli)
 - add workflow to support license management (PR #58 by @chicco785)
 - docker workflow: add `pre-build` step (PR #57 by @cosimomeli)
 - markdown workflow: add optional spell checker (PR #44 by @chicco785)
