@@ -4,7 +4,7 @@
 
 ### Features
 
-- Add docker login on test and benchmark golang workflows (PR #64 by
+- golang: add docker login on test and benchmark workflows (PR #64 by
   @cosimomeli)
 - docker workflow: add git and build information as build arguments (PR #63 by
   @cosimomeli)
