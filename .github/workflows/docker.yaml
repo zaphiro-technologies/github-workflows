@@ -96,3 +96,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            GIT_REV=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.revision']}}
+            GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
+            GIT_URL=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.source']}}
+            BUILD_DATE=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.created']}}
