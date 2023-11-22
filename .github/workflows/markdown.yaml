@@ -92,7 +92,7 @@ jobs:
       with:
         fix: true
         config: ${{ inputs.config-lint-path || '.github/config/.markdownlint.json' }}
-        globs: ${{ inputs.md-lint-globs || '**/*.{md,MD} #__test__/test.md' }}
+        globs: ${{ inputs.md-lint-globs || '**/*.{md,MD}\n#__test__/test.md' }}
     - name: Commit markdown-lint changes
       run: |
         git config --global user.name 'Bot'
