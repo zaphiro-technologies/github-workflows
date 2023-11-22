@@ -10,6 +10,6 @@
             "pattern": "^https://github.com/orgs/zaphiro-technologies/"
         }
     ],
-    "aliveStatusCodes": [200, 206, 4O3, 429]
+    "aliveStatusCodes": [200, 206, 429]
 }
 
