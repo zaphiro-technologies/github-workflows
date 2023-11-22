@@ -1,6 +1,6 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-11-17
+## 0.0.2-dev - 2023-11-22
 
 ### Features
 
@@ -30,6 +30,7 @@
 
 ### Bug Fixes
 
+- Support correctly .prettierignore (PR #65 by @chicco785)
 - markdown workflow: fix check to enable/disable spellchecker (PR #55 by
   @chicco785)
 - golang workflow: add shell configuration to enable `pipefail` for benchmark
