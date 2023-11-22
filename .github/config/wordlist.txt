@@ -12,3 +12,5 @@ untagged
 chicco
 tejo
 cosimomeli
+prettifier
+prettierignore
