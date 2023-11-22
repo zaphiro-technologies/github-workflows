@@ -30,6 +30,7 @@
 
 ### Bug Fixes
 
+- pr-check workflow: pass correctly `input.labels` (PR #67 by @chicco785)
 - markdown workflow: fix check to enable/disable spellchecker (PR #55 by
   @chicco785)
 - golang workflow: add shell configuration to enable `pipefail` for benchmark
