@@ -100,7 +100,7 @@ jobs:
           base-lcov-file: ${{ hashFiles('./lcov.info') != ''  && './lcov.info' || null }}
           minimum-ratio: 70
           send-summary-comment: true
-          show-annotations: "warning"
+          show-annotations: "error"
       - name: Upload code coverage for ref branch
         if: ${{ ! github.event.pull_request }}
         uses: actions/upload-artifact@v3
