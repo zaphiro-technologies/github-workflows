@@ -1,6 +1,6 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-11-17
+## 0.0.2-dev - 2023-11-23
 
 ### Features
 
@@ -47,6 +47,7 @@
 
 ### Continuous Integration
 
+- Lower annotation pollution on PRs (PR #68 by @hiimjako)
 - use new action for markdown (PR #15 by @chicco785)
 - Add job to clean up artefacts on pr closure (PR #9 by @chicco785)
 - Add workflow to clean-up action cache on PR closure (PR #8 by @chicco785)
