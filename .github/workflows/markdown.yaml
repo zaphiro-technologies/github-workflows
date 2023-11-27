@@ -84,15 +84,16 @@ jobs:
     - name: Prettify MD files
       uses: zaphiro-technologies/prettier_action@main
       with:
-          prettier_options: --prose-wrap always --write **/*.{md,MD}
+          prettier_options: --prose-wrap always --write **/*.{md,MD} --ignore-path .github/config/.prettierignore
           dry: true
           dry_no_fail: true
     - name: Lint
-      uses: DavidAnson/markdownlint-cli2-action@v11
+      uses: DavidAnson/markdownlint-cli2-action@v13
       with:
         fix: true
         config: ${{ inputs.config-lint-path || '.github/config/.markdownlint.json' }}
-        globs: ${{ inputs.md-lint-globs || '**/*.{md,MD}' }}
+        globs: ${{ inputs.md-lint-globs || '**/*.md,**/*.MD,#__tests__/test.md' }}
+        separator: ${{ inputs.md-lint-globs && '' || ',' }}
     - name: Commit markdown-lint changes
       run: |
         git config --global user.name 'Bot'
