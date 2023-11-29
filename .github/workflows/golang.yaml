@@ -18,12 +18,8 @@ concurrency:
   group: ${{github.repository}}-${{ github.ref_name }}-go
   cancel-in-progress: true
 
-# Permissions needed
-# permissions:
-#   # Give the default GITHUB_TOKEN write permission to commit and push the
-#   # updated CHANGELOG back to the repository.
-#   # https://github.blog/changelog/2023-02-02-github-actions-updating-the-default-github_token-permissions-to-read-only/
-#   contents: write
+permissions:
+  packages: read
 
 on:
   workflow_call:
@@ -86,7 +82,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PACKAGE_READ_PAT }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Test
         run: |
           make ci-test
@@ -132,7 +128,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PACKAGE_READ_PAT }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Run benchmark
         shell: bash
         run: make ci-bench | tee output.txt
