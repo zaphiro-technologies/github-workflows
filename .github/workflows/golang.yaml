@@ -127,8 +127,12 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-      - name: Docker Login
-        run: echo "$GH_PACKAGES_TOKEN" | docker login ghcr.io -u $GH_USERNAME --password-stdin
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.PACKAGE_READ_PAT }}
       - name: Run benchmark
         shell: bash
         run: make ci-bench | tee output.txt
