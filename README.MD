@@ -22,9 +22,9 @@ The repository includes:
 - [release-notes](.github/workflows/release-notes.yaml) workflow: automatically
   updates release notes using PR titles and labels.
 - [golang](.github/workflows/golang.yaml) workflow: lint, test and benchmark Go
-  Applications. The workflow includes authentication to GHCR in case tests
-  relies on private images. To retrieve the images, you need also to set
-  [read permission](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#ensuring-workflow-access-to-your-package)
+  Applications. The workflow includes authentication to Github Container
+  Registry in case tests rely on private images. To retrieve the images, you
+  need also to set [read permission](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#ensuring-workflow-access-to-your-package)
   for the repository on the package.
 - [docker](.github/workflows/docker.yaml) workflow: build and push Docker images
 - [clean-up-docker](.github/workflows/clean-up-docker.yaml) workflow: when a PR
