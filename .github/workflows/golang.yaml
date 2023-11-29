@@ -119,8 +119,6 @@ jobs:
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
-      GH_USERNAME: chicco785
-      GH_PACKAGES_TOKEN: ${{ secrets.PACKAGE_READ_PAT }}
     steps:
       - uses: actions/checkout@v4
       - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
