@@ -1,9 +1,10 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-11-29
+## 0.0.2-dev - 2023-12-04
 
 ### Features
 
+- Workflow to check CLA/DCO by contributors (PR #70 by @chicco785)
 - golang: add docker login on test and benchmark workflows (PR #64 by
   @cosimomeli)
 - docker workflow: add git and build information as build arguments (PR #63 by
