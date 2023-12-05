@@ -20,7 +20,7 @@ on:
       - '*'
   pull_request:
     # Only following types are handled by the action, but one can default to all as well
-    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled, ready_for_review]
     branches:
       - main
   workflow_call:
@@ -45,6 +45,7 @@ jobs:
   release_notes:
     name: Release Notes
     runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
     steps:
     - uses: actions/checkout@v3
       with:
