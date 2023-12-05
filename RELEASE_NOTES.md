@@ -1,9 +1,11 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-11-29
+## 0.0.2-dev - 2023-12-05
 
 ### Features
 
+- Run release note, license management and markdown workflows only on ready for
+  review PRs (PR #72 by @chicco785)
 - golang: add docker login on test and benchmark workflows (PR #64 by
   @cosimomeli)
 - docker workflow: add git and build information as build arguments (PR #63 by
