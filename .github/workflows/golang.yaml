@@ -81,6 +81,15 @@ jobs:
       - name: Install gcov2lcov
         run: |
           go install github.com/jandelgado/gcov2lcov@latest
+      # We Login in GHCR to retrieve owned private images used in docker-compose
+      # This requires to set in the package settings read permission for the
+      # repository where the golang ci is running
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Test
         run: |
           make ci-test
@@ -121,6 +130,15 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
+      # We Login in GHCR to retrieve owned private images used in docker-compose
+      # This requires to set in the package settings read permission for the
+      # repository where the golang ci is running
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Run benchmark
         shell: bash
         run: make ci-bench | tee output.txt
