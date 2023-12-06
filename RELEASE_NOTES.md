@@ -1,6 +1,6 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-11-29
+## 0.0.2-dev - 2023-12-06
 
 ### Features
 
@@ -32,6 +32,8 @@
 
 ### Bug Fixes
 
+- golang workflow: use current branch if base_ref not available (PR #74 by
+  @cosimomeli)
 - markdown workflow: support correctly `.prettierignore` (PR #65 by @chicco785)
 - pr-check workflow: pass correctly `input.labels` (PR #67 by @chicco785)
 - markdown workflow: fix check to enable/disable spellchecker (PR #55 by
