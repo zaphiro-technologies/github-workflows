@@ -73,7 +73,7 @@ jobs:
               - '.github/config/md-link-config.json'
               - '.github/config/spellcheck.yml'
               - '.github/config/wordlist.txt'
-              - '.github/workflows/*.yaml'
+              - '.github/workflows/markdown.yaml'
   markdown:
     needs: changes
     if: ${{ needs.changes.outputs.files-changed == 'true' && !github.event.pull_request.draft }}
