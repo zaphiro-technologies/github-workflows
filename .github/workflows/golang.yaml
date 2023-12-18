@@ -148,7 +148,7 @@ jobs:
         with:
           name: benchmark-result
           github_token: ${{ secrets.REPO_PRIVATE_READ_PAT }}
-          branch: ${{github.base_ref}}
+          branch: ${{ github.base_ref || github.ref_name }}
           if_no_artifact_found: warn
       # Run `github-action-benchmark` action
       - name: Store benchmark result
