@@ -1,6 +1,6 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-12-06
+## 0.0.2-dev - 2023-12-18
 
 ### Features
 
