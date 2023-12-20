@@ -1,15 +1,15 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-12-18
+## 0.0.2-dev - 2023-12-20
 
 ### Features
 
+- markdown workflow: extend link checker configuration example to allow 429
+  status (PR #62 by @chicco785)
 - golang: add docker login on test and benchmark workflows (PR #64 by
   @cosimomeli)
 - docker workflow: add git and build information as build arguments (PR #63 by
   @cosimomeli)
-- markdown workflow: extend link checker configuration example to allow 429
-  status (PR #62 by @chicco785)
 - add workflow to support license management (PR #58 by @chicco785)
 - docker workflow: add `pre-build` step (PR #57 by @cosimomeli)
 - markdown workflow: add optional spell checker (PR #44 by @chicco785)
@@ -62,6 +62,7 @@
 
 ### Refactoring
 
+- Remove annotiation in PRs (PR #76 by @hiimjako)
 - release notes workflow: remove work around to fix broken lists (PR #28 by
   @chicco785)
 
