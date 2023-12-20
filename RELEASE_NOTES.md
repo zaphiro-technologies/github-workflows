@@ -62,7 +62,7 @@
 
 ### Refactoring
 
-- Remove annotiation in PRs (PR #76 by @hiimjako)
+- Remove code coverage annotations (PR #76 by @hiimjako)
 - release notes workflow: remove work around to fix broken lists (PR #28 by
   @chicco785)
 
