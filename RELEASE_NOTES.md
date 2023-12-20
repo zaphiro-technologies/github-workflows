@@ -1,6 +1,6 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-12-07
+## 0.0.2-dev - 2023-12-20
 
 ### Features
 
@@ -10,6 +10,8 @@
   @cosimomeli)
 - docker workflow: add git and build information as build arguments (PR #63 by
   @cosimomeli)
+- markdown workflow: extend link checker configuration example to allow 429
+  status (PR #62 by @chicco785)
 - add workflow to support license management (PR #58 by @chicco785)
 - docker workflow: add `pre-build` step (PR #57 by @cosimomeli)
 - markdown workflow: add optional spell checker (PR #44 by @chicco785)
