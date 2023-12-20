@@ -4,6 +4,7 @@
 
 ### Features
 
+- golang: remove code coverage annotations (PR #76 by @hiimjako)
 - markdown workflow: extend link checker configuration example to allow 429
   status (PR #62 by @chicco785)
 - golang: add docker login on test and benchmark workflows (PR #64 by
@@ -62,7 +63,6 @@
 
 ### Refactoring
 
-- golang: remove code coverage annotations (PR #76 by @hiimjako)
 - release notes workflow: remove work around to fix broken lists (PR #28 by
   @chicco785)
 
