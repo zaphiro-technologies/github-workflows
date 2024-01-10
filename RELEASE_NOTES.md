@@ -1,13 +1,13 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-12-20
+## 0.0.2-dev - 2024-01-10
 
 ### Features
 
-- Workflow to check CLA/DCO by contributors (PR #70 by @chicco785)
 - golang: remove code coverage annotations (PR #76 by @hiimjako)
 - markdown workflow: extend link checker configuration example to allow 429
   status (PR #62 by @chicco785)
+- Workflow to check CLA/DCO by contributors (PR #70 by @chicco785)
 - golang: add docker login on test and benchmark workflows (PR #64 by
   @cosimomeli)
 - docker workflow: add git and build information as build arguments (PR #63 by
