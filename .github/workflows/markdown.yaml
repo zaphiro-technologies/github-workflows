@@ -67,9 +67,7 @@ jobs:
         with:
           filters: |
             markdown:
-              - '*.{md,MD}'
-              - '**/*.{md,MD}'
-              - '!RELEASE_NOTES.md'
+              - '!RELEASE_NOTES.md, *.{md,MD}, **/*.{md,MD}'
               - '.github/config/.markdownlint.json'
               - '.github/config/.prettierignore'
               - '.github/config/md-link-config.json'
