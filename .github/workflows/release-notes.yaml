@@ -19,6 +19,9 @@ on:
     tags:
       - '*'
   pull_request_review:
+  pull_request:
+    branches:
+      - main
   workflow_call:
     inputs:
       config-release-path:
