@@ -24,6 +24,9 @@ on:
       - main
     types:
       - opened
+      - reopened
+      - edited
+      - synchronize
       - labeled
       - unlabeled
   workflow_call:
