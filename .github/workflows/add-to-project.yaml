@@ -42,6 +42,7 @@ jobs:
   add-to-project:
     name: Add issue/PR to a project
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - uses: actions/add-to-project@v0.5.0
         id: add-project
@@ -67,21 +68,13 @@ jobs:
           item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
           field-keys: Status
           field-values: 🔖 Ready
-  assing-pr-to-creator:
-    name: Assign PR to creator
-    runs-on: ubuntu-latest
-    steps:
       - name: Assign PR to creator
+        if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
         uses: thomaseizinger/assign-pr-creator-action@v1.0.0
-        if: github.event_name == 'pull_request'
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-  add-reviewer-to-pr:
-    name: Assign Reviewer to PR
-    runs-on: ubuntu-latest
-    permissions: write-all
-    steps:
-      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false }}
+      - name: Add permissions
+        if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
         run: |
           IFS=,
           for TEAM in $TEAMS; 
@@ -98,7 +91,8 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
           TEAMS: ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }}
-      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false }}
+      - name: Add reviewers
+        if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
         uses: rowi1de/auto-assign-review-teams@v1.1.3
         with:
           repo-token: ${{ secrets.REPO_PAT }}
