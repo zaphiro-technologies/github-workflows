@@ -51,6 +51,7 @@ on:
           **/*.MD
           #.github
           #vendor
+          #RELEASE_NOTES.md
 jobs:
   changes:
     if: ${{ !github.event.pull_request.draft }}
@@ -68,6 +69,7 @@ jobs:
             markdown:
               - '*.{md,MD}'
               - '**/*.{md,MD}'
+              - '#RELEASE_NOTES.md'
               - '.github/config/.markdownlint.json'
               - '.github/config/.prettierignore'
               - '.github/config/md-link-config.json'
