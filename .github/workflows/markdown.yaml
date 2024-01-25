@@ -71,8 +71,8 @@ jobs:
               - '.github/config/.markdownlint.json'
               - '.github/config/.prettierignore'
               - '.github/config/md-link-config.json'
-              - '.github/config/spellcheck.yml'
-              - '.github/config/wordlist.txt'
+              - '.github/config/.gramma.json'
+              - '.github/config/grammar-check.sh'
               - '.github/workflows/markdown.yaml'
   markdown:
     needs: changes
@@ -126,30 +126,9 @@ jobs:
         token: ${{ secrets.REPO_PAT }}
         ref: ${{github.event.pull_request.head.ref}}
         repository: ${{github.event.pull_request.head.repo.full_name}}
-    - name: Update wordlist.txt with users
+    - uses: actions/setup-node@v4
+    - name: Spellcheck
       shell: bash
       run: |
-        export CREDITS=$(gh repo credits)
-        for CREDIT in $CREDITS;
-        do
-          CREDIT=$(printf '%s' "$CREDIT" | sed 's/[0-9]//g')
-          export TEST=$(grep -c $CREDIT .github/config/wordlist.txt)
-          if [ $TEST -eq 0 ]; then
-            echo "not found"
-            echo "$CREDIT" >> .github/config/wordlist.txt
-          else
-            echo "$CREDIT: found"
-          fi
-        done
-        git config --global user.name 'Bot'
-        git config --global user.email 'bot@zaphiro.ch'
-        git commit -am "Automated wordlist update with user names" || echo "No changes to commit"
-        git push
-      env:
-        GH_TOKEN: ${{ github.token }}
-    - uses: rojopolis/spellcheck-github-actions@v0
-      name: Spellcheck
-      with:
-        config_path: .github/config/spellcheck.yml
-        output_file: spellcheck-output.txt
-        task_name: Markdown
+        cd .github/config
+        ./grammar-check.sh

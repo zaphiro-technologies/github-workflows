@@ -16,13 +16,13 @@ The repository includes:
   that labels are valid.
 - [clean-up-storage](.github/workflows/clean-up-storage.yaml) workflow: when a
   new PR is closed, related cache and artefact are deleted.
-- [markdown](.github/workflows/markdown.yaml) workflow: lint all markdown
-  documents and checks that links referenced in the documents are valid. If
+- [markdown](.github/workflows/markdown.yaml) workflow: lint all Markdown
+  documents and checks that the links referenced in the documents are valid. If
   `skip-spell-check: false`, also a spell checker is executed.
 - [release-notes](.github/workflows/release-notes.yaml) workflow: automatically
   updates release notes using PR titles and labels.
-- [golang](.github/workflows/golang.yaml) workflow: lint, test and benchmark Go
-  Applications. The workflow includes authentication to Github Container
+- [Golang](.github/workflows/golang.yaml) workflow: lint, test and benchmark Go
+  Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. To retrieve the images, you
   need also to set
   [read permission](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#ensuring-workflow-access-to-your-package)
@@ -33,7 +33,7 @@ The repository includes:
 - [license](.github/workflows/license.yaml) workflow: add license in file
   headers and the license of dependencies.
 
-Some of this workflows are configured as [starter workflows][starter-workflows]
+Some of these workflows are configured as [starter workflows][starter-workflows]
 in [`.github` repository][.github], so that you can add them at any time from
 the actions page.
 
@@ -111,7 +111,7 @@ developers in the `new action` page:
    }
    ```
 
-   For icons we leverage [octicon icons][octicon].
+   For icons, we leverage [octicon icons][octicon].
 
 You can find more information in [starter workflows][starter-workflows]
 documentation.

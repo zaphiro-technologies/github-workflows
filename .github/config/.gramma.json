@@ -1,0 +1,32 @@
+{
+  "api_url": "https://api.languagetool.org/v2/check",
+  "api_key": "",
+  "dictionary": [
+    "CODEOWNERS",
+    "SynchroGuard",
+    "check-pr",
+    "golang",
+    "pr-check",
+    "license"
+  ],
+  "language": "en-GB",
+  "rules": {
+    "casing": false,
+    "colloquialisms": false,
+    "compounding": true,
+    "confused_words": true,
+    "false_friends": true,
+    "gender_neutrality": false,
+    "grammar": true,
+    "misc": false,
+    "punctuation": true,
+    "redundancy": false,
+    "regionalisms": false,
+    "repetitions": true,
+    "semantics": false,
+    "style": false,
+    "typography": false,
+    "bre_style_oxford_spelling": false,
+    "typos": true
+  }
+}

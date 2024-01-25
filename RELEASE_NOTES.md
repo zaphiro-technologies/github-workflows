@@ -1,4 +1,4 @@
-# github-workflows Release Notes
+# GitHub Workflows Release Notes
 
 ## 0.0.2-dev - 2024-02-05
 

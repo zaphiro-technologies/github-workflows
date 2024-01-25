@@ -91,12 +91,12 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
           TEAMS: ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }}
-      - name: Add reviewers
-        if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
-        uses: rowi1de/auto-assign-review-teams@v1.1.3
-        with:
-          repo-token: ${{ secrets.REPO_PAT }}
-          teams:  ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }} # only works for GitHub Organisation/Teams
-          persons:  ${{ inputs.reviewers-individuals }} # add individual persons here
-          include-draft: false # Draft PRs will be skipped (default: false)
-          skip-with-manual-reviewers: 1 # Skip this action, if the number of reviwers was already assigned (default: 0)
+      # - name: Add reviewers
+      #   if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
+      #   uses: rowi1de/auto-assign-review-teams@v1.1.3
+      #   with:
+      #     repo-token: ${{ secrets.REPO_PAT }}
+      #     teams:  ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }} # only works for GitHub Organisation/Teams
+      #     persons:  ${{ inputs.reviewers-individuals }} # add individual persons here
+      #     include-draft: false # Draft PRs will be skipped (default: false)
+      #     skip-with-manual-reviewers: 1 # Skip this action, if the number of reviwers was already assigned (default: 0)
