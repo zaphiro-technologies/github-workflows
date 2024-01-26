@@ -1,37 +1,38 @@
 # Reusable GitHub Workflows
 
-This repository hosts [re-usable github workflows][re-usable-github-workflows].
+This repository hosts [Reusable GitHub Workflows][re-usable-github-workflows].
 
 The repository includes:
 
-- [add-to-project](.github/workflows/add-to-project.yaml) workflow: when a new
+- [`add-to-project`](.github/workflows/add-to-project.yaml) workflow: when a new
   issue or PR is added to a repository, it is also added - by default - to the
   [SynchroGuard platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
   or to the project defined by `project-url` input parameter with status `new`.
   When a new PR is added, the PR is assigned to its creator. When a PR is set to
   ready, reviewers from `reviewers-team` input parameter (default value
   `backend-devs`) or `reviewers-individuals` (comma separated) are added.
-- [check-pr](.github/workflows/check-pr.yaml) workflow: when a new PR is added
+- [`check-pr`](.github/workflows/check-pr.yaml) workflow: when a new PR is added
   to a repository or any change occurs to the PR, the PR is validated to be sure
   that labels are valid.
-- [clean-up-storage](.github/workflows/clean-up-storage.yaml) workflow: when a
-  new PR is closed, related cache and artefact are deleted.
-- [markdown](.github/workflows/markdown.yaml) workflow: lint all Markdown
+- [`clean-up-storage`](.github/workflows/clean-up-storage.yaml) workflow: when a
+  new PR is closed, related cache and artifact are deleted.
+- [`markdown`](.github/workflows/markdown.yaml) workflow: lint all Markdown
   documents and checks that the links referenced in the documents are valid. If
   `skip-spell-check: false`, also a spell checker is executed.
-- [release-notes](.github/workflows/release-notes.yaml) workflow: automatically
-  updates release notes using PR titles and labels.
-- [Golang](.github/workflows/golang.yaml) workflow: lint, test and benchmark Go
-  Applications. The workflow includes authentication to GitHub Container
+- [`release-notes`](.github/workflows/release-notes.yaml) workflow:
+  automatically updates release notes using PR titles and labels.
+- [`golang`](.github/workflows/golang.yaml) workflow: lint, test and benchmark
+  Go Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. To retrieve the images, you
   need also to set
-  [read permission](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#ensuring-workflow-access-to-your-package)
+  [`read permission`](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#ensuring-workflow-access-to-your-package)
   for the repository on the package.
-- [docker](.github/workflows/docker.yaml) workflow: build and push Docker images
-- [clean-up-docker](.github/workflows/clean-up-docker.yaml) workflow: when a PR
-  is closed, related docker images and untagged ones are deleted
-- [license](.github/workflows/license.yaml) workflow: add license in file
-  headers and the license of dependencies.
+- [`docker`](.github/workflows/docker.yaml) workflow: build and push Docker
+  images
+- [`clean-up-docker`](.github/workflows/clean-up-docker.yaml) workflow: when a
+  PR is closed, related docker images and untagged ones are deleted
+- [`license`](.github/workflows/license.yaml) workflow: add licensing
+  information in file headers and check dependencies licensing compatibility.
 
 Some of these workflows are configured as [starter workflows][starter-workflows]
 in [`.github` repository][.github], so that you can add them at any time from
@@ -48,11 +49,11 @@ the actions page.
      workflow_call:
    ```
 
-   This type of trigger can also be used to specify input parameters as
-   discussed in [re-usable github workflows][re-usable-github-workflows]
+   This type of trigger can also be used to specify input parameters, as
+   discussed in [Reusable GitHub Workflows][re-usable-github-workflows]
    documentation. In which case we recommend to also include default values.
 
-1. Ideally the workflow should be tested in this repository itself before being
+1. Ideally, the workflow should be tested in this repository itself before being
    used in other repositories. In relation to this, it is then important that
    you trigger it with events such as `issues` or `pull_request` and that, for
    these events, that do not support input parameters, you find a way to pass
@@ -74,7 +75,7 @@ the actions page.
 
 ## How to add a starter workflow to `.github` repository
 
-Should you wish to advertise the re-usable workflow to your organisation
+Should you wish to advertise the re-usable workflow to your organization
 developers in the `new action` page:
 
 1. You need to create a template in the [`.github` repository][.github] in the
@@ -118,10 +119,10 @@ documentation.
 
 ## References
 
-- [re-usable github workflows][re-usable-github-workflows]
+- [Reusable GitHub Workflows][re-usable-github-workflows]
 - [octicon icons][octicon]
 - [`.github` repository][.github]
-- [starter workflows][starter-workflows]
+- [Starter workflows][starter-workflows]
 
 [re-usable-github-workflows]:
   https://docs.github.com/en/actions/using-workflows/reusing-workflows

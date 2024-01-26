@@ -7,7 +7,7 @@
     "check-pr",
     "golang",
     "pr-check",
-    "license"
+    "octicon"
   ],
   "language": "en-GB",
   "rules": {
