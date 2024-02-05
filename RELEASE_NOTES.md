@@ -1,6 +1,6 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2023-12-20
+## 0.0.2-dev - 2024-02-05
 
 ### Features
 
@@ -25,9 +25,9 @@
 - markdown workflow: exclude `vendor` folder from checks (PR #46 by @tejo)
 - add-to-project workflow: automatically add reviewers without need of
   CODEOWNERS (PR #37 by @chicco785)
-- add-to-project workflow: automatically assign pr to its creator (PR #36 by
+- add-to-project workflow: automatically assign PR to its creator (PR #36 by
   @chicco785)
-- add-to-project workflow: make project url configurable as input parameter (PR
+- add-to-project workflow: make project URL configurable as input parameter (PR
   #33 by @chicco785)
 - add-to-project workflow: make labels configurable as inputs (PR #27 by
   @chicco785)
@@ -56,9 +56,10 @@
 
 ### Continuous Integration
 
+- Add dependabot (PR #81 by @chicco785)
 - Lower annotation pollution on PRs (PR #68 by @hiimjako)
 - use new action for markdown (PR #15 by @chicco785)
-- Add job to clean up artefacts on pr closure (PR #9 by @chicco785)
+- Add job to clean up artefacts on PR closure (PR #9 by @chicco785)
 - Add workflow to clean-up action cache on PR closure (PR #8 by @chicco785)
 
 ### Refactoring
