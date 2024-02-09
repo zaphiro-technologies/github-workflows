@@ -71,8 +71,9 @@ jobs:
               - '.github/config/.markdownlint.json'
               - '.github/config/.prettierignore'
               - '.github/config/md-link-config.json'
-              - '.github/config/.gramma.json'
-              - '.github/config/grammar-check.sh'
+              - '.gramma.json'
+              - '.grammarignore'
+              - 'grammar-check.sh'
               - '.github/workflows/markdown.yaml'
   markdown:
     needs: changes
@@ -130,6 +131,5 @@ jobs:
     - name: Spellcheck
       shell: bash
       run: |
-        cd .github/config
         ./grammar-check.sh
 

@@ -42,7 +42,7 @@ if [ -z ${file+x} ]; then
   fi
 
   while read line; do
-    file=${line:6}
+    file=${line:2}
     if [[ ! ${ignorefiles[*]} =~ "$file" ]]
       then
         echo ""
@@ -71,7 +71,7 @@ if [ -z ${file+x} ]; then
             fi 
         fi
     fi
-  done <<<$(find ../.. -iname "*.md" -type f)
+  done <<<$(find . -iname "*.md" -type f)
 
   if [ $error -ne 0 ]; then
     echo "The following files contain errors:"
