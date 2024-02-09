@@ -46,7 +46,8 @@ jobs:
     outputs:
       reviews: ${{ steps.reviews.outputs.state }}
     steps:
-      - if: ${{ github.event_name == 'pull_request' }}
+      - name: PR approval check
+        if: ${{ github.event_name == 'pull_request' }}
         id: reviews
         env:
           pr: ${{ github.event.number }}
