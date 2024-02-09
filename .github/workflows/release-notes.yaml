@@ -69,10 +69,15 @@ jobs:
     - name: Select configuration
       if: ${{ github.event_name != ' workflow_call' }}
       run: echo "CONFIGURATION='.github/config/release-config.json'" >> $GITHUB_ENV
+    - name: Get Pull Request Number
+      if: ${{ !github.event.pull_request.draft }}
+      run: echo "PULL_NUMBER=$(echo "$GITHUB_REF" | awk -F / '{print $3}')" >> $GITHUB_ENV
+      shell: bash
     - name: "Update changelog config"
       id: update_changelog_config
+      if: ${{ !github.event.pull_request.draft }}
       env:
-        PR: ${{ github.event.number }}
+        PR: ${{ env.PULL_NUMBER }}
       run : |
         jq --arg match "myPR" \
           --arg replace "$PR" \
