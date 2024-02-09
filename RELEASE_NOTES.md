@@ -37,7 +37,7 @@
 
 ### Bug Fixes
 
-- test to reproduce bug (PR #88 by @chicco785)
+- Compute correctly PR number in the case of PR review (PR #88 by @chicco785)
 - golang workflow: use current branch if base_ref not available (PR #74 by
   @cosimomeli)
 - markdown workflow: support correctly `.prettierignore` (PR #65 by @chicco785)
