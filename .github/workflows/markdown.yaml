@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2 # To retrieve the preceding commit.
-      - uses: mirpedrol/paths-filter@changes-last-commit
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -91,7 +91,7 @@ jobs:
           dry: true
           dry_no_fail: true
     - name: Lint
-      uses: DavidAnson/markdownlint-cli2-action@v13
+      uses: DavidAnson/markdownlint-cli2-action@v15
       with:
         fix: true
         config: ${{ inputs.config-lint-path || '.github/config/.markdownlint.json' }}
