@@ -1,4 +1,4 @@
-#!/usr/bin/env bash -i
+#!/usr/bin/env bash
 
 error=0
 errorMessages=""
