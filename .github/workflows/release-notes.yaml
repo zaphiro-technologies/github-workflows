@@ -46,7 +46,7 @@ jobs:
   release_notes:
     name: Release Notes
     runs-on: ubuntu-latest
-    if: ${{ !github.event.pull_request.draft || startsWith(github.ref, 'refs/tags/') }}
+    if: ${{ github.event.review.state == 'approved' || startsWith(github.ref, 'refs/tags/') }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -70,12 +70,12 @@ jobs:
       if: ${{ github.event_name != ' workflow_call' }}
       run: echo "CONFIGURATION='.github/config/release-config.json'" >> $GITHUB_ENV
     - name: Get Pull Request Number
-      if: ${{ !github.event.pull_request.draft }}
+      if: ${{ github.event.review.state == 'approved' }}
       run: echo "PULL_NUMBER=$(echo "$GITHUB_REF" | awk -F / '{print $3}')" >> $GITHUB_ENV
       shell: bash
     - name: "Update changelog config"
       id: update_changelog_config
-      if: ${{ !github.event.pull_request.draft }}
+      if: ${{ github.event.review.state == 'approved' }}
       env:
         PR: ${{ env.PULL_NUMBER }}
       run : |
