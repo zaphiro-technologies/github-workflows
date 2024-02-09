@@ -9,7 +9,6 @@
 - golang: remove code coverage annotations (PR #76 by @hiimjako)
 - markdown workflow: extend link checker configuration example to allow 429
   status (PR #62 by @chicco785)
-- Workflow to check CLA/DCO by contributors (PR #70 by @chicco785)
 - golang: add docker login on test and benchmark workflows (PR #64 by
   @cosimomeli)
 - docker workflow: add git and build information as build arguments (PR #63 by
@@ -38,6 +37,7 @@
 
 ### Bug Fixes
 
+- Compute correctly PR number in the case of PR review (PR #88 by @chicco785)
 - golang workflow: use current branch if base_ref not available (PR #74 by
   @cosimomeli)
 - markdown workflow: support correctly `.prettierignore` (PR #65 by @chicco785)
@@ -67,8 +67,8 @@
 
 ### Dependencies
 
-- Bump actions/upload-artifact from 3 to 4 (PR #82 by @dependabot[bot])
 - Bump actions/setup-go from 4 to 5 (PR #86 by @dependabot[bot])
+- Bump actions/upload-artifact from 3 to 4 (PR #82 by @dependabot[bot])
 
 ### Refactoring
 
