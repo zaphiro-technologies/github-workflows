@@ -67,8 +67,8 @@
 
 ### Dependencies
 
-- Bump actions/setup-go from 4 to 5 (PR #86 by @dependabot[bot])
 - Bump actions/upload-artifact from 3 to 4 (PR #82 by @dependabot[bot])
+- Bump actions/setup-go from 4 to 5 (PR #86 by @dependabot[bot])
 
 ### Refactoring
 
