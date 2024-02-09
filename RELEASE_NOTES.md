@@ -1,12 +1,15 @@
 # GitHub Workflows Release Notes
 
-## 0.0.2-dev - 2024-02-05
+## 0.0.2-dev - 2024-02-09
 
 ### Features
 
 - golang: remove code coverage annotations (PR #76 by @hiimjako)
 - markdown workflow: extend link checker configuration example to allow 429
   status (PR #62 by @chicco785)
+- Run release note, license management and markdown workflows only on ready for
+  review PRs (PR #72 by @chicco785)
+- Workflow to check CLA/DCO by contributors (PR #70 by @chicco785)
 - golang: add docker login on test and benchmark workflows (PR #64 by
   @cosimomeli)
 - docker workflow: add git and build information as build arguments (PR #63 by
@@ -62,8 +65,18 @@
 - Add job to clean up artefacts on PR closure (PR #9 by @chicco785)
 - Add workflow to clean-up action cache on PR closure (PR #8 by @chicco785)
 
+### Dependencies
+
+- Bump actions/setup-go from 4 to 5 (PR #86 by @dependabot[bot])
+- Bump dorny/paths-filter from 2 to 3 (PR #85 by @dependabot[bot])
+- Bump actions/checkout from 3 to 4 (PR #84 by @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 13 to 15 (PR #83 by
+  @dependabot[bot])
+- Bump actions/upload-artifact from 3 to 4 (PR #82 by @dependabot[bot])
+
 ### Refactoring
 
+- replace check speller with npx gramma (PR #80 by @chicco785)
 - release notes workflow: remove work around to fix broken lists (PR #28 by
   @chicco785)
 
