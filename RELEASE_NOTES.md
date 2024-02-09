@@ -1,6 +1,6 @@
 # github-workflows Release Notes
 
-## 0.0.2-dev - 2024-02-05
+## 0.0.2-dev - 2024-02-09
 
 ### Features
 
@@ -61,6 +61,10 @@
 - use new action for markdown (PR #15 by @chicco785)
 - Add job to clean up artefacts on PR closure (PR #9 by @chicco785)
 - Add workflow to clean-up action cache on PR closure (PR #8 by @chicco785)
+
+### Dependencies
+
+- Bump dorny/paths-filter from 2 to 3 (PR #85 by @dependabot[bot])
 
 ### Refactoring
 
