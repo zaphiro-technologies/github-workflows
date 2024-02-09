@@ -35,8 +35,8 @@ The repository includes:
   information in file headers and check dependencies licensing compatibility.
 
 Some of these workflows are configured as [starter workflows][starter-workflows]
-in the [`.github`][.github] repository, so that you can add them at any time from
-the actions page.
+in the [`.github`][.github] repository, so that you can add them at any time
+from the actions page.
 
 ![Starter Actions](./screenshot.png)
 
@@ -121,9 +121,8 @@ documentation.
 
 To support it in your repo, you need to download and install the grammar check
 [script](grammar-check.sh) in your repository. You can customise parameters or
-just use what's in the script. In the GitHub action mode (the default mode),
-the script uses the set of parameters included in
-[`.gramma.json`](.gramma.json).
+just use what's in the script. In the GitHub action mode (the default mode), the
+script uses the set of parameters included in [`.gramma.json`](.gramma.json).
 
 You can include files that you want to be ignored in the
 [`.grammarignore`](.grammarignore) file.
