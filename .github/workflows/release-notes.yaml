@@ -90,7 +90,6 @@ jobs:
       shell: bash
     - name: "Update changelog config"
       id: update_changelog_config
-      if: ${{ github.event.review.state == 'approved' }}
       env:
         PR: ${{ github.event.review.state == 'approved' && env.PULL_NUMBER || github.event.number }}
       run : |
