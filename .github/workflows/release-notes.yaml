@@ -18,9 +18,8 @@ on:
   push:
     tags:
       - '*'
+  pull_request_review:
   pull_request:
-    # Only following types are handled by the action, but one can default to all as well
-    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
     branches:
       - main
   workflow_call:
@@ -45,8 +44,9 @@ jobs:
   release_notes:
     name: Release Notes
     runs-on: ubuntu-latest
+    if: ${{ github.event.review.state == 'approved' || startsWith(github.ref, 'refs/tags/') }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         ref: ${{ github.head_ref }}
         token: ${{ secrets.REPO_PAT }}
@@ -178,7 +178,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Select configuration

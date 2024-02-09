@@ -3,6 +3,7 @@
 header:
   license:
     spdx-id: Apache-2.0
+    copyright-year: 2024
     copyright-owner: Zaphiro Technologies
 
   paths-ignore:
@@ -10,6 +11,7 @@ header:
     - '**/*.{md,MD}'
     - 'LICENSE'
     - 'NOTICE'
+    - '.*'
 
   comment: on-failure
 
