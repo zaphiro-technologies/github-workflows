@@ -20,8 +20,8 @@ on:
       - '*'
   pull_request_review:
   pull_request:
-      # Only following types are handled by the action, but one can default to all as well
-      types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+    # Only following types are handled by the action, but one can default to all as well
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
     branches:
       - main
   workflow_call:
