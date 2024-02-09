@@ -12,24 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Test artifact
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
-concurrency:
-  group: ${{ github.ref_name }}-test
-  cancel-in-progress: true
-
-on:
-  pull_request:
-    branches:
-      - main
-
-jobs:
-  test-upload:
-    runs-on: ubuntu-latest
-    steps:
-    - run: |
-        echo "Test artifact" >> test.txt
-    - uses: actions/upload-artifact@v3
-      with:
-        name: test-upload
-        path: test.txt
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions every weekday
+      interval: "weekly"
