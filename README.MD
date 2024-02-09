@@ -18,7 +18,7 @@ The repository includes:
   new PR is closed, related cache and artifact are deleted.
 - [`markdown`](.github/workflows/markdown.yaml) workflow: lint all Markdown
   documents and checks that the links referenced in the documents are valid. If
-  `skip-spell-check: false`, also a spell checker is executed.
+  `skip-spell-check: false`, also, a spell checker is executed.
 - [`release-notes`](.github/workflows/release-notes.yaml) workflow:
   automatically updates release notes using PR titles and labels.
 - [`golang`](.github/workflows/golang.yaml) workflow: lint, test and benchmark
@@ -35,8 +35,8 @@ The repository includes:
   information in file headers and check dependencies licensing compatibility.
 
 Some of these workflows are configured as [starter workflows][starter-workflows]
-in [`.github` repository][.github], so that you can add them at any time from
-the actions page.
+in the [`.github`][.github] repository, so that you can add them at any time
+from the actions page.
 
 ![Starter Actions](./screenshot.png)
 
@@ -116,6 +116,28 @@ developers in the `new action` page:
 
 You can find more information in [starter workflows][starter-workflows]
 documentation.
+
+## Grammar check support
+
+To support it in your repo, you need to download and install the grammar check
+[script](grammar-check.sh) in your repository. You can customise parameters or
+just use what's in the script. In the GitHub action mode (the default mode), the
+script uses the set of parameters included in [`.gramma.json`](.gramma.json).
+
+You can include files that you want to be ignored in the
+[`.grammarignore`](.grammarignore) file.
+
+To use the local mode, that uses additional rules, run:
+
+```bash
+./grammar-check.sh -m local
+```
+
+To check a single file using the interactive mode, run:
+
+```bash
+./grammar-check.sh -m local -f filename.md
+```
 
 ## References
 

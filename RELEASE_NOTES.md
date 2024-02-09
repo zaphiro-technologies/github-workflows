@@ -2,7 +2,10 @@
 
 ## 0.0.3-dev - 2024-02-09
 
-- no changes
+### Features
+
+- Support different grammar check modalities (local and online) in the script
+  (PR #89 by @chicco785)
 
 ## 0.0.2 - 2024-02-09
 
