@@ -112,24 +112,28 @@ if [ -z ${file+x} ]; then
   fi
 else
   echo "Checking list of files: $file"
-  # filesize=$(wc -c $file | awk '{print $1}')
-  # if [[ $filesize -gt 20000 && $file ]]
-  #   then
-  #     echo "The file $file is too big, it will be split in sub files and checked:"
-  #     csplit -k -n 4 -s -f 'tmp' $file '/##/' '{100}'
-  #     while read tmp; do
-  #         clean_brackets $tmp
-  #         npx gramma check -m -p $parameters "$tmp"
-  #     done <<<$(find . -name "tmp*" -type f)
-  #     rm -rf tmp*
-  #   else
-  #     if [ "$mode" != "local" ]; then
-  #       cp $file tmp
-  #       clean_brackets tmp
-  #       npx gramma check -m $parameters tmp
-  #       rm tmp
-  #     else
-  #       npx gramma check -m $parameters $file
-  #     fi
-  # fi
+  eval "arr=($file)"
+  for f in "${arr[@]}"; do 
+      echo "processing file $f"
+      filesize=$(wc -c $f | awk '{print $1}')
+      if [[ $filesize -gt 20000 && $f ]]
+        then
+          echo "The file $f is too big, it will be split in sub files and checked:"
+          csplit -k -n 4 -s -f 'tmp' $f '/##/' '{100}'
+          while read tmp; do
+              clean_brackets $tmp
+              npx gramma check -m -p $parameters "$tmp"
+          done <<<$(find . -name "tmp*" -type f)
+          rm -rf tmp*
+        else
+          if [ "$mode" != "local" ]; then
+            cp $f tmp
+            clean_brackets tmp
+            npx gramma check -m $parameters tmp
+            rm tmp
+          else
+            npx gramma check -m $parameters $f
+          fi
+      fi
+  done
 fi

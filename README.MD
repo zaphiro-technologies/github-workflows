@@ -31,7 +31,7 @@ The repository includes:
   images
 - [`clean-up-docker`](.github/workflows/clean-up-docker.yaml) workflow: when a
   PR is closed, related docker images and untagged ones are deleted
-- [`license`](.github/workflows/license.yaml) workflow: add licensing
+- [`licensing`](.github/workflows/license.yaml) workflow: add licensing
   information in file headers and check dependencies licensing compatibility.
 
 Some of these workflows are configured as [starter workflows][starter-workflows]

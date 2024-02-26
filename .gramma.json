@@ -5,9 +5,14 @@
     "CODEOWNERS",
     "SynchroGuard",
     "check-pr",
+    "github",
     "golang",
+    "gramma",
+    "grammarignore",
+    "json",
+    "octicon",
     "pr-check",
-    "octicon"
+    "project-url"
   ],
   "language": "en-GB",
   "rules": {
