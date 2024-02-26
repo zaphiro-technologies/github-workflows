@@ -9,9 +9,10 @@
 
 ### Dependencies
 
+- Bump dawidd6/action-download-artifact from 2 to 3 (PR #94 by @dependabot[bot])
 - Bump stefanzweifel/git-auto-commit-action from 4 to 5 (PR #92 by
   @dependabot[bot])
-- Bump dawidd6/action-download-artifact from 2 to 3 (PR #94 by @dependabot[bot])
+- Bump EndBug/add-and-commit from 4 to 9 (PR #93 by @dependabot[bot])
 
 ## 0.0.2 - 2024-02-09
 
