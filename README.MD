@@ -139,6 +139,12 @@ To check a single file using the interactive mode, run:
 ./grammar-check.sh -m local -f filename.md
 ```
 
+To check a list of file using the interactive mode, run:
+
+```bash
+./grammar-check.sh -f filename1.md filename2.md
+```
+
 ## References
 
 - [Reusable GitHub Workflows][re-usable-github-workflows]

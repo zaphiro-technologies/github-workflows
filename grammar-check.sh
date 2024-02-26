@@ -19,6 +19,16 @@ errorMessages=""
 declare -a ignorefiles
 parameters=""
 
+clean_brackets() {
+  if [[ $(uname) == "Darwin" ]]; then
+      # macOS requires an argument for -i to specify the backup file extension
+      sed -E -i '' '/```/,/```/! s/`//g' "$1"
+  else
+      # Linux systems do not require an argument for -i
+      sed -E -i '/```/,/```/! s/`//g' "$1"
+  fi
+}
+
 while getopts m:f:mode:file: flag
 do
     case "${flag}" in
@@ -38,6 +48,9 @@ else
       ;;
     local)
       parameters="-e casing -e colloquialisms -e compounding -e confused_words -e false_friends -e gender_neutrality -e grammar -e misc -e punctuation -e redundancy -e repetitions -e regionalisms -e semantics -e style -e typos"
+      ;;
+    local-non-interactive)
+      parameters="-e casing -e colloquialisms -e compounding -e confused_words -e false_friends -e gender_neutrality -e grammar -e misc -e punctuation -e redundancy -e repetitions -e regionalisms -e semantics -e style -e typos  -p"
       ;;
     *)
       echo "Invalid Mode"
@@ -68,6 +81,7 @@ if [ -z ${file+x} ]; then
             echo "The file $file is too big, it will be split in sub files and checked:"
             csplit -k -n 4 -s -f 'tmp' $line '/##/' '{100}'
             while read tmp; do
+                clean_brackets $tmp
                 npx gramma check -m -p $parameters "$tmp"
                 if [ $? -ne 0 ]; then
                   error=1
@@ -78,11 +92,14 @@ if [ -z ${file+x} ]; then
             done <<<$(find . -name "tmp*" -type f)
             rm -rf tmp*
           else
-            npx gramma check -m -p $parameters "$line"
+            cp $line tmp
+            clean_brackets tmp
+            npx gramma check -m -p $parameters tmp
             if [ $? -ne 0 ]; then
                 error=1
                 errorMessages=$errorMessages"\n - ${file}"
-            fi 
+            fi
+            rm tmp
         fi
     fi
   done <<<$(find . -iname "*.md" -type f)
@@ -95,5 +112,25 @@ if [ -z ${file+x} ]; then
   fi
 else
   echo "Checking a single file"
-  npx gramma check -m $parameters $file
+  echo $file
+  # filesize=$(wc -c $file | awk '{print $1}')
+  # if [[ $filesize -gt 20000 && $file ]]
+  #   then
+  #     echo "The file $file is too big, it will be split in sub files and checked:"
+  #     csplit -k -n 4 -s -f 'tmp' $file '/##/' '{100}'
+  #     while read tmp; do
+  #         clean_brackets $tmp
+  #         npx gramma check -m -p $parameters "$tmp"
+  #     done <<<$(find . -name "tmp*" -type f)
+  #     rm -rf tmp*
+  #   else
+  #     if [ "$mode" != "local" ]; then
+  #       cp $file tmp
+  #       clean_brackets tmp
+  #       npx gramma check -m $parameters tmp
+  #       rm tmp
+  #     else
+  #       npx gramma check -m $parameters $file
+  #     fi
+  # fi
 fi

@@ -65,6 +65,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          list-files: shell
           filters: |
             markdown:
               - '**/!(*RELEASE_NOTES).(md|MD)'
@@ -131,5 +132,4 @@ jobs:
     - name: Spellcheck
       shell: bash
       run: |
-        ./grammar-check.sh
-
+        ./grammar-check.sh -f ${{ needs.changes.outputs.markdown_files }}
