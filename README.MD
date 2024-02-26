@@ -142,7 +142,7 @@ To check a single file using the interactive mode, run:
 To check a list of file using the interactive mode, run:
 
 ```bash
-./grammar-check.sh -f filename1.md filename2.md
+./grammar-check.sh -f "filename1.md filename2.md"
 ```
 
 ## References

@@ -111,8 +111,7 @@ if [ -z ${file+x} ]; then
     exit 1
   fi
 else
-  echo "Checking a single file"
-  echo $file
+  echo "Checking list of files: $file"
   # filesize=$(wc -c $file | awk '{print $1}')
   # if [[ $filesize -gt 20000 && $file ]]
   #   then

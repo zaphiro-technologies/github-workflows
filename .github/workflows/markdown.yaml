@@ -57,7 +57,7 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     outputs:
-      files-changed: ${{ steps.filter.outputs.markdown }}
+      files-changed: ${{ steps.filter.outputs.markdown || steps.filter.outputs.scripts }}
       markdown_files: ${{ steps.filter.outputs.markdown_files }}
     steps:
       - uses: actions/checkout@v4
@@ -78,7 +78,6 @@ jobs:
               - '.github/workflows/markdown.yaml'
             markdown:
               - '**/!(*RELEASE_NOTES).(md|MD)'
-      - run: echo "${{ steps.filter.outputs.markdown_files }}"
   markdown:
     needs: changes
     if: ${{ needs.changes.outputs.files-changed == 'true' && !github.event.pull_request.draft }}
@@ -135,4 +134,4 @@ jobs:
     - name: Spellcheck
       shell: bash
       run: |
-        ./grammar-check.sh -f ${{ needs.changes.outputs.markdown_files }}
+        ./grammar-check.sh -f "${{ needs.changes.outputs.markdown_files }}"
