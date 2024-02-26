@@ -1,11 +1,16 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-02-09
+## 0.0.3-dev - 2024-02-26
 
 ### Features
 
 - Support different grammar check modalities (local and online) in the script
   (PR #89 by @chicco785)
+
+### Dependencies
+
+- Bump stefanzweifel/git-auto-commit-action from 4 to 5 (PR #92 by
+  @dependabot[bot])
 
 ## 0.0.2 - 2024-02-09
 
