@@ -54,7 +54,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    if: ${{ github.actor!= 'dependabot[bot]' || contains(github.event.pull_request.labels.*.name, 'docker') || startsWith(github.ref, 'refs/tags/') }}  # ignore the pull request which comes from user depbot.
+    if: ${{ github.actor== 'dependabot[bot]' || contains(github.event.pull_request.labels.*.name, 'docker') || startsWith(github.ref, 'refs/tags/') }}  # ignore the pull request which comes from user depbot.
     steps:
       - run: |
           echo "ok"
