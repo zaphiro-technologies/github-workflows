@@ -182,7 +182,7 @@ jobs:
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
         branch: ${{github.event.pull_request.head.ref}}
-        commit_message: 'docs(release_notes): update RELEASE_NOTES.md'
+        commit_message: 'docs(release_notes): update RELEASE_NOTES.md [dependabot skip]'
         file_pattern: RELEASE_NOTES.md
     - name: Commit updated CHANGELOG
       if: startsWith(github.ref, 'refs/tags/')
