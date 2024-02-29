@@ -54,7 +54,7 @@ jobs:
     if: ${{ github.actor != 'dependabot[bot]' || contains(github.event.pull_request.labels.*.name, 'docker') || github.event_name == 'push' }}  # ignore the pull request which comes from user depbot.
     steps:
       - run: |
-          echo "ok"
+          echo "docker build is required"
   build:
     needs: check
     runs-on: ubuntu-latest
