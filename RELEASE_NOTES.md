@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-02-27
+## 0.0.3-dev - 2024-02-29
 
 ### Features
 
+- docker workflow: execute only if the pr actor is not dependabot or labels
+  contains `docker` (PR #99 by @chicco785)
 - markdown workflow: run spellcheck only on actually changed \*.md files (PR #96
   by @chicco785)
 - Support different grammar check modalities (local and online) in the script
