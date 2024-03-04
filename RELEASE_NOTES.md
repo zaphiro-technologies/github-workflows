@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-02-27
+## 0.0.3-dev - 2024-03-04
 
 ### Features
 
+- golang workflow: skip code coverage if the actor is dependabot (PR #100 by
+  @cosimomeli)
 - markdown workflow: run spellcheck only on actually changed \*.md files (PR #96
   by @chicco785)
 - Support different grammar check modalities (local and online) in the script
