@@ -4,10 +4,10 @@
 
 ### Features
 
-- docker workflow: execute only if the pr actor is not dependabot or labels
-  contains `docker` (PR #99 by @chicco785)
 - golang workflow: skip code coverage if the actor is dependabot (PR #100 by
   @cosimomeli)
+- docker workflow: execute only if the pr actor is not dependabot or labels
+  contains `docker` (PR #99 by @chicco785)
 - markdown workflow: run spellcheck only on actually changed \*.md files (PR #96
   by @chicco785)
 - Support different grammar check modalities (local and online) in the script
