@@ -28,6 +28,11 @@ concurrency:
 on:
   workflow_call:
     inputs:
+      alert-treshold-benchmark:
+        required: false
+        default: 150%
+        type: string
+        description: Percent that will trigger benchmark alert
       skip-benchmark:
         required: false
         default: false
@@ -167,7 +172,7 @@ jobs:
           # Enable alert commit comment
           comment-on-alert: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          alert-threshold: 150%
+          alert-threshold: ${{ inputs.alert-treshold-benchmark }}
           summary-always: true
       - name: Upload code coverage for ref branch
         if: ${{ ! github.event.pull_request }}
