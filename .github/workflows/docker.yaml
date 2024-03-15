@@ -49,7 +49,14 @@ on:
 #   pull-requests: read
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' || contains(github.event.pull_request.labels.*.name, 'docker') || github.event_name == 'push' }}  # ignore the pull request which comes from user depbot.
+    steps:
+      - run: |
+          echo "docker build is required"
   build:
+    needs: check
     runs-on: ubuntu-latest
     env:
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}

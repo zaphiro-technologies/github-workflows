@@ -106,7 +106,7 @@ jobs:
       run: |
         git config --global user.name 'Bot'
         git config --global user.email 'bot@zaphiro.ch'
-        git commit -am "Automated markdown-lint fixes" || echo "No changes to commit"
+        git commit -am "Automated markdown-lint fixes [dependabot skip]" || echo "No changes to commit"
         git push
         rm -fr vendor
     # Checks the status of hyperlinks in .md and .MD files in verbose mode (the action is case sensitive and .{MD,md})
