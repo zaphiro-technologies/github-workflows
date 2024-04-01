@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-      - uses: actions/add-to-project@v0.6.0
+      - uses: actions/add-to-project@v1.0.0
         id: add-project
         with:
           # You can target a project in a different organization
