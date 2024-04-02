@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-03-25
+## 0.0.3-dev - 2024-04-02
 
 ### Features
 
@@ -17,6 +17,7 @@
 
 ### Dependencies
 
+- Bump actions/add-to-project from 0.6.0 to 1.0.0 (PR #103 by @dependabot[bot])
 - Bump actions/add-to-project from 0.5.0 to 0.6.0 (PR #97 by @dependabot[bot])
 - Bump golangci/golangci-lint-action from 3 to 4 (PR #91 by @dependabot[bot])
 - Bump EndBug/add-and-commit from 4 to 9 (PR #93 by @dependabot[bot])
