@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-04-02
+## 0.0.3-dev - 2024-04-08
 
 ### Features
 
@@ -17,6 +17,7 @@
 
 ### Dependencies
 
+- Bump apache/skywalking-eyes from 0.5.0 to 0.6.0 (PR #104 by @dependabot[bot])
 - Bump actions/add-to-project from 0.6.0 to 1.0.0 (PR #103 by @dependabot[bot])
 - Bump actions/add-to-project from 0.5.0 to 0.6.0 (PR #97 by @dependabot[bot])
 - Bump golangci/golangci-lint-action from 3 to 4 (PR #91 by @dependabot[bot])
