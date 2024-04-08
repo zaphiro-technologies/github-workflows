@@ -45,7 +45,7 @@ jobs:
           repository: ${{github.event.pull_request.head.repo.full_name}}
       - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
         name: Check Dependencies' License
-        uses: apache/skywalking-eyes/dependency@v0.5.0
+        uses: apache/skywalking-eyes/dependency@v0.6.0
         with:
             # log: debug # optional: set the log level. The default value is
             # `info`.
@@ -53,7 +53,7 @@ jobs:
             # mode: # optional: Which mode License-Eye should be run in. Choices are `check` or `resolve`. The default value is `check`.
             # flags: # optional: Extra flags appended to the command, for example, `--summary=path/to/template.tmpl`
       - name: Fix License Header
-        uses: apache/skywalking-eyes/header@v0.5.0
+        uses: apache/skywalking-eyes/header@v0.6.0
         with:
           config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
           mode: fix
