@@ -101,8 +101,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}-buildcache
+          cache-to: type=registry,ref=ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}-buildcache,mode=max
           build-args: |
             GIT_REV=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.revision']}}
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
