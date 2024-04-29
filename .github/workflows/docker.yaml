@@ -92,6 +92,23 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build intermediary image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ inputs.docker-context }}
+          file: ${{ inputs.docker-file }}
+          platforms: ${{ inputs.platforms }}
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}:buildcache,mode=max
+          target: build
+          build-args: |
+            GIT_REV=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.revision']}}
+            GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
+            GIT_URL=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.source']}}
+            BUILD_DATE=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.created']}}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -101,8 +118,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}-buildcache
-          cache-to: type=registry,ref=ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}-buildcache,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}:buildcache,mode=max
           build-args: |
             GIT_REV=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.revision']}}
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
