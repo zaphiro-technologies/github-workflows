@@ -58,7 +58,7 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     outputs:
-      files-changed: ${{ steps.filter.outputs.markdown || steps.filter.outputs.scripts }}
+      files_changed: ${{ steps.filter.outputs.markdown || steps.filter.outputs.scripts }}
       markdown_files: ${{ steps.filter.outputs.markdown_files }}
     steps:
       - uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
               - '**/!(*RELEASE_NOTES).(md|MD)'
   markdown:
     needs: changes
-    if: ${{ needs.changes.outputs.files-changed == 'true' && !github.event.pull_request.draft }}
+    if: ${{ needs.changes.outputs.files_changed == 'true' && !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
