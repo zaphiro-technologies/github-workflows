@@ -115,11 +115,13 @@ jobs:
       with:
         config-file: ${{ inputs.config-link-path || '.github/config/md-link-config.json' }}
         use-verbose-mode: 'yes'
+        use-quiet-mode: 'yes'
     - name: Check links (.MD)
       uses: gaurav-nelson/github-action-markdown-link-check@v1
       with:
         config-file: ${{ inputs.config-link-path || '.github/config/md-link-config.json' }}
         use-verbose-mode: 'yes'
+        use-quiet-mode: 'yes'
         file-extension: '.MD'
   markdown-spellchecker:
     runs-on: ubuntu-latest
