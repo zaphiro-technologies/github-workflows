@@ -82,7 +82,7 @@ jobs:
       - run : |
               echo ${{ steps.filter.outputs.markdown }}
               echo ${{ steps.filter.outputs.scripts }}
-              echo ${{ steps.filter.outputs.markdown || steps.filter.outputs.scripts }}
+              echo ${{ steps.filter.outputs.markdown == 'true' || steps.filter.outputs.scripts == 'true' }}
   markdown:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' && !github.event.pull_request.draft }}
