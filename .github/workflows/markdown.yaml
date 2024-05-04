@@ -80,6 +80,8 @@ jobs:
             markdown:
               - '**/!(*RELEASE_NOTES).(md|MD)'
       - run : |
+              echo ${{ steps.filter.outputs.markdown }}
+              echo ${{ steps.filter.outputs.scripts }}
               echo ${{ steps.filter.outputs.markdown || steps.filter.outputs.scripts }}
   markdown:
     needs: changes
