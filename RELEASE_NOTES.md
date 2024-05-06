@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-05-02
+## 0.0.3-dev - 2024-05-06
 
 ### Features
 
+- markdown workflow: Use quiet mode for link checker (PR #112 by @chicco785)
 - golang workflow: add input variable for alert threshold (PR #101 by
   @chicco785)
 - docker workflow: execute only if the pr actor is not dependabot or labels
