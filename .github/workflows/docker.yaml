@@ -40,7 +40,11 @@ on:
         description: Platform to build for, comma separated
         type: string
         default: linux/amd64,linux/arm64
-      
+      skip-sbom:
+        required: false
+        default: false
+        type: boolean
+        description: True to skip sbom exec
 
 # Permissions needed
 # permissions:
@@ -108,3 +112,8 @@ jobs:
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
             GIT_URL=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.source']}}
             BUILD_DATE=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.created']}}
+      - name: sbom
+        if: ${{ ! inputs.skip-sbom }}
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}:${{ github.ref_name }}
