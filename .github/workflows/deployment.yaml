@@ -105,7 +105,7 @@ jobs:
           script: |
             const {IMAGE_TAG} = process.env
             const repository_name = "${{steps.repository-name.outputs.repository}}"
-            # Check IMAGE_TAG is not empty
+            // Check IMAGE_TAG is not empty
             if (!IMAGE_TAG) {
               return core.setFailed("No valid tag found");
             }
@@ -116,7 +116,7 @@ jobs:
                 org: "${{github.repository_owner}}",
                 state: "active"
                 })) {
-              # Check if tag is in tags list
+              // Check if tag is in tags list
               if (version.data.metadata.container.tags.includes(IMAGE_TAG)) {
                 return core.exportVariable('DIGEST', version.data.name);
               }
