@@ -85,6 +85,19 @@ jobs:
         if: steps.search-pr.outputs.pr != ''
         run: |
           echo "IMAGE_TAG=pr-${{steps.search-pr.outputs.pr}}" >> $GITHUB_ENV
+      - name: Checkout of k8s-deployments
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          repository: ${{github.repository_owner}}/k8s-deployments
+          ref: main
+      - name: Get package name name
+        if: github.ref_type != 'tag'
+        id: repository-name
+        uses: pietrobolcato/action-read-yaml@1.1.0
+        with:
+          config: kubernetes/${{env.CLUSTER}}/values-platforms.yaml
+          key-path-pattern: ^platforms\.${{env.PLATFORM}}\.${{inputs.app-name}}\.image\.
       - name: Get digest for image tag if not git tag
         if: github.ref_type != 'tag'
         id: digest
@@ -93,6 +106,7 @@ jobs:
         with:
           script: |
             const {IMAGE_TAG} = process.env
+            const repository_name = "${{steps.repository-name.outputs.repository}}"
             # Check IMAGE_TAG is not empty
             if (!IMAGE_TAG) {
               return core.setFailed("No valid tag found");
@@ -100,7 +114,7 @@ jobs:
             for await (const version of github.paginate.iterator(
               github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg, {
                 package_type: "container",
-                package_name: "${{github.repository}}",
+                package_name: repository_name.split("/").pop(),
                 org: "${{github.repository_owner}}",
                 state: "active"
                 })) {
@@ -114,12 +128,6 @@ jobs:
         if: env.DIGEST != ''
         run: |
           echo "IMAGE_TAG=$IMAGE_TAG@$DIGEST" >> $GITHUB_ENV
-      - name: Checkout of k8s-deployments
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.REPO_PAT }}
-          repository: ${{github.repository_owner}}/k8s-deployments
-          ref: main
       - name: Update values-platforms.yaml
         uses: fjogeleit/yaml-update-action@v0.14.0
         with:
