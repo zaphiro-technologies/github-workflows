@@ -91,7 +91,7 @@ jobs:
           token: ${{ secrets.REPO_PAT }}
           repository: ${{github.repository_owner}}/k8s-deployments
           ref: main
-      - name: Get package name name
+      - name: Get repository name from values-platforms.yaml
         if: github.ref_type != 'tag'
         id: repository-name
         uses: pietrobolcato/action-read-yaml@1.1.0
