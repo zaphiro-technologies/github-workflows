@@ -135,9 +135,14 @@ jobs:
           valueFile: kubernetes/${{env.CLUSTER}}/values-platforms.yaml
           propertyPath: platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.tag
           value: ${{env.IMAGE_TAG}}
-          commitChange: true
           message: Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}
+          commitChange: false
           createPR: false
-          token: ${{ secrets.REPO_PAT }}
-          repository: ${{github.repository_owner}}/k8s-deployments
+      - name: GitHub Commit & Push
+        uses: actions-js/push@v1.5
+        with:
+          github_token: ${{ secrets.REPO_PAT }}
           branch: main
+          message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
+          directory: kubernetes/${{env.CLUSTER}}
+          repository: ${{github.repository_owner}}/k8s-deployments
