@@ -36,15 +36,28 @@ on:
         description: Environment name for the deployment
 
 jobs:
-  deploy:
-    name: Deploy
+  split-environment:
+    name: Split environment
     runs-on: ubuntu-latest
-    environment: ${{inputs.environment}}
     steps:
       - name: Split environment to cluster and platform
         run: |
-          echo "CLUSTER=$(echo ${{inputs.environment}} | cut -d'|' -f1)" >> $GITHUB_ENV
-          echo "PLATFORM=$(echo ${{inputs.environment}} | cut -d'|' -f2)" >> $GITHUB_ENV
+          echo "cluster=$(echo ${{inputs.environment}} | cut -d'|' -f1)" >> $GITHUB_OUTPUT
+          echo "platform=$(echo ${{inputs.environment}} | cut -d'|' -f2)" >> $GITHUB_OUTPUT
+    outputs:
+      cluster: ${{steps.split-environment.outputs.cluster}}
+      platform: ${{steps.split-environment.outputs.platform}}
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: split-environment
+    env:
+      CLUSTER: ${{needs.split-environment.outputs.cluster}}
+      PLATFORM: ${{needs.split-environment.outputs.platform}}
+    environment:
+      name: ${{inputs.environment}}
+      url: https://argocd.${{env.CLUSTER}}.zaphiro.ch/applications?&proj=platform-${{env.PLATFORM}}
+    steps:
       - name: Get image tag from git tag
         if: github.ref_type == 'tag'
         run: |
