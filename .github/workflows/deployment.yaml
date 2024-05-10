@@ -117,7 +117,7 @@ jobs:
                 state: "active"
                 })) {
               // Check if tag is in tags list
-              for version of versions.data {
+              for (const version of versions.data) {
                 console.log(version)
                 if (version.metadata.container.tags.includes(IMAGE_TAG)) {
                   return core.exportVariable('DIGEST', version.data.name);
