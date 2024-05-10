@@ -95,10 +95,7 @@ jobs:
       - name: Get repository name from values-platforms.yaml
         if: github.ref_type != 'tag'
         id: repository-name
-        uses: pietrobolcato/action-read-yaml@main
-        with:
-          config: kubernetes/${{env.CLUSTER}}/values-platforms.yaml
-          key-path-pattern: ^platforms\.${{env.PLATFORM}}\.${{inputs.app-name}}\.image\.
+        run: echo "repository=$(yq '.platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.repository' kubernetes/${{env.CLUSTER}}/values-platforms.yaml)" >> $GITHUB_OUTPUT
       - name: Get digest for image tag if not git tag
         if: github.ref_type != 'tag'
         id: digest
