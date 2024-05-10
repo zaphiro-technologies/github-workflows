@@ -41,6 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Split environment to cluster and platform
+        id: split-environment
         run: |
           echo "cluster=$(echo ${{inputs.environment}} | cut -d'|' -f1)" >> $GITHUB_OUTPUT
           echo "platform=$(echo ${{inputs.environment}} | cut -d'|' -f2)" >> $GITHUB_OUTPUT
@@ -86,7 +87,7 @@ jobs:
         run: |
           echo "IMAGE_TAG=pr-${{steps.search-pr.outputs.pr}}" >> $GITHUB_ENV
       - name: Checkout of k8s-deployments
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.REPO_PAT }}
           repository: ${{github.repository_owner}}/k8s-deployments
@@ -94,7 +95,7 @@ jobs:
       - name: Get repository name from values-platforms.yaml
         if: github.ref_type != 'tag'
         id: repository-name
-        uses: pietrobolcato/action-read-yaml@1.1.0
+        uses: pietrobolcato/action-read-yaml@main
         with:
           config: kubernetes/${{env.CLUSTER}}/values-platforms.yaml
           key-path-pattern: ^platforms\.${{env.PLATFORM}}\.${{inputs.app-name}}\.image\.
