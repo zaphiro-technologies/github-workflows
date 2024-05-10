@@ -109,7 +109,7 @@ jobs:
             if (!IMAGE_TAG) {
               return core.setFailed("No valid tag found");
             }
-            for await (const version of github.paginate.iterator(
+            for await (const versions of github.paginate.iterator(
               github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg, {
                 package_type: "container",
                 package_name: repository_name.split("/").pop(),
@@ -117,9 +117,11 @@ jobs:
                 state: "active"
                 })) {
               // Check if tag is in tags list
-              console.log(version)
-              if (version.metadata.container.tags.includes(IMAGE_TAG)) {
-                return core.exportVariable('DIGEST', version.data.name);
+              for version of versions.data {
+                console.log(version)
+                if (version.metadata.container.tags.includes(IMAGE_TAG)) {
+                  return core.exportVariable('DIGEST', version.data.name);
+                }
               }
             }
             core.setFailed("Image tag not found");
