@@ -135,7 +135,6 @@ jobs:
           valueFile: kubernetes/${{env.CLUSTER}}/values-platforms.yaml
           propertyPath: platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.tag
           value: ${{env.IMAGE_TAG}}
-          message: Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}
           commitChange: false
           createPR: false
       - name: GitHub Commit & Push
