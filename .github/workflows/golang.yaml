@@ -198,6 +198,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - name: Build
+        run: go build -v ./...
       - name: Generate SBOM
         uses: CycloneDX/gh-gomod-generate-sbom@v2
         with:
