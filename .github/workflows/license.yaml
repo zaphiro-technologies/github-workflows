@@ -51,12 +51,15 @@ jobs:
       - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
         name: Check Dependencies' License
         uses: apache/skywalking-eyes/dependency@v0.6.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-            # log: debug # optional: set the log level. The default value is
+            log: debug # optional: set the log level. The default value is
             # `info`.
             config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
             # mode: # optional: Which mode License-Eye should be run in. Choices are `check` or `resolve`. The default value is `check`.
-            # flags: # optional: Extra flags appended to the command, for example, `--summary=path/to/template.tmpl`
+            # flags: # optional: Extra flags appended to the command, for
+            # example, `--summary=path/to/template.tmpl`
       - name: Fix License Header
         if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: apache/skywalking-eyes/header@v0.6.0
