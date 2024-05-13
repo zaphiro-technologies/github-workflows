@@ -207,3 +207,11 @@ jobs:
       - uses: anchore/sbom-action@v0
         with:
           config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
+      - name: Generate SBOM
+        uses: CycloneDX/gh-gomod-generate-sbom@v2
+        with:
+          version: v1
+          args: app -licenses=true -assert-licenses=true -json=true -output sbom.json .
+      - name: Update summary
+        if: always()
+        run: echo -e "$(cat sbom.json)" >> $GITHUB_STEP_SUMMARY
