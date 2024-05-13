@@ -73,7 +73,6 @@ jobs:
         with:
           args: --fix
           version: latest
-          skip-pkg-cache: true
       - name: Commit golines & golangci-lint changes
         run: |
           git config --global user.name 'Bot'
