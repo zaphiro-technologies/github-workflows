@@ -45,7 +45,11 @@ on:
         default: false
         type: boolean
         description: True to skip sbom exec
-
+      config-sbom-path:
+        default: '.github/config/syft.yaml'
+        required: false
+        type: string
+        
 # Permissions needed
 # permissions:
 #   contents: read
@@ -117,3 +121,4 @@ jobs:
         uses: anchore/sbom-action@v0
         with:
           image: ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}:${{ github.ref_name }}
+          config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
