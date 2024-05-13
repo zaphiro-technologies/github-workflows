@@ -16,7 +16,8 @@ The repository includes:
   that labels are valid.
 - [`clean-up-storage`](.github/workflows/clean-up-storage.yaml) workflow: when a
   new PR is closed, related cache and artifact are deleted.
-- [`deployment`](.github/workflows/deployment.yaml) workflow: commit a container image tag in the k8s-deployments repository
+- [`deployment`](.github/workflows/deployment.yaml) workflow: commit a container
+  image tag in the k8s-deployments repository
 - [`markdown`](.github/workflows/markdown.yaml) workflow: lint all Markdown
   documents and checks that the links referenced in the documents are valid. If
   `skip-spell-check: false`, also, a spell checker is executed.
