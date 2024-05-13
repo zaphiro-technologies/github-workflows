@@ -28,6 +28,11 @@ on:
         default: false
         type: boolean
         description: True to skip dependency check
+      skip-fix:
+          required: false
+          default: true
+          type: boolean
+          description: True to skip license fix
       license-config-path:
           required: false
           default: '.github/config/.licenserc.yaml'
@@ -53,12 +58,14 @@ jobs:
             # mode: # optional: Which mode License-Eye should be run in. Choices are `check` or `resolve`. The default value is `check`.
             # flags: # optional: Extra flags appended to the command, for example, `--summary=path/to/template.tmpl`
       - name: Fix License Header
+        if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: apache/skywalking-eyes/header@v0.6.0
         with:
           config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
           mode: fix
           # log: debug # optional: set the log level. The default value is `info`.
       - name: Apply Changes
+        if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: EndBug/add-and-commit@v9
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
