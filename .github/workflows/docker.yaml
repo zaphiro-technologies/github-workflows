@@ -116,15 +116,16 @@ jobs:
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
             GIT_URL=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.source']}}
             BUILD_DATE=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.created']}}
-      - name: Generate tag (PR)
-        if: ${{ ! inputs.skip-sbom && github.event_name == 'pull_request' }}
-        run: echo "TAG=pr-${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-      - name: Generate tag (PR)
-        if: ${{ ! inputs.skip-sbom && startsWith(github.ref, 'refs/tags/') }}
-        run: echo "TAG=main" >> $GITHUB_ENV
+      # - name: Generate tag (PR)
+      #   if: ${{ ! inputs.skip-sbom && github.event_name == 'pull_request' }}
+      #   run: echo "TAG=pr-${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+      # - name: Generate tag (PR)
+      #   if: ${{ ! inputs.skip-sbom && startsWith(github.ref, 'refs/tags/') }}
+      #   run: echo "TAG=main" >> $GITHUB_ENV
       - name: sbom
         if: ${{ ! inputs.skip-sbom }}
         uses: anchore/sbom-action@v0
         with:
           config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
-          image: ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}:${{ env.TAG }}
+          image: ${{ env.DOCKER_METADATA_OUTPUT_TAGS }}
+          syft-version: v1.4.1
