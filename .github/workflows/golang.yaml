@@ -43,10 +43,6 @@ on:
         default: false
         type: boolean
         description: True to skip sbom exec
-      config-sbom-path:
-        default: '.github/config/syft.yaml'
-        required: false
-        type: string
       
 jobs:
   lint:
