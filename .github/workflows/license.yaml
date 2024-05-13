@@ -48,18 +48,6 @@ jobs:
           token: ${{ secrets.REPO_PAT }}
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
-      - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
-        name: Check Dependencies' License
-        uses: apache/skywalking-eyes/dependency@v0.6.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-            log: debug # optional: set the log level. The default value is
-            # `info`.
-            config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
-            # mode: # optional: Which mode License-Eye should be run in. Choices are `check` or `resolve`. The default value is `check`.
-            # flags: # optional: Extra flags appended to the command, for
-            # example, `--summary=path/to/template.tmpl`
       - name: Fix License Header
         if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: apache/skywalking-eyes/header@v0.6.0
@@ -76,3 +64,27 @@ jobs:
           author_name: License Bot
           author_email: bot@zaphiro.ch
           message: 'Automatic application of license header'
+      - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
+        name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
+        name: check license
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          go install github.com/apache/skywalking-eyes/cmd/license-eye@latest
+          license-eye -c ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }} dep check
+      # - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
+      #   name: Check Dependencies' License
+      #   uses: apache/skywalking-eyes/dependency@v0.6.0 # use a old version of golang
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #       # log: debug # optional: set the log level. The default value is
+      #       # `info`.
+      #       config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
+      #       # mode: # optional: Which mode License-Eye should be run in. Choices are `check` or `resolve`. The default value is `check`.
+      #       # flags: # optional: Extra flags appended to the command, for
+      #       # example, `--summary=path/to/template.tmpl`
