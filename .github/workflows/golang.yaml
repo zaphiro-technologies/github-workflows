@@ -43,6 +43,11 @@ on:
         default: false
         type: boolean
         description: True to skip sbom exec
+      config-sbom-path:
+        default: '.github/config/syft.yaml'
+        required: false
+        type: string
+      
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -195,3 +200,5 @@ jobs:
       - uses: actions/checkout@v4
       - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
       - uses: anchore/sbom-action@v0
+        with:
+          config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
