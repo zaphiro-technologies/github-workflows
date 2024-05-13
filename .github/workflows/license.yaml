@@ -67,9 +67,7 @@ jobs:
           author_name: License Bot
           author_email: bot@zaphiro.ch
           message: 'Automatic application of license header'
-      - run: git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
       - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
         name: Set up Go
         uses: actions/setup-go@v5
