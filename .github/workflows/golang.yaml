@@ -205,7 +205,7 @@ jobs:
       - name: Build
         run: go build -v ./...
       - name: Generate SBOM
-        if: ${{ ! inputs.skip-sbom }}
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0 # this action is using an old version of syft
         with:
-          config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
+           config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
+           version: 1.4.1
