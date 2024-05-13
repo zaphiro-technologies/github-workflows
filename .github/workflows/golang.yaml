@@ -200,5 +200,5 @@ jobs:
       - name: Generate SBOM
         uses: anchore/sbom-action@v0 # this action is using an old version of syft
         with:
-           config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
-           syft-version: v1.4.1
+          config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
+          syft-version: v1.4.1
