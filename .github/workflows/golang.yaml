@@ -190,7 +190,6 @@ jobs:
           path: benchmark-data.json
           retention-days: 400
   sbom:
-    name: Generate SBOM
     runs-on: ubuntu-latest
     if: ${{ ! inputs.skip-sbom }}
     env:
