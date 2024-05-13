@@ -57,7 +57,7 @@ jobs:
       PLATFORM: ${{needs.split-environment.outputs.platform}}
     environment:
       name: ${{inputs.environment}}
-      url: https://argocd.${{env.CLUSTER}}.zaphiro.ch/applications/argocd/platforms
+      url: https://argocd.${{env.CLUSTER}}.zaphiro.ch/applications/argocd/platforms?view=tree&resource=kind%3AApplication
     steps:
       - name: Get image tag from git tag
         if: github.ref_type == 'tag'
