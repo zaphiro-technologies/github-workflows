@@ -208,4 +208,4 @@ jobs:
         uses: anchore/sbom-action@v0 # this action is using an old version of syft
         with:
            config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
-           syft-version: 1.4.1
+           syft-version: v1.4.1
