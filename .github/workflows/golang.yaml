@@ -198,6 +198,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      - name: Build
+        run: go build -v ./...
       - name: Generate SBOM
         uses: anchore/sbom-action@v0 # this action is using an old version of syft
         with:
