@@ -190,7 +190,6 @@ jobs:
           path: benchmark-data.json
           retention-days: 400
   sbom:
-    name: Generate SBOM
     runs-on: ubuntu-latest
     if: ${{ ! inputs.skip-sbom }}
     env:
@@ -205,7 +204,7 @@ jobs:
           go-version-file: go.mod
       - name: Build
         run: go build -v ./...
-      - name: sbom
+      - name: Generate SBOM
         if: ${{ ! inputs.skip-sbom }}
         uses: anchore/sbom-action@v0
         with:
