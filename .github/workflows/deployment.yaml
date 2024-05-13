@@ -80,8 +80,9 @@ jobs:
               state: 'open'
             });
             if (pr.data.length > 0) {
-              core.setOutput('pr', pr.data[0].number);
+              return core.setOutput('pr', pr.data[0].number);
             }
+            core.setFailed("PR not found");
       - name: Get image tag from PR number
         if: steps.search-pr.outputs.pr != ''
         run: |
