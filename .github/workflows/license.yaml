@@ -27,10 +27,10 @@ on:
         required: false
         default: false
         type: boolean
-        description: True to skip dependency check
+        description: True to skip license dependency check
       skip-fix:
           required: false
-          default: false
+          default: true
           type: boolean
           description: True to skip license fix
       license-config-path:
