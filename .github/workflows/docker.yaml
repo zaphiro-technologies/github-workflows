@@ -126,20 +126,8 @@ jobs:
           image-ref: ${{ needs.build.outputs.tags }}
           trivy-config:
           scanners: "vuln,secret,misconfig"
-          output: trivy.txt
+          exit-code: '1'
+          severity: MEDIUM,HIGH,CRITICAL
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish Trivy Output to Summary
-        run: |
-          if [[ -s trivy.txt ]]; then
-            {
-              echo "### Security Output"
-              echo "<details><summary>Click to expand</summary>"
-              echo ""
-              echo '```terraform'
-              cat trivy.txt
-              echo '```'
-              echo "</details>"
-            } >> $GITHUB_STEP_SUMMARY
-          fi

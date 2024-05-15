@@ -203,7 +203,7 @@ jobs:
           scan-type: fs
           scan-ref: .
           skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
-          scanners: "vuln,secret,misconfig,license"
+          scanners: "vuln,secret,misconfig"
           hide-progress: true
           output: trivy.txt
       - name: Publish Trivy Output to Summary
