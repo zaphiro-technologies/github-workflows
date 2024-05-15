@@ -38,15 +38,16 @@ on:
         default: false
         type: boolean
         description: True to skip benchmark exec
-      skip-sbom:
+      vulterability-scan:
         required: false
-        default: false
+        default: true
         type: boolean
-        description: True to skip sbom exec
-      config-sbom-path:
-        default: '.github/config/syft.yaml'
+        description: False to skip vulterability-scan exec
+      vulterability-scan-skip-dirs:
         required: false
+        default: 'vendor,.github'
         type: string
+        description: Comma separated list of directories where vulterability check is skipped
       
 jobs:
   lint:
@@ -189,16 +190,31 @@ jobs:
           name: benchmark-result
           path: benchmark-data.json
           retention-days: 400
-  sbom:
+  vulnerability:
+    if: ${{ inputs.vulterability-scan}}
     runs-on: ubuntu-latest
-    if: ${{ ! inputs.skip-sbom }}
-    env:
-      GOPRIVATE: github.com/zaphiro-technologies/*
-      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Generate SBOM
-        uses: anchore/sbom-action@v0 # this action is using an old version of syft
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
         with:
-          config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
-          syft-version: v1.4.1
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          scanners: "vuln,secret,misconfig"
+          output: trivy.txt
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish Trivy Output to Summary
+        run: |
+          if [[ -s trivy.txt ]]; then
+            {
+              echo "### File System scan output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```terraform'
+              cat trivy.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
