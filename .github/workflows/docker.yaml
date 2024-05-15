@@ -40,15 +40,11 @@ on:
         description: Platform to build for, comma separated
         type: string
         default: linux/amd64,linux/arm64
-      skip-sbom:
+      vulterability-scan:
         required: false
-        default: false
+        default: true
         type: boolean
-        description: True to skip sbom exec
-      config-sbom-path:
-        default: '.github/config/syft.yaml'
-        required: false
-        type: string
+        description: False to skip vulterability-scan
         
 # Permissions needed
 # permissions:
@@ -116,10 +112,11 @@ jobs:
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
             GIT_URL=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.source']}}
             BUILD_DATE=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.created']}}
-      - name: Generate SBOM
-        if: ${{ ! inputs.skip-sbom }}
-        uses: anchore/sbom-action@v0
+      - name: Run Trivy vulnerability scanner
+        if: ${{ inputs.vulterability-scan}}
+        uses: aquasecurity/trivy-action@master
         with:
-          config: ${{ inputs.config-sbom-path || '.github/config/syft.yaml' }}
-          image: ${{ env.DOCKER_METADATA_OUTPUT_TAGS }}
-          syft-version: v1.4.1
+          scan-type: image
+          image-ref: ${{ env.DOCKER_METADATA_OUTPUT_TAGS }}
+          trivy-config:
+          scanners: "vuln,secret,misconfig"
