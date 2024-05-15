@@ -206,7 +206,7 @@ jobs:
         file_pattern: RELEASE_NOTES.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - if: ${{ ! inputs.skip-sbom }}
+    - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
       name: Generate SBOM
       uses: aquasecurity/trivy-action@master
       with:
@@ -214,7 +214,7 @@ jobs:
         scan-ref: '.'
         format: 'cyclonedx'
         output: 'cyclonedx-sbom.json'
-    - if: ${{ ! inputs.skip-sbom }}
+    - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
       name: Upload SBOM as a Github artifact
       uses: actions/upload-artifact@v4
       with:
@@ -254,7 +254,7 @@ jobs:
 
   release-sbom:
     name: Release SBOM
-    if:  ${{ github.event_name == 'release' && ! inputs.skip-sbom }}
+    if:  ${{ github.event_name == 'release' && (! inputs.skip-sbom || inputs.skip-sbom == '') }}
     runs-on: ubuntu-latest
     steps:
       - name: Generate SBOM
