@@ -1,0 +1,148 @@
+# Copyright 2024 Zaphiro Technologies
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Container Deployment
+
+concurrency:
+  group: ${{inputs.environment}}-container-deployment
+  cancel-in-progress: false
+
+# Permissions needed
+# permissions:
+#   packages: read
+#   pull-requests: read
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        required: true
+        type: string
+        description: Application name used in k8s-deployments
+      environment:
+        required: true
+        type: string
+        description: Environment name for the deployment
+
+jobs:
+  split-environment:
+    name: Split environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Split environment to cluster and platform
+        id: split-environment
+        run: |
+          echo "cluster=$(echo ${{inputs.environment}} | cut -d'|' -f1)" >> $GITHUB_OUTPUT
+          echo "platform=$(echo ${{inputs.environment}} | cut -d'|' -f2)" >> $GITHUB_OUTPUT
+    outputs:
+      cluster: ${{steps.split-environment.outputs.cluster}}
+      platform: ${{steps.split-environment.outputs.platform}}
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: split-environment
+    env:
+      CLUSTER: ${{needs.split-environment.outputs.cluster}}
+      PLATFORM: ${{needs.split-environment.outputs.platform}}
+    environment:
+      name: ${{inputs.environment}}
+      url: https://argocd.${{env.CLUSTER}}.zaphiro.ch/applications/argocd/platforms?view=tree&resource=kind%3AApplication
+    steps:
+      - name: Get image tag from git tag
+        if: github.ref_type == 'tag'
+        run: |
+          echo "IMAGE_TAG=${$(echo ${{github.ref}} | cut -d'/' -f3)#v}" >> $GITHUB_ENV
+      - name: Get image tag from main branch
+        if: github.ref_type == 'branch' && github.ref == 'refs/heads/main'
+        run: |
+          echo "IMAGE_TAG=main" >> $GITHUB_ENV
+      - name: Search PR of branch not main
+        if: github.ref_type == 'branch' && github.ref != 'refs/heads/main'
+        id: search-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: context.ref,
+              state: 'open'
+            });
+            if (pr.data.length > 0) {
+              return core.setOutput('pr', pr.data[0].number);
+            }
+            core.setFailed("PR not found");
+      - name: Get image tag from PR number
+        if: steps.search-pr.outputs.pr != ''
+        run: |
+          echo "IMAGE_TAG=pr-${{steps.search-pr.outputs.pr}}" >> $GITHUB_ENV
+      - name: Checkout of k8s-deployments
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          repository: ${{github.repository_owner}}/k8s-deployments
+          ref: main
+      - name: Get repository name from values-platforms.yaml
+        if: github.ref_type != 'tag'
+        id: repository-name
+        run: echo "repository=$(yq '.platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.repository' kubernetes/${{env.CLUSTER}}/values-platforms.yaml)" >> $GITHUB_OUTPUT
+      - name: Get digest for image tag if not git tag
+        if: github.ref_type != 'tag'
+        id: digest
+        # Use github APIs to get the digest of the image tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {IMAGE_TAG} = process.env
+            const repository_name = "${{steps.repository-name.outputs.repository}}"
+            // Check IMAGE_TAG is not empty
+            if (!IMAGE_TAG) {
+              return core.setFailed("No valid tag found");
+            }
+            for await (const versions of github.paginate.iterator(
+              github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg, {
+                package_type: "container",
+                package_name: repository_name.split("/").pop(),
+                org: "${{github.repository_owner}}",
+                state: "active"
+                })) {
+              // Check if tag is in tags list
+              for (const version of versions.data) {
+                console.log(version)
+                if (version.metadata.container.tags.includes(IMAGE_TAG)) {
+                  return core.exportVariable('DIGEST', version.name);
+                }
+              }
+            }
+            core.setFailed("Image tag not found");
+      - name: Concat digest to tag
+        if: env.DIGEST != ''
+        run: |
+          echo "IMAGE_TAG=$IMAGE_TAG@$DIGEST" >> $GITHUB_ENV
+      - name: Update values-platforms.yaml
+        uses: fjogeleit/yaml-update-action@v0.14.0
+        with:
+          valueFile: kubernetes/${{env.CLUSTER}}/values-platforms.yaml
+          propertyPath: platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.tag
+          value: ${{env.IMAGE_TAG}}
+          commitChange: false
+          createPR: false
+      - name: Commit & Push changed tag
+        uses: actions-js/push@v1.5
+        with:
+          github_token: ${{ secrets.REPO_PAT }}
+          branch: main
+          message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
+          directory: kubernetes/${{env.CLUSTER}}
+          repository: ${{github.repository_owner}}/k8s-deployments

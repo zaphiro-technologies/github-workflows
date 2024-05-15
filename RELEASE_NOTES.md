@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-05-14
+## 0.0.3-dev - 2024-05-15
 
 ### Features
 
+- Add the deployment workflow (PR #115 by @cosimomeli)
 - markdown workflow: Use quiet mode for link checker (PR #112 by @chicco785)
 - golang workflow: add input variable for alert threshold (PR #101 by
   @chicco785)
