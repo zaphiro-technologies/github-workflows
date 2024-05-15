@@ -120,3 +120,6 @@ jobs:
           image-ref: ${{ env.DOCKER_METADATA_OUTPUT_TAGS }}
           trivy-config:
           scanners: "vuln,secret,misconfig"
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
