@@ -30,7 +30,7 @@ on:
         description: True to skip dependency check
       skip-fix:
           required: false
-          default: true
+          default: false
           type: boolean
           description: True to skip license fix
       license-config-path:
@@ -74,21 +74,13 @@ jobs:
         with:
           go-version-file: go.mod
       - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
-        name: check license
+        name: Check Dependencies' License
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           go install github.com/apache/skywalking-eyes/cmd/license-eye@latest
           license-eye -c ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }} dep check
-      # - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
-      #   name: Check Dependencies' License
-      #   uses: apache/skywalking-eyes/dependency@v0.6.0 # use a old version of golang
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #       # log: debug # optional: set the log level. The default value is
-      #       # `info`.
-      #       config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
-      #       # mode: # optional: Which mode License-Eye should be run in. Choices are `check` or `resolve`. The default value is `check`.
-      #       # flags: # optional: Extra flags appended to the command, for
-      #       # example, `--summary=path/to/template.tmpl`
+      # NOTE: we are not using the action
+      # apache/skywalking-eyes/dependency@v0.6.0
+      # since it uses a old version of golang.
+      # The file `.github/config/.licenserc.yaml` is required, or it will fail.
