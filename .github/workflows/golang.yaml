@@ -211,7 +211,10 @@ jobs:
           if [[ -s trivy.txt ]]; then
             {
               echo "### Trivy Security Output"
+              echo ""
+              echo '```text'
               cat trivy.txt
+              echo '```'
             } >> $GITHUB_STEP_SUMMARY
           fi
       # this comes as last or scan results won't be uploaded
