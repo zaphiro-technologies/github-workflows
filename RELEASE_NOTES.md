@@ -19,6 +19,10 @@
 - Support different grammar check modalities (local and online) in the script
   (PR #89 by @chicco785)
 
+### Bug Fixes
+
+- Fix deployment workflow on PRs (PR #120 by @cosimomeli)
+
 ### Continuous Integration
 
 - Move sonarcloud checks to test job (PR #119 by @chicco785)
