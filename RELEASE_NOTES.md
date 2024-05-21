@@ -1,12 +1,12 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-05-20
+## 0.0.3-dev - 2024-05-21
 
 ### Features
 
-- Add the deployment workflow (PR #115 by @cosimomeli)
 - license, docker, golang, release notes workflows: support SBOM generation,
   license compatibility check and vulnerability check (PR #116 by @chicco785)
+- Add the deployment workflow (PR #115 by @cosimomeli)
 - markdown workflow: Use quiet mode for link checker (PR #112 by @chicco785)
 - golang workflow: add input variable for alert threshold (PR #101 by
   @chicco785)
@@ -21,6 +21,8 @@
 
 ### Dependencies
 
+- Bump fjogeleit/yaml-update-action from 0.14.0 to 1 (PR #118 by
+  @dependabot[bot])
 - Bump golangci/golangci-lint-action from 5 to 6 (PR #117 by @dependabot[bot])
 - Bump golangci/golangci-lint-action from 4 to 5 (PR #110 by @dependabot[bot])
 - Bump mikepenz/action-gh-release from 0.2.0.pre.a03 to 1 (PR #106 by
