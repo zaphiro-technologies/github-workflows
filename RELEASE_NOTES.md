@@ -1,12 +1,12 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-05-20
+## 0.0.3-dev - 2024-05-21
 
 ### Features
 
-- Add the deployment workflow (PR #115 by @cosimomeli)
 - license, docker, golang, release notes workflows: support SBOM generation,
   license compatibility check and vulnerability check (PR #116 by @chicco785)
+- Add the deployment workflow (PR #115 by @cosimomeli)
 - markdown workflow: Use quiet mode for link checker (PR #112 by @chicco785)
 - golang workflow: add input variable for alert threshold (PR #101 by
   @chicco785)
@@ -18,6 +18,10 @@
   by @chicco785)
 - Support different grammar check modalities (local and online) in the script
   (PR #89 by @chicco785)
+
+### Continuous Integration
+
+- Move sonarcloud checks to test job (PR #119 by @chicco785)
 
 ### Dependencies
 
