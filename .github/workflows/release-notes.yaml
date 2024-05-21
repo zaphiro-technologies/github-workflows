@@ -27,12 +27,20 @@ on:
       - synchronize
     branches:
       - main
+  release:
+    types:
+      - published
   workflow_call:
     inputs:
       config-release-path:
         required: false
         default: '.github/config/release-config.json'
         type: string
+      skip-sbom:
+        required: false
+        default: false
+        type: boolean
+        description: True to skip sbom exec
 
 concurrency:
   group: ${{ github.ref_name }}-release
@@ -198,6 +206,21 @@ jobs:
         file_pattern: RELEASE_NOTES.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
+      name: Generate SBOM
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: fs
+        scan-ref: '.'
+        format: 'cyclonedx'
+        output: 'cyclonedx-sbom.json'
+    - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
+      name: Upload SBOM as a Github artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: trivy-sbom-report
+        path: '${{ github.workspace }}/cyclonedx-sbom.json'
+        retention-days: 20 # 90 is the default
 
   release:
     name: Release
@@ -228,3 +251,30 @@ jobs:
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-b') || contains(github.ref, '-a') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-sbom:
+    name: Release SBOM
+    if:  ${{ github.event_name == 'release' && (! inputs.skip-sbom || inputs.skip-sbom == '') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate SBOM
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: '.'
+          format: 'cyclonedx'
+          output: 'cyclonedx-sbom.json'
+      - name: Get Release
+        id: release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Attach SBOM to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: cyclonedx-sbom.json
+          asset_name: 'cyclonedx-sbom.json'
+          asset_content_type: application/json

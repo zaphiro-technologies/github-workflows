@@ -38,10 +38,22 @@ on:
         default: false
         type: boolean
         description: True to skip benchmark exec
-
+      vulterability-scan:
+        required: false
+        default: true
+        type: boolean
+        description: False to skip vulterability-scan exec
+      vulterability-scan-skip-dirs:
+        required: false
+        default: 'vendor,.github'
+        type: string
+        description: Comma separated list of directories where vulterability check is skipped
+      
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: ${{ github.event.pull_request }}
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
@@ -64,7 +76,6 @@ jobs:
         with:
           args: --fix
           version: latest
-          skip-pkg-cache: true
       - name: Commit golines & golangci-lint changes
         run: |
           git config --global user.name 'Bot'
@@ -181,4 +192,38 @@ jobs:
           name: benchmark-result
           path: benchmark-data.json
           retention-days: 400
-      
+  vulnerability:
+    if: ${{ inputs.vulterability-scan}}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy vulnerability scanner (for summary)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          scanners: "vuln,secret,misconfig"
+          hide-progress: true
+          output: trivy.txt
+      - name: Publish Trivy Output to Summary
+        run: |
+          if [[ -s trivy.txt ]]; then
+            {
+              echo "### Trivy Security Output"
+              echo ""
+              echo '```text'
+              cat trivy.txt
+              echo '```'
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+      # this comes as last or scan results won't be uploaded
+      - name: Run Trivy vulnerability scanner (security treshold)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          scanners: "vuln,secret,misconfig"
+          exit-code: '1'
+          severity: MEDIUM,HIGH,CRITICAL

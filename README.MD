@@ -28,9 +28,10 @@ The repository includes:
   Registry in case tests rely on private images. To retrieve the images, you
   need also to set
   [`read permission`](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#ensuring-workflow-access-to-your-package)
-  for the repository on the package.
+  for the repository on the package. The workflow also scans for
+  vulnerabilities.
 - [`docker`](.github/workflows/docker.yaml) workflow: build and push Docker
-  images
+  images and scans for vulnerabilities.
 - [`clean-up-docker`](.github/workflows/clean-up-docker.yaml) workflow: when a
   PR is closed, related docker images and untagged ones are deleted
 - [`licensing`](.github/workflows/license.yaml) workflow: add licensing

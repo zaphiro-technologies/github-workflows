@@ -21,13 +21,19 @@ concurrency:
 on:
   pull_request:
     branches: [ main ]
+    types: [opened, reopened, ready_for_review, synchronize]
   workflow_call:
     inputs:
       skip-dependecy:
         required: false
         default: false
         type: boolean
-        description: True to skip dependency check
+        description: True to skip license dependency check
+      skip-fix:
+          required: false
+          default: true
+          type: boolean
+          description: True to skip license fix
       license-config-path:
           required: false
           default: '.github/config/.licenserc.yaml'
@@ -37,28 +43,24 @@ jobs:
     name: Check licenses
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
+    env:
+      GOPRIVATE: github.com/zaphiro-technologies/*
+      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.REPO_PAT }}
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
-      - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
-        name: Check Dependencies' License
-        uses: apache/skywalking-eyes/dependency@v0.6.0
-        with:
-            # log: debug # optional: set the log level. The default value is
-            # `info`.
-            config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
-            # mode: # optional: Which mode License-Eye should be run in. Choices are `check` or `resolve`. The default value is `check`.
-            # flags: # optional: Extra flags appended to the command, for example, `--summary=path/to/template.tmpl`
       - name: Fix License Header
+        if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: apache/skywalking-eyes/header@v0.6.0
         with:
           config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
           mode: fix
           # log: debug # optional: set the log level. The default value is `info`.
       - name: Apply Changes
+        if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: EndBug/add-and-commit@v9
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -66,3 +68,25 @@ jobs:
           author_name: License Bot
           author_email: bot@zaphiro.ch
           message: 'Automatic application of license header'
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - if: ${{ (! inputs.skip-dependecy || inputs.skip-dependecy == '') && hashFiles('go.mod') != '' }}
+        name: Set up Go (Go project)
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - if: ${{ (! inputs.skip-dependecy || inputs.skip-dependecy == '') && hashFiles('go.mod') == '' }}
+        name: Set up Go (non-Go project)
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.20.0'
+      - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
+        name: Check Dependencies' License
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          go install github.com/apache/skywalking-eyes/cmd/license-eye@latest
+          license-eye -c ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }} dep check
+      # NOTE: we are not using the action
+      # apache/skywalking-eyes/dependency@v0.6.0
+      # since it uses a old version of golang.
+      # The file `.github/config/.licenserc.yaml` is required, or it will fail.
