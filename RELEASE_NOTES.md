@@ -25,6 +25,8 @@
 
 ### Dependencies
 
+- Bump fjogeleit/yaml-update-action from 0.14.0 to 1 (PR #118 by
+  @dependabot[bot])
 - Bump golangci/golangci-lint-action from 5 to 6 (PR #117 by @dependabot[bot])
 - Bump golangci/golangci-lint-action from 4 to 5 (PR #110 by @dependabot[bot])
 - Bump mikepenz/action-gh-release from 0.2.0.pre.a03 to 1 (PR #106 by
