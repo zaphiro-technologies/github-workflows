@@ -1,3 +1,4 @@
+
 # Copyright 2024 Zaphiro Technologies
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +39,11 @@ on:
         default: false
         type: boolean
         description: True to skip benchmark exec
+      code-scan:
+          required: false
+          default: true
+          type: boolean
+          description: False to skip code-scan exec
       vulterability-scan:
         required: false
         default: true
@@ -89,6 +95,8 @@ jobs:
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -109,6 +117,20 @@ jobs:
       - name: Test
         run: |
           make ci-test
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        if: ${{ inputs.code-scan }}
+        # we log in the registry to code check also images
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: SonarCloud Code Scan
+        if: ${{ inputs.code-scan }}
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Download code coverage report from base branch
         uses: dawidd6/action-download-artifact@v3
         if: github.actor != 'dependabot[bot]'
