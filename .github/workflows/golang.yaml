@@ -1,3 +1,4 @@
+
 # Copyright 2024 Zaphiro Technologies
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -116,14 +117,14 @@ jobs:
           make ci-test
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
-        if: ${{ ! inputs.code-scan }}
+        if: ${{ inputs.code-scan }}
         # we log in the registry to code check also images
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: SonarCloud Code Scan
-        if: ${{ ! inputs.code-scan }}
+        if: ${{ inputs.code-scan }}
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
