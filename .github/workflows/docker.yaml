@@ -15,7 +15,7 @@
 name: Docker Build
 
 concurrency:
-  group: ${{github.repository}}-${{ github.ref_name }}-docker
+  group: ${{github.repository}}-${{ github.ref_name }}-docker-${{ inputs.image-name || 'default' }}
   cancel-in-progress: true
 
 on:
