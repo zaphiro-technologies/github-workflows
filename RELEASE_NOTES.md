@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-05-21
+## 0.0.3-dev - 2024-05-23
 
 ### Features
 
+- docker wf: support concurrent image builds (PR #121 by @chicco785)
 - license, docker, golang, release notes workflows: support SBOM generation,
   license compatibility check and vulnerability check (PR #116 by @chicco785)
 - Add the deployment workflow (PR #115 by @cosimomeli)
