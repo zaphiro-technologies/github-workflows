@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-06-04
+## 0.0.3-dev - 2024-06-11
 
 ### Features
 
@@ -30,6 +30,8 @@
 
 ### Dependencies
 
+- Bump dawidd6/action-download-artifact from 4 to 5 (PR #123 by
+  @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 3 to 4 (PR #122 by
   @dependabot[bot])
 - Bump fjogeleit/yaml-update-action from 0.14.0 to 1 (PR #118 by
