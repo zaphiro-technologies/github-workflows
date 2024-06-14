@@ -94,6 +94,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Go Build Cache for Docker
+        id: cache
         if: ${{ inputs.go-cache }}
         uses: actions/cache@v4
         with:
@@ -101,9 +102,13 @@ jobs:
           key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
       - name: inject go-build-cache into docker
         if: ${{ inputs.go-cache }}
-        uses: reproducible-containers/buildkit-cache-dance@4b2444fec0c0fb9dbf175a96c094720a692ef810
+        uses: reproducible-containers/buildkit-cache-dance@v3.1.0
         with:
-          cache-source: go-build-cache
+          cache-map: |
+            {
+              "go-build-cache": "/root/.cache/go-build"
+            }
+          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
