@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-06-18
+## 0.0.3-dev - 2024-06-24
 
 ### Features
 
@@ -26,6 +26,7 @@
 
 ### Continuous Integration
 
+- docker workflow: support golang build caching (PR #124 by @chicco785)
 - Move sonarcloud checks to test job (PR #119 by @chicco785)
 
 ### Dependencies
