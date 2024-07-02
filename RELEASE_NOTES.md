@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-07-01
+## 0.0.3-dev - 2024-07-02
 
 ### Features
 
@@ -31,12 +31,14 @@
 
 ### Dependencies
 
+- Bump reproducible-containers/buildkit-cache-dance from 3.1.1 to 3.1.2 (PR #129
+  by @dependabot[bot])
+- Bump docker/build-push-action from 5 to 6 (PR #125 by @dependabot[bot])
 - Bump actions/add-to-project from 1.0.1 to 1.0.2 (PR #127 by @dependabot[bot])
 - Bump reproducible-containers/buildkit-cache-dance from 3.1.0 to 3.1.1 (PR #128
   by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 5 to 6 (PR #126 by
   @dependabot[bot])
-- Bump docker/build-push-action from 5 to 6 (PR #125 by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 4 to 5 (PR #123 by
   @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 3 to 4 (PR #122 by
