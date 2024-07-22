@@ -59,8 +59,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      go-changed: ${{ steps.filter.outputs.go }}
-      scripts-changed: ${{ steps.filter.outputs.scripts }}
+      files_changed: ${{ steps.filter.outputs.go == 'true' || steps.filter.outputs.scripts == 'true' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -83,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: ${{ (needs.changes.outputs.go-changed == 'true' || needs.changes.outputs.scripts-changed == 'true') && github.event.pull_request }}
+    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
@@ -118,7 +117,7 @@ jobs:
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
-    if: ${{ needs.changes.outputs.go-changed == 'true' || needs.changes.outputs.scripts-changed == 'true' }}
+    if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -187,7 +186,7 @@ jobs:
   benchmark:
     needs: changes
     runs-on: ubuntu-latest
-    if: ${{ (needs.changes.outputs.go-changed == 'true' || needs.changes.outputs.scripts-changed == 'true') && ! inputs.skip-benchmark}}
+    if: ${{ needs.changes.outputs.files_changed == 'true' && ! inputs.skip-benchmark}}
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
