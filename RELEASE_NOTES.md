@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-07-02
+## 0.0.3-dev - 2024-07-30
 
 ### Features
 
@@ -22,6 +22,7 @@
 
 ### Bug Fixes
 
+- golang workflow: fix changes check (PR #130 by @chicco785)
 - Fix deployment workflow on PRs (PR #120 by @cosimomeli)
 
 ### Continuous Integration
@@ -31,6 +32,8 @@
 
 ### Dependencies
 
+- Bump mikepenz/release-changelog-builder-action from 4 to 5 (PR #132 by
+  @dependabot[bot])
 - Bump reproducible-containers/buildkit-cache-dance from 3.1.1 to 3.1.2 (PR #129
   by @dependabot[bot])
 - Bump docker/build-push-action from 5 to 6 (PR #125 by @dependabot[bot])
