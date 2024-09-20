@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-07-30
+## 0.0.3-dev - 2024-09-20
 
 ### Features
 
+- Support Customer Label (PR #136 by @chicco785)
 - docker wf: support concurrent image builds (PR #121 by @chicco785)
 - license, docker, golang, release notes workflows: support SBOM generation,
   license compatibility check and vulnerability check (PR #116 by @chicco785)
@@ -22,6 +23,7 @@
 
 ### Bug Fixes
 
+- Fix vulnerability-scan typo (PR #133 by @cosimomeli)
 - golang workflow: fix changes check (PR #130 by @chicco785)
 - Fix deployment workflow on PRs (PR #120 by @cosimomeli)
 
@@ -32,6 +34,8 @@
 
 ### Dependencies
 
+- Bump DavidAnson/markdownlint-cli2-action from 16 to 17 (PR #134 by
+  @dependabot[bot])
 - Bump mikepenz/release-changelog-builder-action from 4 to 5 (PR #132 by
   @dependabot[bot])
 - Bump reproducible-containers/buildkit-cache-dance from 3.1.1 to 3.1.2 (PR #129
