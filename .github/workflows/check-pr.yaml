@@ -33,7 +33,7 @@ on:
     inputs:
       labels:
         description: 'Labels to be checked'
-        default: 'feature,bug,ci,refactor,security,documentation,dependencies,skip-changelog'
+        default: 'feature,bug,ci,refactor,security,documentation,dependencies,customer,skip-changelog'
         required: false
         type: string
 jobs:
