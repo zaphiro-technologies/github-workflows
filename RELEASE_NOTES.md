@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-09-20
+## 0.0.3-dev - 2024-09-23
 
 ### Features
 
@@ -23,6 +23,7 @@
 
 ### Bug Fixes
 
+- deployment workflow: fix tag version extraction (PR #137 by @cosimomeli)
 - Fix vulnerability-scan typo (PR #133 by @cosimomeli)
 - golang workflow: fix changes check (PR #130 by @chicco785)
 - Fix deployment workflow on PRs (PR #120 by @cosimomeli)

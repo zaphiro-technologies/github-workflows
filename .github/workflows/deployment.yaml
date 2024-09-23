@@ -62,7 +62,8 @@ jobs:
       - name: Get image tag from git tag
         if: github.ref_type == 'tag'
         run: |
-          echo "IMAGE_TAG=${$(echo ${{github.ref}} | cut -d'/' -f3)#v}" >> $GITHUB_ENV
+          tag_version="$(echo ${{github.ref}} | cut -d'/' -f3)"
+          echo "IMAGE_TAG=${tag_version#v}" >> $GITHUB_ENV
       - name: Get image tag from main branch
         if: github.ref_type == 'branch' && github.ref == 'refs/heads/main'
         run: |
