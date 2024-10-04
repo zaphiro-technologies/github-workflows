@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-09-23
+## 0.0.3-dev - 2024-10-04
 
 ### Features
 
+- Golang & Docker workflows: add db caching to trivy (PR #138 by @chicco785)
 - Support Customer Label (PR #136 by @chicco785)
 - docker wf: support concurrent image builds (PR #121 by @chicco785)
 - license, docker, golang, release notes workflows: support SBOM generation,
