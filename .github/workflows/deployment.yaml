@@ -135,7 +135,7 @@ jobs:
         run: |
           echo "IMAGE_TAG=$IMAGE_TAG@$DIGEST" >> $GITHUB_ENV
       - name: Update values-platforms.yaml
-        uses: fjogeleit/yaml-update-action@v0.15
+        uses: fjogeleit/yaml-update-action@v0.15.0
         with:
           valueFile: kubernetes/${{env.CLUSTER}}/values-platforms.yaml
           propertyPath: platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.tag
