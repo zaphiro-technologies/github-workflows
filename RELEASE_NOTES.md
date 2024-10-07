@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-10-04
+## 0.0.3-dev - 2024-10-07
 
 ### Features
 
@@ -24,6 +24,8 @@
 
 ### Bug Fixes
 
+- deployment workflow: fix yaml-update-action@v1 is not available (PR #139 by
+  @chicco785)
 - deployment workflow: fix tag version extraction (PR #137 by @cosimomeli)
 - Fix vulnerability-scan typo (PR #133 by @cosimomeli)
 - golang workflow: fix changes check (PR #130 by @chicco785)
