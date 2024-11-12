@@ -249,17 +249,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        ## To avoid the trivy-db becoming outdated, we save the cache for one day
-      - name: Get data
-        id: date
-        run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
-      - name: Restore trivy cache
-        uses: actions/cache@v4
-        with:
-          path: cache/db
-          key: trivy-cache-${{ steps.date.outputs.date }}
-          restore-keys:
-            trivy-cache-
       - name: Run Trivy vulnerability scanner (for summary)
         uses: aquasecurity/trivy-action@master
         with:
@@ -269,7 +258,6 @@ jobs:
           scanners: "vuln,secret,misconfig"
           hide-progress: true
           output: trivy.txt
-          cache-dir: "./cache"
       - name: Publish Trivy Output to Summary
         run: |
           if [[ -s trivy.txt ]]; then
@@ -291,9 +279,5 @@ jobs:
           scanners: "vuln,secret,misconfig"
           exit-code: '1'
           severity: MEDIUM,HIGH,CRITICAL
-          cache-dir: "./cache"
-      ## Trivy-db uses `0600` permissions.
-      ## But `action/cache` use `runner` user by default
-      ## So we need to change the permissions before caching the database.
-      - name: change permissions for trivy.db
-        run: sudo chmod 0644 ./cache/db/trivy.db
+          # On a subsequent call to the action we know trivy is already installed so can skip this
+          skip-setup-trivy: true

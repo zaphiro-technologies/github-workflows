@@ -168,16 +168,6 @@ jobs:
         id: extract_tag
         run: echo "::set-output name=tag::$(echo "${{ needs.build.outputs.tags }}" | head -n1)"
         ## To avoid the trivy-db becoming outdated, we save the cache for one day
-      - name: Get data
-        id: date
-        run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
-      - name: Restore trivy cache
-        uses: actions/cache@v4
-        with:
-          path: cache/db
-          key: trivy-cache-${{ steps.date.outputs.date }}
-          restore-keys:
-            trivy-cache-
       - name: Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -187,12 +177,6 @@ jobs:
           scanners: "vuln,secret,misconfig"
           exit-code: '1'
           severity: MEDIUM,HIGH,CRITICAL
-          cache-dir: "./cache"
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      ## Trivy-db uses `0600` permissions.
-      ## But `action/cache` use `runner` user by default
-      ## So we need to change the permissions before caching the database.
-      - name: change permissions for trivy.db
-        run: sudo chmod 0644 ./cache/db/trivy.db
