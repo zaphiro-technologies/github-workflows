@@ -167,13 +167,11 @@ jobs:
       - name: Extract first tag
         id: extract_tag
         run: echo "::set-output name=tag::$(echo "${{ needs.build.outputs.tags }}" | head -n1)"
-        ## To avoid the trivy-db becoming outdated, we save the cache for one day
       - name: Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: image
           image-ref: ${{ steps.extract_tag.outputs.tag }}
-          trivy-config:
           scanners: "vuln,secret,misconfig"
           exit-code: '1'
           severity: MEDIUM,HIGH,CRITICAL
