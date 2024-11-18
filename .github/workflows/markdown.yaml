@@ -96,7 +96,7 @@ jobs:
           dry: true
           dry_no_fail: true
     - name: Lint
-      uses: DavidAnson/markdownlint-cli2-action@v17
+      uses: DavidAnson/markdownlint-cli2-action@v18
       with:
         fix: true
         config: ${{ inputs.config-lint-path || '.github/config/.markdownlint.json' }}
