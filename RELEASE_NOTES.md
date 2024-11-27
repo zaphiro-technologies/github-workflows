@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-10-07
+## 0.0.3-dev - 2024-11-27
 
 ### Features
 
+- golang workflow: include `.sql` and `.docker/*.yml` files in golang changes
+  filter (PR #142 by @chicco785)
 - Golang & Docker workflows: add db caching to trivy (PR #138 by @chicco785)
 - Support Customer Label (PR #136 by @chicco785)
 - docker wf: support concurrent image builds (PR #121 by @chicco785)
@@ -38,6 +40,8 @@
 
 ### Dependencies
 
+- Bump DavidAnson/markdownlint-cli2-action from 17 to 18 (PR #141 by
+  @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 16 to 17 (PR #134 by
   @dependabot[bot])
 - Bump mikepenz/release-changelog-builder-action from 4 to 5 (PR #132 by

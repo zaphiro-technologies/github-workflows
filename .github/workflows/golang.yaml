@@ -73,6 +73,9 @@ jobs:
               - '.golangci.yaml'
               - 'Makefile'
               - '.github/workflows/golang.*'
+              - '**/*.sql'
+              - '.docker/*.yml'
+              - '.docker/*.yaml'
             go:
               - '**/*.go'
               - 'go.mod'
