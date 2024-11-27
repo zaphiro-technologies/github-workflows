@@ -73,6 +73,7 @@ jobs:
               - '.golangci.yaml'
               - 'Makefile'
               - '.github/workflows/golang.*'
+              - '**/*.sql'
             go:
               - '**/*.go'
               - 'go.mod'
