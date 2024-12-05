@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-11-27
+## 0.0.3-dev - 2024-12-05
 
 ### Features
 
@@ -40,6 +40,8 @@
 
 ### Dependencies
 
+- Bump dawidd6/action-download-artifact from 6 to 7 (PR #143 by
+  @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 17 to 18 (PR #141 by
   @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 16 to 17 (PR #134 by
