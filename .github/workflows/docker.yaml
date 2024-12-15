@@ -127,7 +127,7 @@ jobs:
         with:
           cache-map: |
             {
-              "node-build-cache": "/root/.yarn"
+              "node-build-cache": "/root/.cache"
             }
           skip-extraction: ${{ steps.cache-node.outputs.cache-hit }}
       - name: Set up QEMU
