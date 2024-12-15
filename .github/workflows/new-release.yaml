@@ -18,7 +18,7 @@ on:
         type: boolean
         default: false
 jobs:
-  create-new-tag:
+  create-new-release:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
