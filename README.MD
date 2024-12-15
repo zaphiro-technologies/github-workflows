@@ -36,6 +36,8 @@ The repository includes:
   PR is closed, related docker images and untagged ones are deleted
 - [`licensing`](.github/workflows/license.yaml) workflow: add licensing
   information in file headers and check dependencies licensing compatibility.
+- ['new-release`](.github/workflows/new-release.yaml) workflow: create a new
+  release (optionally updating packaging file version).
 
 Some of these workflows are configured as [starter workflows][starter-workflows]
 in the [`.github`][.github] repository, so that you can add them at any time
