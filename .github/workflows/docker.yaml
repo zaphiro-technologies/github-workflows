@@ -120,14 +120,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node-build-cache
-          key: ${{ runner.os }}-node-build-cache-${{ hashFiles('**/package.json') }}
+          key: ${{ runner.os }}-node-build-cache-${{ hashFiles('**/yarn.lock') }}
       - name: inject node-build-cache into docker
         if: ${{ inputs.language-cache == 'javascript' }}
         uses: reproducible-containers/buildkit-cache-dance@v3.1.2
         with:
           cache-map: |
             {
-              "node-build-cache": "/usr/local/share/.cache"
+              "node-build-cache": "/root/.yarn"
             }
           skip-extraction: ${{ steps.cache-node.outputs.cache-hit }}
       - name: Set up QEMU
