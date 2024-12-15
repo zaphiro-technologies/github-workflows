@@ -129,8 +129,8 @@ jobs:
         with:
           cache-map: |
             {
-              "node-arm64-cache": "/root/.cache/yarn-arm64",
-              "node-amd64-cache": "/root/.cache/yarn-amd64"
+              "node-arm64-cache": "/root/.cache/yarn-arm64/v6",
+              "node-amd64-cache": "/root/.cache/yarn-amd64/v6"
             }
           skip-extraction: ${{ steps.cache-node.outputs.cache-hit }}
       - name: Set up QEMU
