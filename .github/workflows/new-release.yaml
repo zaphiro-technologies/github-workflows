@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
       - name: 'Validate semver'
         if:  ${{ inputs.tag != '' }}
-        run: | 
+        run: |
             local regex='^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?$'
             
             if [[ "$version" =~ $regex ]]; then
@@ -53,12 +53,17 @@ jobs:
           version: ${{ steps.previoustag.outputs.tag }}
       - name: 'Set tag'
         if:  ${{ inputs.tag == '' }}
-        run: | 
+        run: |
             echo "NEWTAG=${{ steps.semvers.outputs.patch }}" >> $GITHUB_ENV
       - name: 'Update version in pyproject.toml'
         if:  ${{ inputs.language == 'python' }}
-        run: | 
+        run: |
             sed -i "s/version = \".*\"/version = \"$NEWTAG\"/g" pyproject.toml
+      - name: 'Update version in pyproject.toml'
+        if:  ${{ inputs.language == 'javascript' }}
+        run: |
+            sudo apt install -y jq
+            jq '.version = env.NEWTAG' package.json > temp.json && mv temp.json package.json
       - name: Commit tag changes
         run: |
             git config --global user.name 'Bot'
