@@ -73,7 +73,7 @@ jobs:
         if:  ${{ inputs.language == 'python' }}
         run: |
             sed -i "s/version = \".*\"/version = \"$NEWTAG\"/g" pyproject.toml
-      - name: 'Update version in pyproject.toml'
+      - name: 'Update version in package.json'
         if:  ${{ inputs.language == 'javascript' }}
         run: |
             sudo apt install -y jq
