@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-12-05
+## 0.0.3-dev - 2024-12-16
 
 ### Features
 
+- docker workflow: add javascript mode for cache (PR #146 by @chicco785)
 - golang workflow: include `.sql` and `.docker/*.yml` files in golang changes
   filter (PR #142 by @chicco785)
 - Golang & Docker workflows: add db caching to trivy (PR #138 by @chicco785)
