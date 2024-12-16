@@ -108,7 +108,9 @@ jobs:
         git config --global user.email 'bot@zaphiro.ch'
         git commit -am "Automated markdown-lint fixes [dependabot skip]" || echo "No changes to commit"
         git push
+        shopt -s globstar
         rm -fr vendor
+        rm -fr */vendor
     # Checks the status of hyperlinks in .md and .MD files in verbose mode (the action is case sensitive and .{MD,md})
     - name: Check links (.md)
       uses: gaurav-nelson/github-action-markdown-link-check@v1
