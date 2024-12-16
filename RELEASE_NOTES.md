@@ -4,8 +4,8 @@
 
 ### Features
 
-- Add workflow to create a new release (PR #145 by @chicco785)
 - docker workflow: add javascript mode for cache (PR #146 by @chicco785)
+- Add workflow to create a new release (PR #145 by @chicco785)
 - golang workflow: include `.sql` and `.docker/*.yml` files in golang changes
   filter (PR #142 by @chicco785)
 - Golang & Docker workflows: add db caching to trivy (PR #138 by @chicco785)
@@ -28,6 +28,7 @@
 
 ### Bug Fixes
 
+- Fix link check for `vendor` folders in subdirectories (PR #147 by @chicco785)
 - deployment workflow: fix yaml-update-action@v1 is not available (PR #139 by
   @chicco785)
 - deployment workflow: fix tag version extraction (PR #137 by @cosimomeli)
