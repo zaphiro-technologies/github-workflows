@@ -108,8 +108,9 @@ jobs:
         git config --global user.email 'bot@zaphiro.ch'
         git commit -am "Automated markdown-lint fixes [dependabot skip]" || echo "No changes to commit"
         git push
-    # Checks the status of hyperlinks in .md and .MD files in verbose mode (the action is case sensitive and .{MD,md})
-    - name: Check links (.md)
+    - name: Fix apparmor issue for puppeteer
+      run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
+    - name: Check links
       uses: umbrelladocs/action-linkspector@v1
       with:
         filter_mode: nofilter
