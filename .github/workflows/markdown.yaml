@@ -116,6 +116,7 @@ jobs:
         filter_mode: nofilter
         reporter: github-pr-review
         config_file: ${{ inputs.config-link-path || '.github/config/.linkspector.yml' }}
+        fail_on_error: true
   markdown-spellchecker:
     runs-on: ubuntu-latest
     needs: changes
