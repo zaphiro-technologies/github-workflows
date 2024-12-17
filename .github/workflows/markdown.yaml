@@ -118,22 +118,22 @@ jobs:
         else
           # Write content to the file
           cat <<EOF > "$FILE"
-          dirs:
-            - .
-          excludedDirs:
-            - vendor
-          useGitIgnore: true
-          aliveStatusCodes:
-            - 200
-            - 201
-            - 204
-            - 206
-            - 429
-          ignorePatterns:
-            - pattern: '^http(s?)://localhost'
-            - pattern: '^https://github.com/orgs/zaphiro-technologies/'
-            - pattern: '^https://github.com/zaphiro-technologies/'
-          EOF
+        dirs:
+          - .
+        excludedDirs:
+          - vendor
+        useGitIgnore: true
+        aliveStatusCodes:
+          - 200
+          - 201
+          - 204
+          - 206
+          - 429
+        ignorePatterns:
+          - pattern: '^http(s?)://localhost'
+          - pattern: '^https://github.com/orgs/zaphiro-technologies/'
+          - pattern: '^https://github.com/zaphiro-technologies/'
+        EOF
         fi
     - name: Check links
       uses: umbrelladocs/action-linkspector@v1
