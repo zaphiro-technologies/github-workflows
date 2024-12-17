@@ -38,7 +38,7 @@ on:
         type: boolean
       config-links-path:
         required: false
-        default: '.github/config/md-link-config.json'
+        default: '.github/config/.linkspector.yml'
         type: string
       config-lint-path:
         default: '.github/config/.markdownlint.json'
@@ -72,7 +72,7 @@ jobs:
             scripts:
               - '.github/config/.markdownlint.json'
               - '.github/config/.prettierignore'
-              - '.github/config/md-link-config.json'
+              - '.github/config/.linkspector.yml'
               - '.gramma.json'
               - '.grammarignore'
               - 'grammar-check.sh'
@@ -113,18 +113,11 @@ jobs:
         rm -fr */vendor
     # Checks the status of hyperlinks in .md and .MD files in verbose mode (the action is case sensitive and .{MD,md})
     - name: Check links (.md)
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      uses: umbrelladocs/action-linkspector@v1
       with:
-        config-file: ${{ inputs.config-link-path || '.github/config/md-link-config.json' }}
-        use-verbose-mode: 'yes'
-        use-quiet-mode: 'yes'
-    - name: Check links (.MD)
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        config-file: ${{ inputs.config-link-path || '.github/config/md-link-config.json' }}
-        use-verbose-mode: 'yes'
-        use-quiet-mode: 'yes'
-        file-extension: '.MD'
+        filter_mode: nofilter
+        reporter: github-pr-review
+        config_file: ${{ inputs.config-link-path || '.github/config/.linkspector.yml' }}
   markdown-spellchecker:
     runs-on: ubuntu-latest
     needs: changes
