@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-12-16
+## 0.0.3-dev - 2024-12-18
 
 ### Features
 
+- Use [linkspector](https://github.com/UmbrellaDocs/linkspector) to check links
+  (PR #148 by @chicco785)
 - docker workflow: add javascript mode for cache (PR #146 by @chicco785)
 - Add workflow to create a new release (PR #145 by @chicco785)
 - golang workflow: include `.sql` and `.docker/*.yml` files in golang changes
