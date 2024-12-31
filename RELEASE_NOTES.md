@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-12-24
+## 0.0.3-dev - 2024-12-31
 
 ### Features
 
@@ -45,6 +45,8 @@
 
 ### Dependencies
 
+- Bump DavidAnson/markdownlint-cli2-action from 18 to 19 (PR #152 by
+  @dependabot[bot])
 - Bump fjogeleit/yaml-update-action from 0.15.0 to 0.16.0 (PR #151 by
   @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 6 to 7 (PR #143 by
