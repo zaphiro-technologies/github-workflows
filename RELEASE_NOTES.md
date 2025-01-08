@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-12-31
+## 0.0.3-dev - 2025-01-08
 
 ### Features
 
@@ -45,6 +45,7 @@
 
 ### Dependencies
 
+- Use SonarSource/sonarqube-scan-action (PR #153 by @chicco785)
 - Bump DavidAnson/markdownlint-cli2-action from 18 to 19 (PR #152 by
   @dependabot[bot])
 - Bump fjogeleit/yaml-update-action from 0.15.0 to 0.16.0 (PR #151 by
