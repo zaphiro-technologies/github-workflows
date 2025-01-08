@@ -38,7 +38,7 @@ on:
         type: boolean
       config-links-path:
         required: false
-        default: '.github/config/md-link-config.json'
+        default: '.github/config/.linkspector.yml'
         type: string
       config-lint-path:
         default: '.github/config/.markdownlint.json'
@@ -72,7 +72,7 @@ jobs:
             scripts:
               - '.github/config/.markdownlint.json'
               - '.github/config/.prettierignore'
-              - '.github/config/md-link-config.json'
+              - '.github/config/.linkspector.yml'
               - '.gramma.json'
               - '.grammarignore'
               - 'grammar-check.sh'
@@ -96,7 +96,7 @@ jobs:
           dry: true
           dry_no_fail: true
     - name: Lint
-      uses: DavidAnson/markdownlint-cli2-action@v17
+      uses: DavidAnson/markdownlint-cli2-action@v19
       with:
         fix: true
         config: ${{ inputs.config-lint-path || '.github/config/.markdownlint.json' }}
@@ -108,21 +108,40 @@ jobs:
         git config --global user.email 'bot@zaphiro.ch'
         git commit -am "Automated markdown-lint fixes [dependabot skip]" || echo "No changes to commit"
         git push
-        rm -fr vendor
-    # Checks the status of hyperlinks in .md and .MD files in verbose mode (the action is case sensitive and .{MD,md})
-    - name: Check links (.md)
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
+    - name: Fix apparmor issue for puppeteer
+      run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
+    - name: Default configuration for link checker
+      run: |
+        FILE=${{ inputs.config-link-path || '.github/config/.linkspector.yml' }}
+        if [ -f $FILE ]; then
+          echo "'$FILE' Exists"
+        else
+          # Write content to the file
+          cat <<EOF > "$FILE"
+        dirs:
+          - .
+        excludedDirs:
+          - vendor
+        useGitIgnore: true
+        aliveStatusCodes:
+          - 200
+          - 201
+          - 204
+          - 206
+          - 429
+        ignorePatterns:
+          - pattern: '^http(s?)://localhost'
+          - pattern: '^https://github.com/orgs/zaphiro-technologies/'
+          - pattern: '^https://github.com/zaphiro-technologies/'
+        EOF
+        fi
+    - name: Check links
+      uses: umbrelladocs/action-linkspector@v1
       with:
-        config-file: ${{ inputs.config-link-path || '.github/config/md-link-config.json' }}
-        use-verbose-mode: 'yes'
-        use-quiet-mode: 'yes'
-    - name: Check links (.MD)
-      uses: gaurav-nelson/github-action-markdown-link-check@v1
-      with:
-        config-file: ${{ inputs.config-link-path || '.github/config/md-link-config.json' }}
-        use-verbose-mode: 'yes'
-        use-quiet-mode: 'yes'
-        file-extension: '.MD'
+        filter_mode: nofilter
+        reporter: github-pr-review
+        config_file: ${{ inputs.config-link-path || '.github/config/.linkspector.yml' }}
+        fail_on_error: true
   markdown-spellchecker:
     runs-on: ubuntu-latest
     needs: changes

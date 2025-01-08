@@ -50,6 +50,11 @@ on:
         default: false
         type: boolean
         description: Use go caching mechanism
+      language-cache:
+        required: false
+        type: string
+        default: ''
+        description: Use caching mechanism for a given language
         
 # Permissions needed
 # permissions:
@@ -94,21 +99,40 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
       - name: Go Build Cache for Docker
-        id: cache
-        if: ${{ inputs.go-cache }}
+        id: cache-go
+        if: ${{ inputs.go-cache || inputs.language-cache == 'go' }}
         uses: actions/cache@v4
         with:
           path: go-build-cache
           key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
       - name: inject go-build-cache into docker
-        if: ${{ inputs.go-cache }}
+        if: ${{ inputs.go-cache || inputs.language-cache == 'go' }}
         uses: reproducible-containers/buildkit-cache-dance@v3.1.2
         with:
           cache-map: |
             {
               "go-build-cache": "/root/.cache/go-build"
             }
-          skip-extraction: ${{ steps.cache.outputs.cache-hit }}
+          skip-extraction: ${{ steps.cache-go.outputs.cache-hit }}
+      - name: Node Build Cache for Docker
+        id: cache-node
+        if: ${{ inputs.language-cache == 'javascript' }}
+        uses: actions/cache@v4
+        with:
+          path: |
+            node-arm64-cache
+            node-amd64-cache
+          key: ${{ runner.os }}-node-build-cache-${{ hashFiles('**/yarn.lock') }}
+      - name: inject node-build-cache into docker
+        if: ${{ inputs.language-cache == 'javascript' }}
+        uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+        with:
+          cache-map: |
+            {
+              "node-arm64-cache": "/root/.cache/yarn-arm64",
+              "node-amd64-cache": "/root/.cache/yarn-amd64"
+            }
+          skip-extraction: ${{ steps.cache-node.outputs.cache-hit }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx

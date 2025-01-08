@@ -1,9 +1,15 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2024-10-07
+## 0.0.3-dev - 2024-12-31
 
 ### Features
 
+- Use [linkspector](https://github.com/UmbrellaDocs/linkspector) to check links
+  (PR #148 by @chicco785)
+- docker workflow: add javascript mode for cache (PR #146 by @chicco785)
+- Add workflow to create a new release (PR #145 by @chicco785)
+- golang workflow: include `.sql` and `.docker/*.yml` files in golang changes
+  filter (PR #142 by @chicco785)
 - Golang & Docker workflows: add db caching to trivy (PR #138 by @chicco785)
 - Support Customer Label (PR #136 by @chicco785)
 - docker wf: support concurrent image builds (PR #121 by @chicco785)
@@ -24,6 +30,7 @@
 
 ### Bug Fixes
 
+- Fix link check for `vendor` folders in subdirectories (PR #147 by @chicco785)
 - deployment workflow: fix yaml-update-action@v1 is not available (PR #139 by
   @chicco785)
 - deployment workflow: fix tag version extraction (PR #137 by @cosimomeli)
@@ -38,6 +45,14 @@
 
 ### Dependencies
 
+- Bump DavidAnson/markdownlint-cli2-action from 18 to 19 (PR #152 by
+  @dependabot[bot])
+- Bump fjogeleit/yaml-update-action from 0.15.0 to 0.16.0 (PR #151 by
+  @dependabot[bot])
+- Bump dawidd6/action-download-artifact from 6 to 7 (PR #143 by
+  @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 17 to 18 (PR #141 by
+  @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 16 to 17 (PR #134 by
   @dependabot[bot])
 - Bump mikepenz/release-changelog-builder-action from 4 to 5 (PR #132 by
