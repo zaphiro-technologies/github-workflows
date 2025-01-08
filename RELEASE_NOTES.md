@@ -54,6 +54,8 @@
   @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 17 to 18 (PR #141 by
   @dependabot[bot])
+- golang and docker workflows: Update trivy configuration to last github action
+  version (PR #140 by @chicco785)
 - Bump DavidAnson/markdownlint-cli2-action from 16 to 17 (PR #134 by
   @dependabot[bot])
 - Bump mikepenz/release-changelog-builder-action from 4 to 5 (PR #132 by
