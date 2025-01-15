@@ -55,7 +55,7 @@ on:
         type: string
         default: ''
         description: Use caching mechanism for a given language
-      initialize-submodules:
+      submodules:
         required: false
         type: boolean
         default: false
@@ -85,7 +85,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: ${{ inputs.initialize-submodules }}
+          submodules: ${{ inputs.submodules }}
       - name: Run pre-build
         run: |
           if test -f "Makefile"; then
