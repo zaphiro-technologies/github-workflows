@@ -80,7 +80,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodule: true
+          submodules: true
       - name: Run pre-build
         run: |
           if test -f "Makefile"; then
