@@ -79,6 +79,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodule: true
       - name: Run pre-build
         run: |
           if test -f "Makefile"; then
