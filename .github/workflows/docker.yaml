@@ -86,6 +86,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: ${{ inputs.submodules }}
+          token: ${{ secrets.REPO_PRIVATE_READ_PAT }}
       - name: Run pre-build
         run: |
           if test -f "Makefile"; then
