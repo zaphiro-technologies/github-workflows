@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-01-08
+## 0.0.3-dev - 2025-01-17
 
 ### Features
 
+- docker workflow: support private repository checkout (PR #156 by @chicco785)
+- docker workflow: support submodules initialisation (PR #155 by @gtauzin)
 - Use [linkspector](https://github.com/UmbrellaDocs/linkspector) to check links
   (PR #148 by @chicco785)
 - docker workflow: add javascript mode for cache (PR #146 by @chicco785)
@@ -45,6 +47,8 @@
 
 ### Dependencies
 
+- golang and docker workflows: Update trivy configuration to last github action
+  version (PR #140 by @chicco785)
 - Use SonarSource/sonarqube-scan-action (PR #153 by @chicco785)
 - Bump DavidAnson/markdownlint-cli2-action from 18 to 19 (PR #152 by
   @dependabot[bot])
@@ -54,8 +58,6 @@
   @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 17 to 18 (PR #141 by
   @dependabot[bot])
-- golang and docker workflows: Update trivy configuration to last github action
-  version (PR #140 by @chicco785)
 - Bump DavidAnson/markdownlint-cli2-action from 16 to 17 (PR #134 by
   @dependabot[bot])
 - Bump mikepenz/release-changelog-builder-action from 4 to 5 (PR #132 by
