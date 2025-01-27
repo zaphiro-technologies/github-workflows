@@ -167,6 +167,7 @@ jobs:
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
             GIT_URL=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.source']}}
             BUILD_DATE=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.created']}}
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
   vulnerability:
     if: ${{ inputs.vulnerability-scan}}
     runs-on: ubuntu-latest
