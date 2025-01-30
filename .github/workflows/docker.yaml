@@ -89,7 +89,7 @@ jobs:
           token: ${{ inputs.submodules != '' && secrets.REPO_PRIVATE_READ_PAT || github.token }}
       - name: Run pre-build
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
         run: |
           if test -f "Makefile"; then
               make ci-pre-build
