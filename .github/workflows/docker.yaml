@@ -70,7 +70,7 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || !github.event.pull_request.draft ) }}
+    if: ${{ (github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || !github.event.pull_request.draft )) || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'docker')) }}
     steps:
       - run: |
           echo "docker build is required"
