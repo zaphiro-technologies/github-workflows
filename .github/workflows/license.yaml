@@ -42,7 +42,7 @@ jobs:
   license:
     name: Check licenses
     runs-on: ubuntu-latest
-    if: ${{ !github.event.pull_request.draft }}
+    if: ${{ github.event.pull_request.draft == false }}
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}

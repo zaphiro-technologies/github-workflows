@@ -55,7 +55,7 @@ on:
           #RELEASE_NOTES.md
 jobs:
   changes:
-    if: ${{ !github.event.pull_request.draft }}
+    if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     outputs:
       files_changed: ${{ steps.filter.outputs.markdown == 'true' || steps.filter.outputs.scripts == 'true' }}
@@ -81,7 +81,7 @@ jobs:
               - '**/!(*RELEASE_NOTES).(md|MD)'
   markdown:
     needs: changes
-    if: ${{ needs.changes.outputs.files_changed == 'true' && !github.event.pull_request.draft }}
+    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -145,7 +145,7 @@ jobs:
   markdown-spellchecker:
     runs-on: ubuntu-latest
     needs: changes
-    if: ${{ needs.changes.outputs.files_changed == 'true'  && !github.event.pull_request.draft && (!inputs.skip-spell-check || inputs.skip-spell-check == '') }}
+    if: ${{ needs.changes.outputs.files_changed == 'true'  && github.event.pull_request.draft == false && (!inputs.skip-spell-check || inputs.skip-spell-check == '') }}
     steps:
     - uses: actions/checkout@v4
       with:
