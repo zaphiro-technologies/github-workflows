@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-01-17
+## 0.0.3-dev - 2025-02-06
 
 ### Features
 
@@ -47,6 +47,8 @@
 
 ### Dependencies
 
+- Bump dawidd6/action-download-artifact from 7 to 8 (PR #158 by
+  @dependabot[bot])
 - golang and docker workflows: Update trivy configuration to last github action
   version (PR #140 by @chicco785)
 - Use SonarSource/sonarqube-scan-action (PR #153 by @chicco785)
@@ -91,6 +93,10 @@
 - Bump dawidd6/action-download-artifact from 2 to 3 (PR #94 by @dependabot[bot])
 - Bump stefanzweifel/git-auto-commit-action from 4 to 5 (PR #92 by
   @dependabot[bot])
+
+### Refactoring
+
+- Reduce number of wf run when pr are in draft mode (PR #160 by @chicco785)
 
 ## 0.0.2 - 2024-02-09
 
