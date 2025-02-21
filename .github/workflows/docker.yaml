@@ -20,6 +20,10 @@ concurrency:
 
 on:
   workflow_call:
+    secrets:
+      token:
+        required: false
+        description: Token to be used for submodules or for docker builds
     inputs:
       image-name:
         required: false
@@ -79,14 +83,12 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tags: ${{ steps.meta.outputs.tags }}
-    env:
-      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: ${{ inputs.submodules }}
-          token: ${{ inputs.submodules != '' && secrets.REPO_PRIVATE_READ_PAT || github.token }}
+          token: ${{ inputs.submodules != '' && secrets.token || github.token }}
       - name: Run pre-build
         run: |
           if test -f "Makefile"; then
@@ -167,6 +169,7 @@ jobs:
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
             GIT_URL=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.source']}}
             BUILD_DATE=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.created']}}
+            GITHUB_TOKEN=${{ secrets.token || github.token }}
   vulnerability:
     if: ${{ inputs.vulnerability-scan}}
     runs-on: ubuntu-latest

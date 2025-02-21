@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-02-06
+## 0.0.3-dev - 2025-02-20
 
 ### Features
 
+- Pass Github Token to Docker build process (PR #157 by @chicco785)
 - docker workflow: support private repository checkout (PR #156 by @chicco785)
 - docker workflow: support submodules initialisation (PR #155 by @gtauzin)
 - Use [linkspector](https://github.com/UmbrellaDocs/linkspector) to check links
