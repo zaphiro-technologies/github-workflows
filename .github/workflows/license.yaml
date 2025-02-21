@@ -54,7 +54,7 @@ jobs:
           repository: ${{github.event.pull_request.head.repo.full_name}}
       - name: Fix License Header
         if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
-        uses: apache/skywalking-eyes/header@v0.6.0
+        uses: apache/skywalking-eyes/header@v0.7.0
         with:
           config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
           mode: fix
