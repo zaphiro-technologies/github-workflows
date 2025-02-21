@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-02-20
+## 0.0.3-dev - 2025-02-21
 
 ### Features
 
@@ -48,6 +48,8 @@
 
 ### Dependencies
 
+- Bump SonarSource/sonarqube-scan-action from 4.2.1 to 5.0.0 (PR #162 by
+  @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 7 to 8 (PR #158 by
   @dependabot[bot])
 - golang and docker workflows: Update trivy configuration to last github action
