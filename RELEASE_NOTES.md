@@ -49,6 +49,8 @@
 ### Dependencies
 
 - Bump apache/skywalking-eyes from 0.6.0 to 0.7.0 (PR #161 by @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 4.2.1 to 5.0.0 (PR #162 by
+  @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 7 to 8 (PR #158 by
   @dependabot[bot])
 - golang and docker workflows: Update trivy configuration to last github action
