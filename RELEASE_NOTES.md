@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-02-21
+## 0.0.3-dev - 2025-02-28
 
 ### Features
 
@@ -46,11 +46,15 @@
 - docker workflow: support golang build caching (PR #124 by @chicco785)
 - Move sonarcloud checks to test job (PR #119 by @chicco785)
 
+### Security
+
+- Pass github token to docker build as secret (PR #163 by @chicco785)
+
 ### Dependencies
 
+- Bump apache/skywalking-eyes from 0.6.0 to 0.7.0 (PR #161 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 4.2.1 to 5.0.0 (PR #162 by
   @dependabot[bot])
-- Bump apache/skywalking-eyes from 0.6.0 to 0.7.0 (PR #161 by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 7 to 8 (PR #158 by
   @dependabot[bot])
 - golang and docker workflows: Update trivy configuration to last github action
