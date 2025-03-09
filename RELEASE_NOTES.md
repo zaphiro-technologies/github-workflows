@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-02-28
+## 0.0.3-dev - 2025-03-09
 
 ### Features
 
@@ -52,6 +52,8 @@
 
 ### Dependencies
 
+- Bump dawidd6/action-download-artifact from 8 to 9 (PR #164 by
+  @dependabot[bot])
 - Bump apache/skywalking-eyes from 0.6.0 to 0.7.0 (PR #161 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 4.2.1 to 5.0.0 (PR #162 by
   @dependabot[bot])
