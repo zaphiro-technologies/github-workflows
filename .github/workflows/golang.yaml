@@ -54,6 +54,12 @@ on:
         default: 'vendor,.github'
         type: string
         description: Comma separated list of directories where vulterability check is skipped
+      install-dvc:
+        required: false
+        default: false
+        type: boolean
+        description: True to install and configure dvc
+
       
 jobs:
   changes:
@@ -126,6 +132,20 @@ jobs:
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - name: Configure AWS Credentials
+        if: ${{ inputs.install-dvc }}
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-south-1
+          role-to-assume: arn:aws:iam::058264335177:role/zaphiro-github-role-demo
+          output-credentials: true
+      - name: Install DVC
+        if: ${{ inputs.install-dvc }}
+        run: pip install dvc[s3]
+      - name: Pull DVC Data
+        if: ${{ inputs.install-dvc }}
+        run: dvc pull
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
