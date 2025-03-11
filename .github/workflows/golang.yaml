@@ -143,6 +143,11 @@ jobs:
       - name: Install DVC
         if: ${{ inputs.pull-dvc-datasets }}
         run: pip install dvc[s3]
+      - name: Configure DVC
+        run: |
+           echo -e "[credential]\n    helper=cache" >> ~/.gitconfig
+           printf "url=https://github.com\nusername=bot\npassword=$GH_ACCESS_TOKEN\n" | git credential-cache store
+           dvc pull
       - name: Pull DVC Data
         if: ${{ inputs.pull-dvc-datasets }}
         run: dvc pull
