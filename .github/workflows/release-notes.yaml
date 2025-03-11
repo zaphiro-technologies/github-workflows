@@ -229,6 +229,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Select configuration
         if: ${{ github.event_name == ' workflow_call' }}
         run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
@@ -257,6 +259,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Generate SBOM
         uses: aquasecurity/trivy-action@master
         with:
