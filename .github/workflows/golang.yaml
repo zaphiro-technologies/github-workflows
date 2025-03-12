@@ -151,6 +151,7 @@ jobs:
       - name: Pull DVC Data
         if: ${{ inputs.pull-dvc-datasets }}
         run: dvc pull
+      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
