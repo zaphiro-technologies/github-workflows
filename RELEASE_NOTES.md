@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-03-09
+## 0.0.3-dev - 2025-03-11
 
 ### Features
 
@@ -33,6 +33,7 @@
 
 ### Bug Fixes
 
+- Release notes workflow: fix sbom generation (PR #166 by @chicco785)
 - Fix link check for `vendor` folders in subdirectories (PR #147 by @chicco785)
 - deployment workflow: fix yaml-update-action@v1 is not available (PR #139 by
   @chicco785)
