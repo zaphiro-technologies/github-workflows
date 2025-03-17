@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-03-11
+## 0.0.3-dev - 2025-03-17
 
 ### Features
 
+- golang workflow: support dvc data pulling for tests (PR #165 by @hiimjako)
 - Pass Github Token to Docker build process (PR #157 by @chicco785)
 - docker workflow: support private repository checkout (PR #156 by @chicco785)
 - docker workflow: support submodules initialisation (PR #155 by @gtauzin)
