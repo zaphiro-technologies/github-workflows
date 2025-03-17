@@ -4,7 +4,7 @@
 
 ### Features
 
-- Add input to install dvc on golang action (PR #165 by @hiimjako)
+- golang workflow: support dvc data pulling for tests (PR #165 by @hiimjako)
 - Pass Github Token to Docker build process (PR #157 by @chicco785)
 - docker workflow: support private repository checkout (PR #156 by @chicco785)
 - docker workflow: support submodules initialisation (PR #155 by @gtauzin)
