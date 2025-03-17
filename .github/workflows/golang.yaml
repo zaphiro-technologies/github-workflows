@@ -150,6 +150,8 @@ jobs:
             gh auth setup-git
             git config --global credential.helper '!/usr/bin/gh auth git-credential'
       - name: Pull DVC Data
+        env:
+           GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
         if: ${{ inputs.pull-dvc-datasets }}
         run: dvc pull
       - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
