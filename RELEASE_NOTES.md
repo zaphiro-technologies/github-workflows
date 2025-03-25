@@ -56,6 +56,7 @@
 
 - Bump SonarSource/sonarqube-scan-action from 5.0.0 to 5.1.0 (PR #168 by
   @dependabot[bot])
+- Bump golangci/golangci-lint-action from 6 to 7 (PR #167 by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 8 to 9 (PR #164 by
   @dependabot[bot])
 - Bump apache/skywalking-eyes from 0.6.0 to 0.7.0 (PR #161 by @dependabot[bot])
