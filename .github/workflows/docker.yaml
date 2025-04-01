@@ -90,6 +90,8 @@ jobs:
           submodules: ${{ inputs.submodules }}
           token: ${{ inputs.submodules != '' && secrets.token || github.token }}
       - name: Run pre-build
+        env:
+           GH_TOKEN: ${{ secrets.token || github.token }}
         run: |
           if test -f "Makefile"; then
               make ci-pre-build
