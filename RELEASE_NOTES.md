@@ -4,6 +4,7 @@
 
 ### Features
 
+- docker workflow: pass token to prebuild step (PR #169 by @chicco785)
 - golang workflow: support dvc data pulling for tests (PR #165 by @hiimjako)
 - Pass Github Token to Docker build process (PR #157 by @chicco785)
 - docker workflow: support private repository checkout (PR #156 by @chicco785)
