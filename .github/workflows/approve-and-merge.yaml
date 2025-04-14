@@ -32,6 +32,12 @@ jobs:
             echo "👉 Processing PR #$number: $title"
 
             # Add label
+            if ! gh label list --repo "$GITHUB_REPOSITORY" --limit 100 | grep -q auto-approved then
+              echo "Label auto-approved does not exist. Creating it..."
+              gh label create auto-approved --repo "$GITHUB_REPOSITORY" --color "0e8a16" --description "Automatically approved and merged by workflow"
+            else
+              echo "Label auto-approved already exists. Skipping creation."
+            fi
             gh label create --repo "$GITHUB_REPOSITORY" auto-approved
             # Approve the PR
             gh pr review "$number" --repo "$GITHUB_REPOSITORY" --approve
