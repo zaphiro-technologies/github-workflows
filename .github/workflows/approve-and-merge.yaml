@@ -8,8 +8,6 @@ on:
 
 permissions:
   pull-requests: write
-  contents: write
-  issues: write
 
 concurrency:
   group: ${{ github.ref_name }}-approve-and-merge
@@ -26,16 +24,16 @@ jobs:
           echo "Fetching open Dependabot PRs older than 3 days..."
 
           # Get PRs by dependabot, filter by age
-          gh pr list --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while read pr; do
+          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while read pr; do
             number=$(echo "$pr" | jq -r '.number')
             title=$(echo "$pr" | jq -r '.title')
 
             echo "👉 Processing PR #$number: $title"
 
             # Approve the PR
-            gh pr review "$number" --approve
-            gh pr merge "$number" --squash --auto
-            gh pr edit "$number" --add-label auto-approved
+            gh pr review "$number" --repo "$GITHUB_REPOSITORY" --approve
+            gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
+            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --add-label auto-approved
 
             echo "✅ Done with PR #$number"
           done
