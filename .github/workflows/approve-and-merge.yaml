@@ -32,17 +32,9 @@ jobs:
           echo "Fetching open Dependabot PRs older than 3 days..."
 
           # Get PRs by dependabot, filter by age
-          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while read pr; do
+          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200) (now - 259200) and .reviewDecision == "REVIEW_REQUIRED")' | jq -c '.' | while read pr; do
             number=$(echo "$pr" | jq -r '.number')
             title=$(echo "$pr" | jq -r '.title')
-
-            # Skip if PR is already approved
-            approved=$(gh api repos/"$REPO"/pulls/"$number"/reviews --jq '.[] | select(.state == "APPROVED")' | wc -l)
-
-            if [ "$approved" -gt 0 ]; then
-              echo "🟡 Skipping PR #$number ($title) – already approved."
-              continue
-            fi
 
             echo "👉 Processing PR #$number: $title"
 
