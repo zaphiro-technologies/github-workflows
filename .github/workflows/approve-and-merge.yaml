@@ -22,6 +22,13 @@ jobs:
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
+          # Add label
+          if ! gh label list --repo "$GITHUB_REPOSITORY" --limit 100 | grep -q auto-approved; then
+            echo "Label auto-approved does not exist. Creating it..."
+            gh label create auto-approved --repo "$GITHUB_REPOSITORY" --color "0e8a16" --description "Automatically approved and merged by workflow"
+          else
+            echo "Label auto-approved already exists. Skipping creation."
+          fi
           echo "Fetching open Dependabot PRs older than 3 days..."
 
           # Get PRs by dependabot, filter by age
@@ -29,16 +36,16 @@ jobs:
             number=$(echo "$pr" | jq -r '.number')
             title=$(echo "$pr" | jq -r '.title')
 
+            # Skip if PR is already approved
+            approved=$(gh api repos/"$REPO"/pulls/"$number"/reviews --jq '.[] | select(.state == "APPROVED")' | wc -l)
+
+            if [ "$approved" -gt 0 ]; then
+              echo "🟡 Skipping PR #$number ($title) – already approved."
+              continue
+            fi
+
             echo "👉 Processing PR #$number: $title"
 
-            # Add label
-            if ! gh label list --repo "$GITHUB_REPOSITORY" --limit 100 | grep -q auto-approved; then
-              echo "Label auto-approved does not exist. Creating it..."
-              gh label create auto-approved --repo "$GITHUB_REPOSITORY" --color "0e8a16" --description "Automatically approved and merged by workflow"
-            else
-              echo "Label auto-approved already exists. Skipping creation."
-            fi
-            # Approve the PR
             gh pr review "$number" --repo "$GITHUB_REPOSITORY" --approve
             gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
             gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --add-label auto-approved
