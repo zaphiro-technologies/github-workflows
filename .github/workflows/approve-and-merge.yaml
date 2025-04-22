@@ -1,0 +1,60 @@
+# Copyright 2024 Zaphiro Technologies
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Auto-approve & auto-merge Dependabot PRs
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # Every day at 3 AM UTC
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  pull-requests: write
+  contents: write
+
+concurrency:
+  group: ${{ github.ref_name }}-approve-and-merge
+  cancel-in-progress: true
+
+jobs:
+  approve-and-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve & Merge Dependabot PRs
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          # Add label
+          if ! gh label list --repo "$GITHUB_REPOSITORY" --limit 100 | grep -q auto-approved; then
+            echo "Label auto-approved does not exist. Creating it..."
+            gh label create auto-approved --repo "$GITHUB_REPOSITORY" --color "0e8a16" --description "Automatically approved and merged by workflow"
+          else
+            echo "Label auto-approved already exists. Skipping creation."
+          fi
+          echo "Fetching open Dependabot PRs older than 3 days..."
+
+          # Get PRs by dependabot, filter by age
+          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200)' | jq -c '.' | while read pr; do
+            number=$(echo "$pr" | jq -r '.number')
+            title=$(echo "$pr" | jq -r '.title')
+
+            echo "👉 Processing PR #$number: $title"
+
+            gh pr review "$number" --repo "$GITHUB_REPOSITORY" --approve
+            gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
+            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --add-label auto-approved
+
+            echo "✅ Done with PR #$number"
+          done
