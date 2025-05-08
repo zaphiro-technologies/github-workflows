@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-04-01
+## 0.0.3-dev - 2025-05-08
 
 ### Features
 
+- approve-and-merge: add workflow that automatically approve and merge PRs by
+  dependabot (PR #170 by @chicco785)
 - docker workflow: pass token to prebuild step (PR #169 by @chicco785)
 - golang workflow: support dvc data pulling for tests (PR #165 by @hiimjako)
 - Pass Github Token to Docker build process (PR #157 by @chicco785)
@@ -35,6 +37,7 @@
 
 ### Bug Fixes
 
+- Run Docker Build after Dependabot merged PR (PR #171 by @cosimomeli)
 - Release notes workflow: fix sbom generation (PR #166 by @chicco785)
 - Fix link check for `vendor` folders in subdirectories (PR #147 by @chicco785)
 - deployment workflow: fix yaml-update-action@v1 is not available (PR #139 by
