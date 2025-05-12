@@ -14,16 +14,6 @@ concurrency:
 on:
     workflow_call:
       inputs:
-        alert-threshold-benchmark:
-          required: false
-          default: 150%
-          type: string
-          description: Percent that will trigger benchmark alert
-        skip-benchmark:
-          required: false
-          default: false
-          type: boolean
-          description: True to skip benchmark exec
         code-scan:
             required: false
             default: true
