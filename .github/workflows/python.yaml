@@ -88,9 +88,8 @@ jobs:
           git commit -am "Automated ruff fixes [dependabot skip]" || echo "No changes to commit"
           git push
       - name: mypy
-        #change app to . when the old code is removed
         run: |
-          mypy src --ignore-missing-imports --non-interactive --install-types --exclude '.*/test_.*\.py'
+          mypy . --ignore-missing-imports --non-interactive --install-types --exclude '.*/test_.*\.py'
   test:
     runs-on: ubuntu-latest
     needs: changes
