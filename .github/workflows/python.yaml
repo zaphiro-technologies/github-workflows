@@ -1,0 +1,200 @@
+# Copyright 2024 Zaphiro Technologies
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Python Lint & Test
+
+concurrency:
+  group: ${{github.repository}}-${{ github.ref_name }}-python
+  cancel-in-progress: true
+
+# Permissions needed
+# permissions:
+#  contents: read
+#  packages: write
+#  pull-requests: read
+#  id-token: write
+
+on:
+    workflow_call:
+      inputs:
+        code-scan:
+            required: false
+            default: true
+            type: boolean
+            description: False to skip code-scan exec
+        vulterability-scan:
+          required: false
+          default: true
+          type: boolean
+          description: False to skip vulterability-scan exec
+        vulterability-scan-skip-dirs:
+          required: false
+          default: 'vendor,.github'
+          type: string
+          description: Comma separated list of directories where vulterability check is skipped
+        pull-dvc-datasets:
+          required: false
+          default: false
+          type: boolean
+          description: True to install and configure dvc
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      files_changed: ${{ steps.filter.outputs.python == 'true' }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          python:
+            - '*.py'
+            - '**/*.py'
+            - '.github/workflows/python.yaml'
+            - '.docker/*.yml'
+            - '.docker/*.yaml'
+  lint:
+    # Check if the PR is not from a fork
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          ref: ${{github.event.pull_request.head.ref}}
+      - name: Install Ruff
+        run: pip install ruff mypy
+      - name: ruff
+        run: |
+          ruff check --fix . && ruff format .
+      - name: Commit ruff changes
+        run: |
+          git config --global user.name 'Bot'
+          git config --global user.email 'bot@zaphiro.ch'
+          git commit -am "Automated ruff fixes [dependabot skip]" || echo "No changes to commit"
+          git push
+      - name: mypy
+        run: |
+          mypy . --ignore-missing-imports --non-interactive --install-types --exclude '.*/test_.*\.py'
+  test:
+    runs-on: ubuntu-latest
+    needs: changes
+    strategy:
+      matrix:
+        python-version: ['3.12']
+    if: ${{ needs.changes.outputs.files_changed == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install packages
+        run: | 
+          make dev-setup
+      - name: Configure AWS Credentials
+        if: ${{ inputs.pull-dvc-datasets }}
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-south-1
+          role-to-assume: arn:aws:iam::058264335177:role/zaphiro-github-role-demo
+          output-credentials: true
+      - name: Install DVC
+        if: ${{ inputs.pull-dvc-datasets }}
+        run: pipx install dvc[s3]
+      - name: Set-up credentials
+        if: ${{ inputs.pull-dvc-datasets }}
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+        run: |
+            gh auth setup-git
+            git config --global credential.helper '!gh auth git-credential'
+      - name: Run tests
+        env:
+          GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+        run: | 
+          make ci-test
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        if: ${{ inputs.code-scan }}
+        # we log in the registry to code check also images
+        with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+      - name: SonarCloud Code Scan
+        if: ${{ inputs.code-scan }}
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  vulnerability:
+    needs: changes
+    if: ${{ inputs.vulterability-scan}}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy vulnerability scanner (for summary)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          scanners: "vuln,secret,misconfig"
+          hide-progress: true
+          output: trivy.txt
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+      - name: Publish Trivy Output to Summary
+        run: |
+          if [[ -s trivy.txt ]]; then
+            {
+              echo "### Trivy Security Output"
+              echo ""
+              echo '```text'
+              cat trivy.txt
+              echo '```'
+            } >> $GITHUB_STEP_SUMMARY
+          fi
+      # this comes as last or scan results won't be uploaded
+      - name: Run Trivy vulnerability scanner (security treshold)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          scanners: "vuln,secret,misconfig"
+          exit-code: '1'
+          severity: MEDIUM,HIGH,CRITICAL
+          # On a subsequent call to the action we know trivy is already installed so can skip this
+          skip-setup-trivy: true
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true

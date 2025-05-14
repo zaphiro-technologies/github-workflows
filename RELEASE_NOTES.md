@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-05-08
+## 0.0.3-dev - 2025-05-14
 
 ### Features
 
+- Add python workflow (PR #174 by @chicco785)
 - approve-and-merge: add workflow that automatically approve and merge PRs by
   dependabot (PR #170 by @chicco785)
 - docker workflow: pass token to prebuild step (PR #169 by @chicco785)
@@ -58,6 +59,9 @@
 
 ### Dependencies
 
+- Bump reproducible-containers/buildkit-cache-dance from 3.1.2 to 3.2.0 (PR #172
+  by @dependabot[bot])
+- Bump golangci/golangci-lint-action from 7 to 8 (PR #173 by @dependabot[bot])
 - Bump golangci/golangci-lint-action from 6 to 7 (PR #167 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 5.0.0 to 5.1.0 (PR #168 by
   @dependabot[bot])
