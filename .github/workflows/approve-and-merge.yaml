@@ -52,6 +52,7 @@ jobs:
 
             echo "👉 Processing PR #$number: $title"
 
+            gh pr update-branch "$number" --rebase "$number" --repo "$GITHUB_REPOSITORY"
             gh pr review "$number" --repo "$GITHUB_REPOSITORY" --approve
             gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
             gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --add-label auto-approved
