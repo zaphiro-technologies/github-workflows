@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-05-14
+## 0.0.3-dev - 2025-05-20
 
 ### Features
 
@@ -59,6 +59,10 @@
 
 ### Dependencies
 
+- Bump DavidAnson/markdownlint-cli2-action from 19 to 20 (PR #176 by
+  @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 5.1.0 to 5.2.0 (PR #175 by
+  @dependabot[bot])
 - Bump reproducible-containers/buildkit-cache-dance from 3.1.2 to 3.2.0 (PR #172
   by @dependabot[bot])
 - Bump golangci/golangci-lint-action from 7 to 8 (PR #173 by @dependabot[bot])
