@@ -61,6 +61,8 @@
 
 - Bump DavidAnson/markdownlint-cli2-action from 19 to 20 (PR #176 by
   @dependabot[bot])
+- Bump fjogeleit/yaml-update-action from 0.16.0 to 0.16.1 (PR #177 by
+  @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 5.1.0 to 5.2.0 (PR #175 by
   @dependabot[bot])
 - Bump reproducible-containers/buildkit-cache-dance from 3.1.2 to 3.2.0 (PR #172
