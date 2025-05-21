@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-05-20
+## 0.0.3-dev - 2025-05-21
 
 ### Features
 
+- Approve-and-merge workflow: rebase before approval (PR #179 by @chicco785)
 - Add python workflow (PR #174 by @chicco785)
 - approve-and-merge: add workflow that automatically approve and merge PRs by
   dependabot (PR #170 by @chicco785)
@@ -59,9 +60,9 @@
 
 ### Dependencies
 
-- Bump DavidAnson/markdownlint-cli2-action from 19 to 20 (PR #176 by
-  @dependabot[bot])
 - Bump fjogeleit/yaml-update-action from 0.16.0 to 0.16.1 (PR #177 by
+  @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 19 to 20 (PR #176 by
   @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 5.1.0 to 5.2.0 (PR #175 by
   @dependabot[bot])
