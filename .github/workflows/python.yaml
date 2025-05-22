@@ -66,6 +66,8 @@ jobs:
             - '.github/workflows/python.yaml'
             - '.docker/*.yml'
             - '.docker/*.yaml'
+            - 'poetry.lock'
+            - 'pyproject.toml'
   lint:
     # Check if the PR is not from a fork
     runs-on: ubuntu-latest

@@ -1,10 +1,12 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-05-21
+## 0.0.3-dev - 2025-05-22
 
 ### Features
 
 - Approve-and-merge workflow: rebase before approval (PR #179 by @chicco785)
+- Python workflow: add `poetry.lock` and `pyproject.toml` to change list (PR
+  #178 by @chicco785)
 - Add python workflow (PR #174 by @chicco785)
 - approve-and-merge: add workflow that automatically approve and merge PRs by
   dependabot (PR #170 by @chicco785)
