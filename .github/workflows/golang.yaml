@@ -189,7 +189,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Download code coverage report from base branch
-        uses: dawidd6/action-download-artifact@v10
+        uses: dawidd6/action-download-artifact@v11
         if: github.actor != 'dependabot[bot]'
         with:
           name: cov-result
@@ -242,7 +242,7 @@ jobs:
         run: make ci-bench | tee output.txt
       # Download previous benchmark result from cache (if exists)
       - name: Download benchmark report from base branch
-        uses: dawidd6/action-download-artifact@v10
+        uses: dawidd6/action-download-artifact@v11
         with:
           name: benchmark-result
           github_token: ${{ secrets.REPO_PRIVATE_READ_PAT }}
