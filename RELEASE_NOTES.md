@@ -64,6 +64,8 @@
 
 - Bump dawidd6/action-download-artifact from 10 to 11 (PR #183 by
   @dependabot[bot])
+- Bump stefanzweifel/git-auto-commit-action from 5 to 6 (PR #182 by
+  @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 9 to 10 (PR #180 by
   @dependabot[bot])
 - Bump fjogeleit/yaml-update-action from 0.16.0 to 0.16.1 (PR #177 by
