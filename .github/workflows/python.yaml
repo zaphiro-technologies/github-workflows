@@ -55,7 +55,7 @@ jobs:
     outputs:
       files_changed: ${{ steps.filter.outputs.python == 'true' }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - uses: dorny/paths-filter@v3
       id: filter
       with:
@@ -74,7 +74,7 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.REPO_PAT }}
           ref: ${{github.event.pull_request.head.ref}}
@@ -100,7 +100,7 @@ jobs:
         python-version: ['3.12']
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up python
@@ -161,7 +161,7 @@ jobs:
     if: ${{ inputs.vulterability-scan}}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run Trivy vulnerability scanner (for summary)
         uses: aquasecurity/trivy-action@master
         with:
