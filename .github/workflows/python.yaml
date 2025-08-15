@@ -48,7 +48,16 @@ on:
           default: false
           type: boolean
           description: True to install and configure dvc
-
+        upload-artefacts:
+          required: false
+          default: false
+          type: boolean
+          description: True to upload files build by test
+        upload-artefacts-dir:
+          required: false
+          default: 'output'
+          type: string
+          description: Directory with the artifacts to upload
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -142,6 +151,13 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
         run: | 
           make ci-test
+      - if: ${{ inputs.upload-artefacts }}
+        name: Upload artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artefacts
+          path: ${{ inputs.upload-artefacts-dir }}
+          if-no-files-found: error
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         if: ${{ inputs.code-scan }}
