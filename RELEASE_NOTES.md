@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-06-17
+## 0.0.3-dev - 2025-08-15
 
 ### Features
 
+- python workflow: add option to upload output as artefact (PR #190 by
+  @chicco785)
 - Python workflow: add `poetry.lock` and `pyproject.toml` to change list (PR
   #178 by @chicco785)
 - Approve-and-merge workflow: rebase before approval (PR #179 by @chicco785)
@@ -62,9 +64,13 @@
 
 ### Dependencies
 
-- Bump dawidd6/action-download-artifact from 10 to 11 (PR #183 by
+- Bump SonarSource/sonarqube-scan-action from 5.2.0 to 5.3.0 (PR #188 by
   @dependabot[bot])
+- Bump reproducible-containers/buildkit-cache-dance from 3.2.0 to 3.3.0 (PR #186
+  by @dependabot[bot])
 - Bump stefanzweifel/git-auto-commit-action from 5 to 6 (PR #182 by
+  @dependabot[bot])
+- Bump dawidd6/action-download-artifact from 10 to 11 (PR #183 by
   @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 9 to 10 (PR #180 by
   @dependabot[bot])
