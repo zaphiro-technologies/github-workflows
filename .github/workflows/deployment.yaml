@@ -92,7 +92,7 @@ jobs:
         run: |
           echo "IMAGE_TAG=pr-${{steps.search-pr.outputs.pr}}" >> $GITHUB_ENV
       - name: Checkout of k8s-deployments
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.REPO_PAT }}
           repository: ${{github.repository_owner}}/k8s-deployments

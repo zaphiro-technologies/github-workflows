@@ -67,7 +67,7 @@ jobs:
     outputs:
       files_changed: ${{ steps.filter.outputs.go == 'true' || steps.filter.outputs.scripts == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2 # To retrieve the preceding commit.
       - uses: dorny/paths-filter@v3
@@ -96,7 +96,7 @@ jobs:
       GOPRIVATE: github.com/zaphiro-technologies/*
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
           token: ${{ secrets.REPO_PAT }}
@@ -128,7 +128,7 @@ jobs:
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Configure AWS Credentials
@@ -223,7 +223,7 @@ jobs:
       GOPRIVATE: github.com/zaphiro-technologies/*
       GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
       - uses: actions/setup-go@v5
         with:
@@ -277,7 +277,7 @@ jobs:
     if: ${{ inputs.vulterability-scan}}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run Trivy vulnerability scanner (for summary)
         uses: aquasecurity/trivy-action@master
         with:

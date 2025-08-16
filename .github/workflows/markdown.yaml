@@ -61,7 +61,7 @@ jobs:
       files_changed: ${{ steps.filter.outputs.markdown == 'true' || steps.filter.outputs.scripts == 'true' }}
       markdown_files: ${{ steps.filter.outputs.markdown_files }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2 # To retrieve the preceding commit.
       - uses: dorny/paths-filter@v3
@@ -84,7 +84,7 @@ jobs:
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         token: ${{ secrets.REPO_PAT }}
         ref: ${{github.event.pull_request.head.ref}}
@@ -147,7 +147,7 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true'  && github.event.pull_request.draft == false && (!inputs.skip-spell-check || inputs.skip-spell-check == '') }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         token: ${{ secrets.REPO_PAT }}
         ref: ${{github.event.pull_request.head.ref}}
