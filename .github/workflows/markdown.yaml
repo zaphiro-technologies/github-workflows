@@ -55,6 +55,7 @@ on:
           #RELEASE_NOTES.md
 jobs:
   changes:
+    if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     outputs:
       files_changed: ${{ steps.filter.outputs.markdown == 'true' || steps.filter.outputs.scripts == 'true' }}
@@ -83,7 +84,7 @@ jobs:
               - '.github/workflows/*.(yaml|yml)'
   github-actions:
     needs: changes
-    if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' }}
+    if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -110,7 +111,7 @@ jobs:
           reporter: github-pr-review
   markdown:
     needs: changes
-    if: ${{ needs.changes.outputs.files_changed == 'true' }}
+    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
