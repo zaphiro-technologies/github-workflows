@@ -104,6 +104,9 @@ jobs:
           git commit -am "Automated yaml-lint fixes [dependabot skip]" || echo "No changes to commit"
           git push
       - uses: reviewdog/action-actionlint@v1
+        with:
+          fail_level: error
+          reporter: github-pr-review
   markdown:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
