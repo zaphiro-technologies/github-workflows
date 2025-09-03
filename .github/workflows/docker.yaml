@@ -180,7 +180,8 @@ jobs:
     steps:
       - name: Extract first tag
         id: extract_tag
-        run: echo "::set-output name=tag::$(echo "${{ needs.build.outputs.tags }}" | head -n1)"
+        run: |
+          echo "tag=$(echo '${{ needs.build.outputs.tags }}' | head -n1)" >> "$GITHUB_OUTPUT"
       - name: Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
