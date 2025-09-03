@@ -91,12 +91,13 @@ jobs:
           token: ${{ secrets.REPO_PAT }}
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
-      - uses: creyD/prettier_action@v4.6
+      - name: Prettify YAML files
+        uses: creyD/prettier_action@v4.6
         with:
           prettier_options: --write "**/*.{yml,yaml}"
           dry: true
           no_commit: true
-      - name: Commit markdown-lint changes
+      - name: Commit yaml-lint changes
         run: |
           git config --global user.name 'Bot'
           git config --global user.email 'bot@zaphiro.ch'
