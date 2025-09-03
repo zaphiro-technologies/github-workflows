@@ -26,57 +26,57 @@ concurrency:
 #  id-token: write
 
 on:
-    workflow_call:
-      inputs:
-        code-scan:
-            required: false
-            default: true
-            type: boolean
-            description: False to skip code-scan exec
-        vulterability-scan:
-          required: false
-          default: true
-          type: boolean
-          description: False to skip vulterability-scan exec
-        vulterability-scan-skip-dirs:
-          required: false
-          default: 'vendor,.github'
-          type: string
-          description: Comma separated list of directories where vulterability check is skipped
-        pull-dvc-datasets:
-          required: false
-          default: false
-          type: boolean
-          description: True to install and configure dvc
-        upload-artefacts:
-          required: false
-          default: false
-          type: boolean
-          description: True to upload files build by test
-        upload-artefacts-dir:
-          required: false
-          default: 'output'
-          type: string
-          description: Directory with the artifacts to upload
+  workflow_call:
+    inputs:
+      code-scan:
+        required: false
+        default: true
+        type: boolean
+        description: False to skip code-scan exec
+      vulterability-scan:
+        required: false
+        default: true
+        type: boolean
+        description: False to skip vulterability-scan exec
+      vulterability-scan-skip-dirs:
+        required: false
+        default: "vendor,.github"
+        type: string
+        description: Comma separated list of directories where vulterability check is skipped
+      pull-dvc-datasets:
+        required: false
+        default: false
+        type: boolean
+        description: True to install and configure dvc
+      upload-artefacts:
+        required: false
+        default: false
+        type: boolean
+        description: True to upload files build by test
+      upload-artefacts-dir:
+        required: false
+        default: "output"
+        type: string
+        description: Directory with the artifacts to upload
 jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
       files_changed: ${{ steps.filter.outputs.python == 'true' }}
     steps:
-    - uses: actions/checkout@v5
-    - uses: dorny/paths-filter@v3
-      id: filter
-      with:
-        filters: |
-          python:
-            - '*.py'
-            - '**/*.py'
-            - '.github/workflows/python.yaml'
-            - '.docker/*.yml'
-            - '.docker/*.yaml'
-            - 'poetry.lock'
-            - 'pyproject.toml'
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            python:
+              - '*.py'
+              - '**/*.py'
+              - '.github/workflows/python.yaml'
+              - '.docker/*.yml'
+              - '.docker/*.yaml'
+              - 'poetry.lock'
+              - 'pyproject.toml'
   lint:
     # Check if the PR is not from a fork
     runs-on: ubuntu-latest
@@ -106,12 +106,12 @@ jobs:
     needs: changes
     strategy:
       matrix:
-        python-version: ['3.12']
+        python-version: ["3.12"]
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v5
@@ -126,7 +126,7 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install packages
-        run: | 
+        run: |
           make dev-setup
       - name: Configure AWS Credentials
         if: ${{ inputs.pull-dvc-datasets }}
@@ -144,12 +144,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
         run: |
-            gh auth setup-git
-            git config --global credential.helper '!gh auth git-credential'
+          gh auth setup-git
+          git config --global credential.helper '!gh auth git-credential'
       - name: Run tests
         env:
           GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
-        run: | 
+        run: |
           make ci-test
       - if: ${{ inputs.upload-artefacts }}
         name: Upload artefacts
@@ -163,14 +163,14 @@ jobs:
         if: ${{ inputs.code-scan }}
         # we log in the registry to code check also images
         with:
-            registry: ghcr.io
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
         uses: SonarSource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   vulnerability:
     needs: changes
@@ -209,7 +209,7 @@ jobs:
           scan-ref: .
           skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
           scanners: "vuln,secret,misconfig"
-          exit-code: '1'
+          exit-code: "1"
           severity: MEDIUM,HIGH,CRITICAL
           # On a subsequent call to the action we know trivy is already installed so can skip this
           skip-setup-trivy: true
