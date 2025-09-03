@@ -55,6 +55,8 @@
 
 ### Continuous Integration
 
+- new-release workflow: delegate to makefile the update of project files (PR
+  #192 by @kwitekrac)
 - docker workflow: support golang build caching (PR #124 by @chicco785)
 - Move sonarcloud checks to test job (PR #119 by @chicco785)
 
