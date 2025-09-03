@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Markdown Lint
+name: Base Lint
 
 concurrency:
-  group: ${{ github.ref_name }}-markdown
+  group: ${{ github.ref_name }}-base-lint
   cancel-in-progress: true
 
 on:
