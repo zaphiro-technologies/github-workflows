@@ -26,11 +26,6 @@ on:
         required: false
         type: string
         default: ''
-      language:
-        description: 'Update pyproject.toml automatically'
-        required: false
-        type: string
-        default: ''
 jobs:
   create-new-release:
     runs-on: ubuntu-latest
@@ -69,16 +64,9 @@ jobs:
         if:  ${{ inputs.tag == '' }}
         run: |
             echo "NEWTAG=${{ steps.semvers.outputs.patch }}" >> $GITHUB_ENV
-      - name: 'Update version in pyproject.toml'
-        if:  ${{ inputs.language == 'python' }}
+      - name: 'Update version using make'
         run: |
-            sed -i "s/version = \".*\"/version = \"$NEWTAG\"/g" pyproject.toml
-      - name: 'Update version in package.json'
-        if:  ${{ inputs.language == 'javascript' }}
-        run: |
-            sudo apt install -y jq
-            jq '.version = env.NEWTAG' package.json > temp.json && mv temp.json package.json
-      - name: Commit tag changes
+            make release NEWTAG=${{ env.NEWTAG }}
         run: |
             git config --global user.name 'Bot'
             git config --global user.email 'bot@zaphiro.ch'
