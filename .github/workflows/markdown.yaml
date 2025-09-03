@@ -84,7 +84,7 @@ jobs:
               - '.github/workflows/*.(yaml|yml)'
   github-actions:
     needs: changes
-    if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' && github.event.pull_request.draft == false }}
+    if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -106,7 +106,7 @@ jobs:
     - uses: reviewdog/action-actionlint@v1
   markdown:
     needs: changes
-    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
+    if: ${{ needs.changes.outputs.files_changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
