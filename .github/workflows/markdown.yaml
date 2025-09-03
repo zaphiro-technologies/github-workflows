@@ -137,7 +137,7 @@ jobs:
         run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
       - name: Default configuration for link checker
         run: |
-          FILE=${{ inputs.config-link-path || '.github/config/.linkspector.yml' }}
+          FILE=${{ inputs.config-links-path || '.github/config/.linkspector.yml' }}
           if [ -f $FILE ]; then
             echo "'$FILE' Exists"
           else
@@ -165,7 +165,7 @@ jobs:
         with:
           filter_mode: nofilter
           reporter: github-pr-review
-          config_file: ${{ inputs.config-link-path || '.github/config/.linkspector.yml' }}
+          config_file: ${{ inputs.config-links-path || '.github/config/.linkspector.yml' }}
           fail_on_error: true
   markdown-spellchecker:
     runs-on: ubuntu-latest
