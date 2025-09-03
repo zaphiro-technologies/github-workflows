@@ -105,6 +105,7 @@ jobs:
           git push
       - uses: reviewdog/action-actionlint@v1
         with:
+          level: warning
           fail_level: error
           reporter: github-pr-review
   markdown:
