@@ -19,6 +19,7 @@ concurrency:
   cancel-in-progress: false
 
 on:
+  workflow_dispatch:  # Allow manual triggering
   workflow_call:
     inputs:
       tag:

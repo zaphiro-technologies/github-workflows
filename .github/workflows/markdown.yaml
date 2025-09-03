@@ -60,6 +60,7 @@ jobs:
     outputs:
       files_changed: ${{ steps.filter.outputs.markdown == 'true' || steps.filter.outputs.scripts == 'true' }}
       markdown_files: ${{ steps.filter.outputs.markdown_files }}
+      github_actions_files_changed: ${{ steps.filter.outputs.github-actions == 'true' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -79,6 +80,30 @@ jobs:
               - '.github/workflows/markdown.yaml'
             markdown:
               - '**/!(*RELEASE_NOTES).(md|MD)'
+            github-actions:
+              - '.github/workflows/*.(yaml|yml)'
+  github-actions:
+    needs: changes
+    if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' && github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        token: ${{ secrets.REPO_PAT }}
+        ref: ${{github.event.pull_request.head.ref}}
+        repository: ${{github.event.pull_request.head.repo.full_name}}
+    - uses: creyD/prettier_action@v4.6
+      with:
+        prettier_options: --write "**/*.{yml,yaml}"
+        dry: true
+        no_commit: true
+    - name: Commit markdown-lint changes
+      run: |
+        git config --global user.name 'Bot'
+        git config --global user.email 'bot@zaphiro.ch'
+        git commit -am "Automated yaml-lint fixes [dependabot skip]" || echo "No changes to commit"
+        git push
+    - uses: reviewdog/action-actionlint@v1
   markdown:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
@@ -90,11 +115,11 @@ jobs:
         ref: ${{github.event.pull_request.head.ref}}
         repository: ${{github.event.pull_request.head.repo.full_name}}
     - name: Prettify MD files
-      uses: zaphiro-technologies/prettier_action@main
+      uses: creyD/prettier_action@v4.6
       with:
           prettier_options: --prose-wrap always --write **/*.{md,MD} --ignore-path .github/config/.prettierignore
           dry: true
-          dry_no_fail: true
+          no_commit: true
     - name: Lint
       uses: DavidAnson/markdownlint-cli2-action@v20
       with:
