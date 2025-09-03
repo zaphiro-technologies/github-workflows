@@ -19,14 +19,14 @@ concurrency:
   cancel-in-progress: false
 
 on:
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch: # Allow manual triggering
   workflow_call:
     inputs:
       tag:
-        description: 'Tag to be created (when empty, it will be automatically computed)'
+        description: "Tag to be created (when empty, it will be automatically computed)"
         required: false
         type: string
-        default: ''
+        default: ""
 jobs:
   create-new-release:
     runs-on: ubuntu-latest
@@ -37,43 +37,43 @@ jobs:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.REPO_PAT }}
           fetch-depth: 0
-      - name: 'Validate semver'
-        if:  ${{ inputs.tag != '' }}
+      - name: "Validate semver"
+        if: ${{ inputs.tag != '' }}
         run: |
-            local regex='^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?$'
-            
-            if [[ "$version" =~ $regex ]]; then
-                echo "${{ inputs.tag }} is a valid SemVer."
-                echo "NEWTAG=${{ inputs.tag }}" >> $GITHUB_ENV
-            else
-                echo "${{ inputs.tag }} is NOT a valid SemVer."
-                exit 1
-            fi
-      - name: 'Get Previous tag'
+          local regex='^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?$'
+
+          if [[ "$version" =~ $regex ]]; then
+              echo "${{ inputs.tag }} is a valid SemVer."
+              echo "NEWTAG=${{ inputs.tag }}" >> $GITHUB_ENV
+          else
+              echo "${{ inputs.tag }} is NOT a valid SemVer."
+              exit 1
+          fi
+      - name: "Get Previous tag"
         id: previoustag
-        if:  ${{ inputs.tag == '' }}
+        if: ${{ inputs.tag == '' }}
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
         with:
           fallback: 0.0.0 # Optional fallback tag to use when no tag can be found
-      - name: 'Get next minor version'
+      - name: "Get next minor version"
         id: semvers
-        if:  ${{ inputs.tag == '' }}
+        if: ${{ inputs.tag == '' }}
         uses: "WyriHaximus/github-action-next-semvers@v1"
         with:
           version: ${{ steps.previoustag.outputs.tag }}
-      - name: 'Set tag'
-        if:  ${{ inputs.tag == '' }}
+      - name: "Set tag"
+        if: ${{ inputs.tag == '' }}
         run: |
-            echo "NEWTAG=${{ steps.semvers.outputs.patch }}" >> $GITHUB_ENV
-      - name: 'Update version using make'
+          echo "NEWTAG=${{ steps.semvers.outputs.patch }}" >> $GITHUB_ENV
+      - name: "Update version using make"
         run: |
-            make release NEWTAG=${{ env.NEWTAG }}
+          make release NEWTAG=${{ env.NEWTAG }}
       - name: Commit tag changes
         run: |
-            git config --global user.name 'Bot'
-            git config --global user.email 'bot@zaphiro.ch'
-            git commit -am "Automated tag changes [dependabot skip]" || echo "No changes to commit"
-            git push
+          git config --global user.name 'Bot'
+          git config --global user.email 'bot@zaphiro.ch'
+          git commit -am "Automated tag changes [dependabot skip]" || echo "No changes to commit"
+          git push
       - name: Create New Tag
         run: |
           git tag -a "v${{ env.NEWTAG }}" -m "Release v${{ env.NEWTAG }}"

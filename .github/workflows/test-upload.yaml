@@ -27,9 +27,9 @@ jobs:
   test-upload:
     runs-on: ubuntu-latest
     steps:
-    - run: |
-        echo "Test artifact" >> test.txt
-    - uses: actions/upload-artifact@v4
-      with:
-        name: test-upload
-        path: test.txt
+      - run: |
+          echo "Test artifact" >> test.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-upload
+          path: test.txt

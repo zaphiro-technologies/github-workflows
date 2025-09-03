@@ -17,7 +17,7 @@ name: Release
 on:
   push:
     tags:
-      - '*'
+      - "*"
   pull_request_review:
   pull_request:
     types:
@@ -34,7 +34,7 @@ on:
     inputs:
       config-release-path:
         required: false
-        default: '.github/config/release-config.json'
+        default: ".github/config/release-config.json"
         type: string
       skip-sbom:
         required: false
@@ -47,7 +47,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  # Give the default GITHUB_TOKEN write permission to commit and push the 
+  # Give the default GITHUB_TOKEN write permission to commit and push the
   # updated CHANGELOG back to the repository.
   # https://github.blog/changelog/2023-02-02-github-actions-updating-the-default-github_token-permissions-to-read-only/
   contents: write
@@ -77,150 +77,150 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ ( github.event_name == 'pull_request' && needs.check_reviews.outputs.reviews == 'APPROVED') || github.event.review.state == 'approved' || startsWith(github.ref, 'refs/tags/') }}
     steps:
-    - uses: actions/checkout@v5
-      with:
-        ref: ${{ github.head_ref }}
-        token: ${{ secrets.REPO_PAT }}
-        fetch-depth: 0
-    - name: 'Get Previous tag'
-      id: previoustag
-      uses: "WyriHaximus/github-action-get-previous-tag@v1"
-      with:
-        fallback: 0.0.0 # Optional fallback tag to use when no tag can be found
-    - name: 'Get next minor version'
-      id: semvers
-      uses: "WyriHaximus/github-action-next-semvers@v1"
-      with:
-        version: ${{ steps.previoustag.outputs.tag }}
-    - name: Select configuration
-      if: ${{ github.event_name == ' workflow_call' }}
-      run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
-    - name: Select configuration
-      if: ${{ github.event_name != ' workflow_call' }}
-      run: echo "CONFIGURATION='.github/config/release-config.json'" >> $GITHUB_ENV
-    - name: Get Pull Request Number
-      if: ${{ github.event.review.state == 'approved' }}
-      run: echo "PULL_NUMBER=$(echo "$GITHUB_REF" | awk -F / '{print $3}')" >> $GITHUB_ENV
-      shell: bash
-    - name: "Update changelog config"
-      id: update_changelog_config
-      env:
-        PR: ${{ github.event.review.state == 'approved' && env.PULL_NUMBER || github.event.number }}
-      run : |
-        jq --arg match "myPR" \
-          --arg replace "$PR" \
-          'walk(if . == $match then $replace else . end)' < ${{ env.CONFIGURATION }} > .github/config/release-config-temp.json
-        more .github/config/release-config-temp.json
-    - name: "Build Changelog"
-      id: build_changelog_1
-      uses: mikepenz/release-changelog-builder-action@v5
-      if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
-      with:
-        configuration: '.github/config/release-config-temp.json'
-        failOnError: true
-        includeOpen: true
-        fromTag: ${{ steps.previoustag.outputs.tag }}
-        toTag: ${{ github.sha }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: "Build Changelog"
-      id: build_changelog_2
-      uses: mikepenz/release-changelog-builder-action@v5
-      if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
-      with:
-        configuration: '.github/config/release-config-temp.json'
-        failOnError: true
-        includeOpen: true
-        toTag: ${{ github.sha }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Clean log
-      if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
-      run: |
-        if [ -f "RELEASE_NOTES.md" ]; then
-          # more RELEASE_NOTES.md
-          export line_start=$(grep -m1 -n "## ${{ steps.semvers.outputs.patch }}" RELEASE_NOTES.md | head -n1 |sed 's/:.*//')
-          # echo $line_start
-          export line_end=$(grep -m2 -n "^## " RELEASE_NOTES.md | head -2 | tail -1 | sed 's/:.*//')
-          # echo $line_end
-          if [[ $line_end -eq $line_start ]] || [[ -z "${line_end}" ]]; then export line_end=$(wc -l < RELEASE_NOTES.md); else export line_end=$(echo $line_end-1 | bc); fi
-          # echo $line_end
-          export PATTERN=${line_start},${line_end}d
-          # echo $PATTERN
-          if [[ -z "${line_start}" ]]; then echo "Empty"; else sed -i -e $PATTERN RELEASE_NOTES.md; fi
-          echo "cleaned release note:"
-          more RELEASE_NOTES.md
-          rm .github/config/release-config-temp.json
-        else
-          echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
-        fi
-    - name: Clean log
-      if: ${{ startsWith(github.ref, 'refs/tags/') }}
-      run: |
-        if [ -f "RELEASE_NOTES.md" ]; then
-          more RELEASE_NOTES.md
-          TAG=${{ steps.previoustag.outputs.tag }}
-          echo "VERSION=${TAG#v}"
-          export SEARCH=$VERSION-dev
-          export REPLACE=$VERSION
-          sed -i "s/$SEARCH/$REPLACE/g" RELEASE_NOTES.md
-          echo "cleaned release note:"
-          more RELEASE_NOTES.md
-          rm .github/config/release-config-temp.json
-        else
-          echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
-        fi
-    - name: Update Changelog (tag)
-      uses: stefanzweifel/changelog-updater-action@v1
-      if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
-      with:
-        latest-version: ${{ steps.semvers.outputs.patch }}-dev
-        release-notes:  ${{ steps.build_changelog_1.outputs.changelog }}
-        path-to-changelog: RELEASE_NOTES.md
-    - name: Update Changelog (no tag)
-      uses: stefanzweifel/changelog-updater-action@v1
-      if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
-      with:
-        latest-version: ${{ steps.semvers.outputs.patch }}-dev
-        release-notes:  ${{ steps.build_changelog_2.outputs.changelog }}
-        path-to-changelog: RELEASE_NOTES.md
-    - name: Prettify RELEASE_NOTES.md
-      uses: creyD/prettier_action@v4.6
-      with:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.REPO_PAT }}
+          fetch-depth: 0
+      - name: "Get Previous tag"
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        with:
+          fallback: 0.0.0 # Optional fallback tag to use when no tag can be found
+      - name: "Get next minor version"
+        id: semvers
+        uses: "WyriHaximus/github-action-next-semvers@v1"
+        with:
+          version: ${{ steps.previoustag.outputs.tag }}
+      - name: Select configuration
+        if: ${{ github.event_name == ' workflow_call' }}
+        run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
+      - name: Select configuration
+        if: ${{ github.event_name != ' workflow_call' }}
+        run: echo "CONFIGURATION='.github/config/release-config.json'" >> $GITHUB_ENV
+      - name: Get Pull Request Number
+        if: ${{ github.event.review.state == 'approved' }}
+        run: echo "PULL_NUMBER=$(echo "$GITHUB_REF" | awk -F / '{print $3}')" >> $GITHUB_ENV
+        shell: bash
+      - name: "Update changelog config"
+        id: update_changelog_config
+        env:
+          PR: ${{ github.event.review.state == 'approved' && env.PULL_NUMBER || github.event.number }}
+        run: |
+          jq --arg match "myPR" \
+            --arg replace "$PR" \
+            'walk(if . == $match then $replace else . end)' < ${{ env.CONFIGURATION }} > .github/config/release-config-temp.json
+          more .github/config/release-config-temp.json
+      - name: "Build Changelog"
+        id: build_changelog_1
+        uses: mikepenz/release-changelog-builder-action@v5
+        if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
+        with:
+          configuration: ".github/config/release-config-temp.json"
+          failOnError: true
+          includeOpen: true
+          fromTag: ${{ steps.previoustag.outputs.tag }}
+          toTag: ${{ github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Build Changelog"
+        id: build_changelog_2
+        uses: mikepenz/release-changelog-builder-action@v5
+        if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
+        with:
+          configuration: ".github/config/release-config-temp.json"
+          failOnError: true
+          includeOpen: true
+          toTag: ${{ github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Clean log
+        if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
+        run: |
+          if [ -f "RELEASE_NOTES.md" ]; then
+            # more RELEASE_NOTES.md
+            export line_start=$(grep -m1 -n "## ${{ steps.semvers.outputs.patch }}" RELEASE_NOTES.md | head -n1 |sed 's/:.*//')
+            # echo $line_start
+            export line_end=$(grep -m2 -n "^## " RELEASE_NOTES.md | head -2 | tail -1 | sed 's/:.*//')
+            # echo $line_end
+            if [[ $line_end -eq $line_start ]] || [[ -z "${line_end}" ]]; then export line_end=$(wc -l < RELEASE_NOTES.md); else export line_end=$(echo $line_end-1 | bc); fi
+            # echo $line_end
+            export PATTERN=${line_start},${line_end}d
+            # echo $PATTERN
+            if [[ -z "${line_start}" ]]; then echo "Empty"; else sed -i -e $PATTERN RELEASE_NOTES.md; fi
+            echo "cleaned release note:"
+            more RELEASE_NOTES.md
+            rm .github/config/release-config-temp.json
+          else
+            echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
+          fi
+      - name: Clean log
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          if [ -f "RELEASE_NOTES.md" ]; then
+            more RELEASE_NOTES.md
+            TAG=${{ steps.previoustag.outputs.tag }}
+            echo "VERSION=${TAG#v}"
+            export SEARCH=$VERSION-dev
+            export REPLACE=$VERSION
+            sed -i "s/$SEARCH/$REPLACE/g" RELEASE_NOTES.md
+            echo "cleaned release note:"
+            more RELEASE_NOTES.md
+            rm .github/config/release-config-temp.json
+          else
+            echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
+          fi
+      - name: Update Changelog (tag)
+        uses: stefanzweifel/changelog-updater-action@v1
+        if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
+        with:
+          latest-version: ${{ steps.semvers.outputs.patch }}-dev
+          release-notes: ${{ steps.build_changelog_1.outputs.changelog }}
+          path-to-changelog: RELEASE_NOTES.md
+      - name: Update Changelog (no tag)
+        uses: stefanzweifel/changelog-updater-action@v1
+        if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
+        with:
+          latest-version: ${{ steps.semvers.outputs.patch }}-dev
+          release-notes: ${{ steps.build_changelog_2.outputs.changelog }}
+          path-to-changelog: RELEASE_NOTES.md
+      - name: Prettify RELEASE_NOTES.md
+        uses: creyD/prettier_action@v4.6
+        with:
           prettier_options: --prose-wrap always --write RELEASE_NOTES.md
           dry: true
           no_commit: true
-    - name: Commit updated CHANGELOG
-      if: startsWith(github.ref, 'refs/tags/') == false
-      uses: stefanzweifel/git-auto-commit-action@v6
-      with:
-        branch: ${{github.event.pull_request.head.ref}}
-        commit_message: 'docs(release_notes): update RELEASE_NOTES.md [dependabot skip]'
-        file_pattern: RELEASE_NOTES.md
-    - name: Commit updated CHANGELOG
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: stefanzweifel/git-auto-commit-action@v6
-      with:
-        branch: main
-        commit_message: 'docs(release_notes): update RELEASE_NOTES.md'
-        file_pattern: RELEASE_NOTES.md
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
-      name: Generate SBOM
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: fs
-        scan-ref: '.'
-        format: 'cyclonedx'
-        output: 'cyclonedx-sbom.json'
-    - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
-      name: Upload SBOM as a Github artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: trivy-sbom-report
-        path: '${{ github.workspace }}/cyclonedx-sbom.json'
-        retention-days: 20 # 90 is the default
+      - name: Commit updated CHANGELOG
+        if: startsWith(github.ref, 'refs/tags/') == false
+        uses: stefanzweifel/git-auto-commit-action@v6
+        with:
+          branch: ${{github.event.pull_request.head.ref}}
+          commit_message: "docs(release_notes): update RELEASE_NOTES.md [dependabot skip]"
+          file_pattern: RELEASE_NOTES.md
+      - name: Commit updated CHANGELOG
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: stefanzweifel/git-auto-commit-action@v6
+        with:
+          branch: main
+          commit_message: "docs(release_notes): update RELEASE_NOTES.md"
+          file_pattern: RELEASE_NOTES.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
+        name: Generate SBOM
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: "."
+          format: "cyclonedx"
+          output: "cyclonedx-sbom.json"
+      - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
+        name: Upload SBOM as a Github artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-sbom-report
+          path: "${{ github.workspace }}/cyclonedx-sbom.json"
+          retention-days: 20 # 90 is the default
 
   release:
     name: Release
@@ -254,7 +254,7 @@ jobs:
 
   release-sbom:
     name: Release SBOM
-    if:  ${{ github.event_name == 'release' && (! inputs.skip-sbom || inputs.skip-sbom == '') }}
+    if: ${{ github.event_name == 'release' && (! inputs.skip-sbom || inputs.skip-sbom == '') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -265,9 +265,9 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
-          scan-ref: '.'
-          format: 'cyclonedx'
-          output: 'cyclonedx-sbom.json'
+          scan-ref: "."
+          format: "cyclonedx"
+          output: "cyclonedx-sbom.json"
       - name: Get Release
         id: release
         uses: bruceadams/get-release@v1.3.2
@@ -280,5 +280,5 @@ jobs:
         with:
           upload_url: ${{ steps.release.outputs.upload_url }}
           asset_path: cyclonedx-sbom.json
-          asset_name: 'cyclonedx-sbom.json'
+          asset_name: "cyclonedx-sbom.json"
           asset_content_type: application/json

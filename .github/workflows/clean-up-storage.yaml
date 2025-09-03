@@ -25,11 +25,11 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v5
-        
+
       - name: Cleanup
         run: |
           gh extension install actions/gh-actions-cache
-          
+
           REPO=${{ github.repository }}
           BRANCH="refs/pull/${{ github.event.pull_request.number }}/merge"
 
@@ -51,7 +51,7 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v5
-        
+
       - name: Cleanup
         run: |
           REPO=${{ github.repository }}
