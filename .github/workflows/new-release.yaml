@@ -67,6 +67,7 @@ jobs:
       - name: 'Update version using make'
         run: |
             make release NEWTAG=${{ env.NEWTAG }}
+      - name: Commit tag changes
         run: |
             git config --global user.name 'Bot'
             git config --global user.email 'bot@zaphiro.ch'
