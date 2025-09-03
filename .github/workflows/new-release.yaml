@@ -40,9 +40,9 @@ jobs:
       - name: "Validate semver"
         if: ${{ inputs.tag != '' }}
         run: |
-          local regex='^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?$'
+          regex='^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?$'
 
-          if [[ "$version" =~ $regex ]]; then
+          if [[ "${{ inputs.tag }}" =~ $regex ]]; then
               echo "${{ inputs.tag }} is a valid SemVer."
               echo "NEWTAG=${{ inputs.tag }}" >> $GITHUB_ENV
           else
