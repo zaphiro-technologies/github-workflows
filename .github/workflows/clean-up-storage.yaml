@@ -39,9 +39,9 @@ jobs:
           ## Setting this to not fail the workflow while deleting cache keys. 
           set +e
           echo "Deleting caches..."
-          for cacheKey in "$cacheKeysForPR"
+          for cacheKey in $cacheKeysForPR
           do
-              gh actions-cache delete $cacheKey -R "$REPO" -B "$BRANCH" --confirm
+              gh actions-cache delete "$cacheKey" -R "$REPO" -B "$BRANCH" --confirm
           done
           echo "Done"
         env:
@@ -59,8 +59,8 @@ jobs:
           sudo apt install -y jq
           while true; do
             # Retrieve a page of artifacts
-            ART_EXIST=$(gh api repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE | jq -r '.artifacts[]')
-            ARTIFACTS=$(gh api repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE | jq -r '.artifacts[] | select(.workflow_run.head_branch =="'"$GITHUB_HEAD_REF"'" ) | .id')
+            ART_EXIST=$(gh api "repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE" | jq -r '.artifacts[]')
+            ARTIFACTS=$(gh api "repos/$REPO/actions/artifacts?per_page=100\&page=$PAGE" | jq -r '.artifacts[] | select(.workflow_run.head_branch =="'"$GITHUB_HEAD_REF"'" ) | .id')
             echo "page: $PAGE"
             # If there are no more artifacts, exit the loop
             if [[ -z "$ART_EXIST" ]]; then
@@ -69,9 +69,9 @@ jobs:
 
             # Loop through the artifacts on this page and delete the old ones
             for ARTIFACT_ID in $ARTIFACTS; do
-              ARTIFACT_NAME=$(gh api repos/$REPO/actions/artifacts/$ARTIFACT_ID | jq -r '.name')
+              ARTIFACT_NAME=$(gh api "repos/$REPO/actions/artifacts/$ARTIFACT_ID" | jq -r '.name')
               echo "Deleting artifact $ARTIFACT_NAME (ID: $ARTIFACT_ID)..."
-              gh api repos/$REPO/actions/artifacts/$ARTIFACT_ID -X DELETE
+              gh api "repos/$REPO/actions/artifacts/$ARTIFACT_ID" -X DELETE
             done
 
             # Increment the page counter
