@@ -139,13 +139,13 @@ jobs:
         run: |
           if [ -f "RELEASE_NOTES.md" ]; then
             # more RELEASE_NOTES.md
-            export line_start=$(grep -m1 -n "## ${{ steps.semvers.outputs.patch }}" RELEASE_NOTES.md | head -n1 |sed 's/:.*//')
-            # echo $line_start
-            export line_end=$(grep -m2 -n "^## " RELEASE_NOTES.md | head -2 | tail -1 | sed 's/:.*//')
-            # echo $line_end
-            if [[ $line_end -eq $line_start ]] || [[ -z "${line_end}" ]]; then export line_end=$(wc -l < RELEASE_NOTES.md); else export line_end=$(echo $line_end-1 | bc); fi
-            # echo $line_end
-            export PATTERN=${line_start},${line_end}d
+            line_start=$(grep -m1 -n "## ${{ steps.semvers.outputs.patch }}" RELEASE_NOTES.md | head -n1 |sed 's/:.*//')
+            export line_start
+            line_end=$(grep -m2 -n "^## " RELEASE_NOTES.md | head -2 | tail -1 | sed 's/:.*//')
+            if [[ $line_end -eq $line_start ]] || [[ -z "${line_end}" ]]; then    line_end=$(wc -l < RELEASE_NOTES.md); else line_end=$(echo $line_end-1 | bc); fi
+            export line_end
+            PATTERN=${line_start},${line_end}d
+            export PATTERN
             # echo $PATTERN
             if [[ -z "${line_start}" ]]; then echo "Empty"; else sed -i -e $PATTERN RELEASE_NOTES.md; fi
             echo "cleaned release note:"
@@ -161,8 +161,10 @@ jobs:
             more RELEASE_NOTES.md
             TAG=${{ steps.previoustag.outputs.tag }}
             echo "VERSION=${TAG#v}"
-            export SEARCH=$VERSION-dev
-            export REPLACE=$VERSION
+            SEARCH=$VERSION-dev
+            export SEARCH
+            REPLACE=$VERSION
+            export REPLACE
             sed -i "s/$SEARCH/$REPLACE/g" RELEASE_NOTES.md
             echo "cleaned release note:"
             more RELEASE_NOTES.md
