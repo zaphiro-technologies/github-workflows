@@ -55,7 +55,6 @@ on:
           #RELEASE_NOTES.md
 jobs:
   changes:
-    if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     outputs:
       files_changed: ${{ steps.filter.outputs.markdown == 'true' || steps.filter.outputs.scripts == 'true' }}
