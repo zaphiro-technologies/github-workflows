@@ -52,7 +52,7 @@ on:
         required: false
         default: "vendor,.github"
         type: string
-        description: Comma separated list of directories where vulterability check is skipped
+        description: Comma separated list of directories where vulnerability check is skipped
       pull-dvc-datasets:
         required: false
         default: false
@@ -98,7 +98,7 @@ jobs:
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
           token: ${{ secrets.REPO_PAT }}
-      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - run: git config --global "url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -152,7 +152,7 @@ jobs:
           GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
         if: ${{ inputs.pull-dvc-datasets }}
         run: dvc pull
-      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - run: git config --global "url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
