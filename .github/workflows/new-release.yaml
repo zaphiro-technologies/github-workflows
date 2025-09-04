@@ -29,11 +29,9 @@ on:
 jobs:
   create-new-release:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v5
-        with:
-          token: ${{ secrets.REPO_PAT }}
-          ref: ${{github.event.pull_request.head.ref}}
       - name: 'Validate semver'
         if:  ${{ inputs.tag != '' }}
         run: |
