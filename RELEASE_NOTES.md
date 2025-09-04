@@ -4,6 +4,7 @@
 
 ### Features
 
+- Add linter for github actions (PR #193 by @chicco785)
 - python workflow: add option to upload output as artefact (PR #190 by
   @chicco785)
 - Python workflow: add `poetry.lock` and `pyproject.toml` to change list (PR

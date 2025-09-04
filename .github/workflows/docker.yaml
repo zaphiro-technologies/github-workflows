@@ -57,12 +57,12 @@ on:
       language-cache:
         required: false
         type: string
-        default: ''
+        default: ""
         description: Use caching mechanism for a given language
       submodules:
         required: false
         type: string
-        default: ''
+        default: ""
         description: True or Recursive to initialize git submodules
 
 # Permissions needed
@@ -91,7 +91,7 @@ jobs:
           token: ${{ inputs.submodules != '' && secrets.token || github.token }}
       - name: Run pre-build
         env:
-           GH_TOKEN: ${{ secrets.token || github.token }}
+          GH_TOKEN: ${{ secrets.token || github.token }}
         run: |
           if test -f "Makefile"; then
               make ci-pre-build
@@ -180,14 +180,15 @@ jobs:
     steps:
       - name: Extract first tag
         id: extract_tag
-        run: echo "::set-output name=tag::$(echo "${{ needs.build.outputs.tags }}" | head -n1)"
+        run: |
+          echo "tag=$(echo '${{ needs.build.outputs.tags }}' | head -n1)" >> "$GITHUB_OUTPUT"
       - name: Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: image
           image-ref: ${{ steps.extract_tag.outputs.tag }}
           scanners: "vuln,secret,misconfig"
-          exit-code: '1'
+          exit-code: "1"
           severity: MEDIUM,HIGH,CRITICAL
         env:
           TRIVY_USERNAME: ${{ github.actor }}
