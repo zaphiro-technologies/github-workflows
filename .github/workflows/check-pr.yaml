@@ -32,8 +32,8 @@ on:
   workflow_call:
     inputs:
       labels:
-        description: 'Labels to be checked'
-        default: 'feature,bug,ci,refactor,security,documentation,dependencies,customer,skip-changelog'
+        description: "Labels to be checked"
+        default: "feature,bug,ci,refactor,security,documentation,dependencies,customer,skip-changelog"
         required: false
         type: string
 jobs:

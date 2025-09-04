@@ -1,4 +1,3 @@
-
 # Copyright 2024 Zaphiro Technologies
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,10 +39,10 @@ on:
         type: boolean
         description: True to skip benchmark exec
       code-scan:
-          required: false
-          default: true
-          type: boolean
-          description: False to skip code-scan exec
+        required: false
+        default: true
+        type: boolean
+        description: False to skip code-scan exec
       vulterability-scan:
         required: false
         default: true
@@ -51,16 +50,15 @@ on:
         description: False to skip vulterability-scan exec
       vulterability-scan-skip-dirs:
         required: false
-        default: 'vendor,.github'
+        default: "vendor,.github"
         type: string
-        description: Comma separated list of directories where vulterability check is skipped
+        description: Comma separated list of directories where vulnerability check is skipped
       pull-dvc-datasets:
         required: false
         default: false
         type: boolean
         description: True to install and configure dvc
 
-      
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -100,7 +98,7 @@ jobs:
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
           token: ${{ secrets.REPO_PAT }}
-      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - run: git config --global "url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -130,7 +128,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: Configure AWS Credentials
         if: ${{ inputs.pull-dvc-datasets }}
         id: creds
@@ -145,16 +143,16 @@ jobs:
       - name: Set-up git credentials for dvc
         if: ${{ inputs.pull-dvc-datasets }}
         env:
-           GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
         run: |
-            gh auth setup-git
-            git config --global credential.helper '!/usr/bin/gh auth git-credential'
+          gh auth setup-git
+          git config --global credential.helper '!/usr/bin/gh auth git-credential'
       - name: Pull DVC Data
         env:
-           GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
         if: ${{ inputs.pull-dvc-datasets }}
         run: dvc pull
-      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - run: git config --global "url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -186,7 +184,7 @@ jobs:
         if: ${{ inputs.code-scan }}
         uses: SonarSource/sonarqube-scan-action@v5.3.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Download code coverage report from base branch
         uses: dawidd6/action-download-artifact@v11
@@ -214,7 +212,7 @@ jobs:
           name: cov-result
           path: ./coverage/lcov.info
           retention-days: 400
-      
+
   benchmark:
     needs: changes
     runs-on: ubuntu-latest
@@ -309,7 +307,7 @@ jobs:
           scan-ref: .
           skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
           scanners: "vuln,secret,misconfig"
-          exit-code: '1'
+          exit-code: "1"
           severity: MEDIUM,HIGH,CRITICAL
           # On a subsequent call to the action we know trivy is already installed so can skip this
           skip-setup-trivy: true

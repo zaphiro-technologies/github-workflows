@@ -7,18 +7,18 @@ header:
     copyright-owner: Zaphiro Technologies
 
   paths-ignore:
-    - '.github/config'
-    - '**/*.{md,MD}'
-    - 'LICENSE'
-    - 'NOTICE'
-    - '.*'
+    - ".github/config"
+    - "**/*.{md,MD}"
+    - "LICENSE"
+    - "NOTICE"
+    - ".*"
 
   comment: on-failure
 
 # If you don't want to check dependencies' license compatibility, remove the following part
 dependency:
   files:
-    - pom.xml           # If this is a maven project.
-    - Cargo.toml        # If this is a rust project.
-    - package.json      # If this is a npm project.
-    - go.mod            # If this is a Go project.
+    - pom.xml # If this is a maven project.
+    - Cargo.toml # If this is a rust project.
+    - package.json # If this is a npm project.
+    - go.mod # If this is a Go project.
