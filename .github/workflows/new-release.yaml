@@ -61,7 +61,7 @@ jobs:
             echo "NEWTAG=${{ steps.semvers.outputs.patch }}" >> $GITHUB_ENV
       - name: 'Update version using make'
         run: |
-            make release NEWTAG=${{ env.NEWTAG }}
+            make release TAG=${{ env.NEWTAG }}
       - name: 'Commit changes'
         run: |
             git config --global user.name 'Bot'
