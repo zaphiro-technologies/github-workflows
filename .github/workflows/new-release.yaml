@@ -29,7 +29,6 @@ on:
 jobs:
   create-new-release:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/branch'
     steps:
       - uses: actions/checkout@v5
         with:
