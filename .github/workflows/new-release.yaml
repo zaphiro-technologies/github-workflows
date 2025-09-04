@@ -32,8 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-            token: ${{ secrets.REPO_PAT }}
-            ref: ${{github.event.pull_request.head.ref}}
+          token: ${{ secrets.REPO_PAT }}
+          ref: ${{github.event.pull_request.head.ref}}
       - name: 'Validate semver'
         if:  ${{ inputs.tag != '' }}
         run: |
