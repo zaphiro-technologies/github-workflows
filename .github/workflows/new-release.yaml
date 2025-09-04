@@ -70,11 +70,10 @@ jobs:
             git config --global user.name 'Bot'
             git config --global user.email 'bot@zaphiro.ch'
             git commit -am "Automated tag changes [dependabot skip]" || echo "No changes to commit"
-            git push
       - name: Create New Tag
         run: |
           git tag -a "v${{ env.NEWTAG }}" -m "Release v${{ env.NEWTAG }}"
-          git push origin "v${{ env.NEWTAG }}"
+          git push --follow-tags
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
