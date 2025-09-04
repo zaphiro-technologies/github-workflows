@@ -40,16 +40,16 @@ jobs:
       - name: "Validate semver"
         if: ${{ inputs.tag != '' }}
         run: |
-            regex='^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?$'
-            
-            if [[ "${{ inputs.tag }}" =~ $regex ]]; then
-                echo "${{ inputs.tag }} is a valid SemVer."
-                echo "NEWTAG=${{ inputs.tag }}" >> $GITHUB_ENV
-            else
-                echo "${{ inputs.tag }} is NOT a valid SemVer."
-                exit 1
-            fi
-      - name: 'Get Previous tag'
+          regex='^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?$'
+
+          if [[ "${{ inputs.tag }}" =~ $regex ]]; then
+              echo "${{ inputs.tag }} is a valid SemVer."
+              echo "NEWTAG=${{ inputs.tag }}" >> $GITHUB_ENV
+          else
+              echo "${{ inputs.tag }} is NOT a valid SemVer."
+              exit 1
+          fi
+      - name: "Get Previous tag"
         id: previoustag
         if: ${{ inputs.tag == '' }}
         uses: "WyriHaximus/github-action-get-previous-tag@v1"
@@ -67,12 +67,12 @@ jobs:
           echo "NEWTAG=${{ steps.semvers.outputs.patch }}" >> $GITHUB_ENV
       - name: "Update version using make"
         run: |
-            make release TAG=${{ env.NEWTAG }}
+          make release TAG=${{ env.NEWTAG }}
       - name: Commit version changes
         run: |
-            git config --global user.name 'Bot'
-            git config --global user.email 'bot@zaphiro.ch'
-            git commit -am "Automated tag changes [dependabot skip]" || echo "No changes to commit"
+          git config --global user.name 'Bot'
+          git config --global user.email 'bot@zaphiro.ch'
+          git commit -am "Automated tag changes [dependabot skip]" || echo "No changes to commit"
       - name: Create New Tag
         run: |
           git tag -a "v${{ env.NEWTAG }}" -m "Release v${{ env.NEWTAG }}"
