@@ -182,7 +182,7 @@ jobs:
           token: ${{ secrets.REPO_PAT }}
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
       - name: Spellcheck
         shell: bash
         run: |
