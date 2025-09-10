@@ -131,7 +131,7 @@ jobs:
       - name: Configure AWS Credentials
         if: ${{ inputs.pull-dvc-datasets }}
         id: creds
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: eu-south-1
           role-to-assume: arn:aws:iam::058264335177:role/zaphiro-github-role-demo
