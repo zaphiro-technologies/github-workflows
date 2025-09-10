@@ -100,7 +100,7 @@ jobs:
           token: ${{ secrets.REPO_PAT }}
       - run: git config --global "url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - name: Golines
@@ -154,7 +154,7 @@ jobs:
         run: dvc pull
       - run: git config --global "url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - name: Install gcov2lcov
@@ -223,7 +223,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       # We Login in GHCR to retrieve owned private images used in docker-compose
