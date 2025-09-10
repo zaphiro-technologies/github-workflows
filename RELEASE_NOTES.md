@@ -68,11 +68,12 @@
 
 ### Dependencies
 
+- Bump actions/setup-go from 5 to 6 (PR #200 by @dependabot[bot])
 - Bump aws-actions/configure-aws-credentials from 4 to 5 (PR #197 by
   @dependabot[bot])
 - Bump actions/github-script from 7 to 8 (PR #196 by @dependabot[bot])
 - Bump actions/setup-node from 4 to 5 (PR #199 by @dependabot[bot])
-- Bump actions/setup-go from 5 to 6 (PR #200 by @dependabot[bot])
+- Bump actions/setup-python from 5 to 6 (PR #198 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 5.3.0 to 5.3.1 (PR #191 by
   @dependabot[bot])
 - Bump actions/checkout from 4 to 5 (PR #189 by @dependabot[bot])
