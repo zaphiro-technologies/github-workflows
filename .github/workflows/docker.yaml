@@ -104,12 +104,12 @@ jobs:
           images: ghcr.io/${{github.repository_owner}}/${{ inputs.image-name || github.event.repository.name }}
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=edge,branch=main
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=edge,branch=main,priority=700
+            type=ref,event=branch,priority=600
+            type=ref,event=pr,priority=800
+            type=semver,pattern={{version}},priority=900
+            type=semver,pattern={{major}}.{{minor}},priority=900
+            type=semver,pattern={{major}},priority=900
       - name: Go Build Cache for Docker
         id: cache-go
         if: ${{ inputs.go-cache || inputs.language-cache == 'go' }}
