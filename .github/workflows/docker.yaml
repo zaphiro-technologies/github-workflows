@@ -105,7 +105,7 @@ jobs:
           # generate Docker tags based on the following events/attributes
           tags: |
             type=edge,branch=main,priority=700
-            type=ref,event=branch,priority=600
+            type=ref,event=branch,priority=800
             type=ref,event=pr,priority=800
             type=semver,pattern={{version}},priority=900
             type=semver,pattern={{major}}.{{minor}},priority=900
