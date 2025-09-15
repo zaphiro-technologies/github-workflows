@@ -44,8 +44,7 @@
 
 ### Bug Fixes
 
-- Updated tags type priority values in docker workflow (PR #201 by
-  @frank-flour24)
+- docker workflow: updated tags type priority values (PR #201 by @frank-flour24)
 - new-release workflow: resolves issues (PR #195 by @kwitekrac)
 - Run Docker Build after Dependabot merged PR (PR #171 by @cosimomeli)
 - Release notes workflow: fix sbom generation (PR #166 by @chicco785)
