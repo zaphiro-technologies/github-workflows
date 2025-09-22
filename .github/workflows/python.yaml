@@ -97,7 +97,7 @@ jobs:
             cache: 'poetry'
       - name: Install packages
         run: |
-          make dev-setup
+          make lint-setup
       - name: Lint
         run: |
           make lint
