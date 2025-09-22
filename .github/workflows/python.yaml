@@ -87,44 +87,42 @@ jobs:
         with:
           token: ${{ secrets.REPO_PAT }}
           ref: ${{github.event.pull_request.head.ref}}
-      - name: Install Ruff
-        run: pip install ruff mypy
-      - name: ruff
+      - name: Install poetry
+        run: pipx install poetry
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v6
+        with:
+            python-version-file: 'pyproject.toml'
+            cache: 'poetry'
+      - name: Install packages
         run: |
-          ruff check --fix . && ruff format .
-      - name: Commit ruff changes
+          make dev-setup
+      - name: Lint
+        run: |
+          make lint
+      - name: Commit lint changes
         run: |
           git config --global user.name 'Bot'
           git config --global user.email 'bot@zaphiro.ch'
-          git commit -am "Automated ruff fixes [dependabot skip]" || echo "No changes to commit"
+          git commit -am "Automated lint fixes [dependabot skip]" || echo "No changes to commit"
           git push
-      - name: mypy
-        run: |
-          mypy . --ignore-missing-imports --non-interactive --install-types --exclude '.*/test_.*\.py'
   test:
     runs-on: ubuntu-latest
     needs: changes
-    strategy:
-      matrix:
-        python-version: ["3.12"]
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Install poetry
+        run: pipx install poetry
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v6
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+            python-version-file: 'pyproject.toml'
+            cache: 'poetry'
       - name: Install packages
         run: |
           make dev-setup
@@ -168,7 +166,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5.3.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -203,7 +201,7 @@ jobs:
           fi
       # this comes as last or scan results won't be uploaded
       - name: Run Trivy vulnerability scanner (security treshold)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: fs
           scan-ref: .
