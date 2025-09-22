@@ -83,9 +83,14 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_SECRET }}
       - uses: actions/checkout@v5
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ steps.generate-token.outputs.token }}
           ref: ${{github.event.pull_request.head.ref}}
       - name: Install poetry
         run: pipx install poetry
