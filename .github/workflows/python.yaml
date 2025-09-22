@@ -98,8 +98,8 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v6
         with:
-            python-version-file: 'pyproject.toml'
-            cache: 'poetry'
+          python-version-file: "pyproject.toml"
+          cache: "poetry"
       - name: Install packages
         run: |
           make lint-setup
@@ -126,8 +126,8 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v6
         with:
-            python-version-file: 'pyproject.toml'
-            cache: 'poetry'
+          python-version-file: "pyproject.toml"
+          cache: "poetry"
       - name: Install packages
         run: |
           make dev-setup
