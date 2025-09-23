@@ -117,6 +117,11 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_SECRET }}
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
@@ -145,13 +150,13 @@ jobs:
       - name: Set-up credentials
         if: ${{ inputs.pull-dvc-datasets }}
         env:
-          GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           gh auth setup-git
           git config --global credential.helper '!gh auth git-credential'
       - name: Run tests
         env:
-          GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           make ci-test
       - if: ${{ inputs.upload-artefacts }}
