@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-09-15
+## 0.0.3-dev - 2025-09-23
 
 ### Features
 
+- python workflow: load python version from `pyproject.yaml` (PR #202 by
+  @chicco785)
 - Add linter for github actions (PR #193 by @chicco785)
 - python workflow: add option to upload output as artefact (PR #190 by
   @chicco785)
