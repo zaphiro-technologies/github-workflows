@@ -59,6 +59,11 @@ jobs:
       name: ${{inputs.environment}}
       url: https://argocd.${{env.CLUSTER}}.zaphiro.ch/applications/argocd/platforms?view=tree&resource=kind%3AApplication
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_SECRET }}
       - name: Get image tag from git tag
         if: github.ref_type == 'tag'
         run: |
@@ -94,7 +99,7 @@ jobs:
       - name: Checkout of k8s-deployments
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.REPO_PAT }}
+          token: ${{ steps.generate-token.outputs.token }}
           repository: ${{github.repository_owner}}/k8s-deployments
           ref: main
       - name: Get repository name from values-platforms.yaml
@@ -145,7 +150,7 @@ jobs:
       - name: Commit & Push changed tag
         uses: actions-js/push@v1.5
         with:
-          github_token: ${{ secrets.REPO_PAT }}
+          github_token: ${{ steps.generate-token.outputs.token }}
           branch: main
           message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
           directory: kubernetes/${{env.CLUSTER}}
