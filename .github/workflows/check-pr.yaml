@@ -37,15 +37,6 @@ on:
         required: false
         type: string
 jobs:
-  # pr-title-lint:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     statuses: write
-  #   steps:
-  #     # see https://www.conventionalcommits.org/en/v1.0.0/
-  #     - uses: aslafy-z/conventional-pr-title-action@v3
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   pr-label-check:
     if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
