@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-09-23
+## 0.0.3-dev - 2025-09-29
 
 ### Features
 
@@ -71,6 +71,8 @@
 
 ### Dependencies
 
+- Bump SonarSource/sonarqube-scan-action from 5.3.1 to 6.0.0 (PR #203 by
+  @dependabot[bot])
 - Bump actions/setup-python from 5 to 6 (PR #198 by @dependabot[bot])
 - Bump actions/setup-go from 5 to 6 (PR #200 by @dependabot[bot])
 - Bump aws-actions/configure-aws-credentials from 4 to 5 (PR #197 by
@@ -156,6 +158,7 @@
 
 ### Refactoring
 
+- Replace PAT secrets with github app tokens (PR #204 by @chicco785)
 - Reduce number of wf run when pr are in draft mode (PR #160 by @chicco785)
 
 ## 0.0.2 - 2024-02-09
