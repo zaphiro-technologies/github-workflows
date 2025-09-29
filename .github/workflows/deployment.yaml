@@ -59,7 +59,7 @@ jobs:
       name: ${{inputs.environment}}
       url: https://argocd.${{env.CLUSTER}}.zaphiro.ch/applications/argocd/platforms?view=tree&resource=kind%3AApplication
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: tibdex/github-app-token@v2
         id: generate-token
         with:
           app_id: ${{ secrets.APP_ID }}

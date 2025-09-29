@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ ( github.event_name == 'pull_request' && needs.check_reviews.outputs.reviews == 'APPROVED') || github.event.review.state == 'approved' || startsWith(github.ref, 'refs/tags/') }}
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: tibdex/github-app-token@v2
         id: generate-token
         with:
           app_id: ${{ secrets.APP_ID }}
