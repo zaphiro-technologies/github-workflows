@@ -44,19 +44,24 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_SECRET }}
       - uses: actions/add-to-project@v1.0.2
         id: add-project
         with:
           # You can target a project in a different organization
           # to the issue
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           labeled: ${{ inputs.labeled }}
       - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == true && steps.add-project.outputs.itemId }}
         uses: titoportas/update-project-fields@v0.1.0
         with:
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
           field-keys: Status
           field-values: 🏗 In progress
@@ -64,7 +69,7 @@ jobs:
         uses: titoportas/update-project-fields@v0.1.0
         with:
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          github-token: ${{ steps.generate-token.outputs.token }}
           item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
           field-keys: Status
           field-values: 🔖 Ready
@@ -87,7 +92,7 @@ jobs:
               -f permission='push'
             done
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_PAT }}
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
           TEAMS: ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }}
@@ -95,7 +100,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
         uses: rowi1de/auto-assign-review-teams@v1.1.3
         with:
-          repo-token: ${{ secrets.REPO_PAT }}
+          repo-token: ${{ steps.generate-token.outputs.token }}
           teams: ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }} # only works for GitHub Organisation/Teams
           persons: ${{ inputs.reviewers-individuals }} # add individual persons here
           include-draft: false # Draft PRs will be skipped (default: false)

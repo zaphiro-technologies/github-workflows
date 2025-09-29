@@ -32,9 +32,14 @@ jobs:
   approve-and-merge:
     runs-on: ubuntu-latest
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_SECRET }}
       - name: Approve & Merge Dependabot PRs
         env:
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           # Add label
           if ! gh label list --repo "$GITHUB_REPOSITORY" --limit 100 | grep -q auto-approved; then

@@ -92,13 +92,17 @@ jobs:
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
-      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_SECRET }}
       - uses: actions/checkout@v5
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
-          token: ${{ secrets.REPO_PAT }}
-      - run: git config --global "url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf" "https://github.com/"
+          token: ${{ steps.generate-token.outputs.token }}
+      - run: git config --global "url.https://${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
@@ -123,9 +127,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
-      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_SECRET }}
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
@@ -143,16 +151,16 @@ jobs:
       - name: Set-up git credentials for dvc
         if: ${{ inputs.pull-dvc-datasets }}
         env:
-          GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           gh auth setup-git
           git config --global credential.helper '!/usr/bin/gh auth git-credential'
       - name: Pull DVC Data
         env:
-          GH_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         if: ${{ inputs.pull-dvc-datasets }}
         run: dvc pull
-      - run: git config --global "url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf" "https://github.com/"
+      - run: git config --global "url.https://${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
@@ -191,7 +199,7 @@ jobs:
         if: github.actor != 'dependabot[bot]'
         with:
           name: cov-result
-          github_token: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          github_token: ${{ steps.generate-token.outputs.token }}
           branch: ${{github.base_ref}}
           if_no_artifact_found: warn
       - name: Generate Code Coverage report
@@ -219,10 +227,14 @@ jobs:
     if: ${{ needs.changes.outputs.files_changed == 'true' && ! inputs.skip-benchmark}}
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
-      GH_ACCESS_TOKEN: ${{ secrets.REPO_PRIVATE_READ_PAT }}
     steps:
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_SECRET }}
       - uses: actions/checkout@v5
-      - run: git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+      - run: git config --global url.https://${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
@@ -243,7 +255,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v11
         with:
           name: benchmark-result
-          github_token: ${{ secrets.REPO_PRIVATE_READ_PAT }}
+          github_token: ${{ steps.generate-token.outputs.token }}
           branch: ${{ github.base_ref || github.ref_name }}
           if_no_artifact_found: warn
       # Run `github-action-benchmark` action
