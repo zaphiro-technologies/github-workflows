@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-09-29
+## 0.0.3-dev - 2025-10-01
 
 ### Features
 
@@ -46,6 +46,8 @@
 
 ### Bug Fixes
 
+- release notes: fix not progressive releases and detached head commits (PR #206
+  by @chicco785)
 - docker workflow: updated tags type priority values (PR #201 by @frank-flour24)
 - new-release workflow: resolves issues (PR #195 by @kwitekrac)
 - Run Docker Build after Dependabot merged PR (PR #171 by @cosimomeli)
