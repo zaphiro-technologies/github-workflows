@@ -83,8 +83,16 @@ jobs:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_SECRET }}
       - uses: actions/checkout@v5
+        if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          token: ${{ steps.generate-token.outputs.token }}
+          fetch-depth: 0
+      - uses: actions/checkout@v5
+        if: ${{ startsWith(github.ref, 'refs/tags/') == true }}
+        with:
+          ref: ${{ github.ref }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
       - name: "Get Previous tag"
@@ -165,12 +173,10 @@ jobs:
           if [ -f "RELEASE_NOTES.md" ]; then
             more RELEASE_NOTES.md
             TAG=${{ steps.previoustag.outputs.tag }}
-            echo "VERSION=${TAG#v}"
-            SEARCH=$VERSION-dev
-            export SEARCH
-            REPLACE=$VERSION
-            export REPLACE
-            sed -i "s/$SEARCH/$REPLACE/g" RELEASE_NOTES.md
+            NEW_VERSION=${TAG#v}
+            echo "NEW_VERSION=$NEW_VERSION"
+            sed -i.bak -E "s/^(##[[:space:]]+)[0-9]+\.[0-9]+\.[0-9]+-dev/\1${NEW_VERSION}/" RELEASE_NOTES.md
+            rm -f RELEASE_NOTES.md.bak
             echo "cleaned release note:"
             more RELEASE_NOTES.md
             rm .github/config/release-config-temp.json
