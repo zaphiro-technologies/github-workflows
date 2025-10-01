@@ -73,6 +73,7 @@
 
 ### Dependencies
 
+- Bump tibdex/github-app-token from 1 to 2 (PR #205 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 5.3.1 to 6.0.0 (PR #203 by
   @dependabot[bot])
 - Bump actions/setup-python from 5 to 6 (PR #198 by @dependabot[bot])
