@@ -89,7 +89,9 @@ jobs:
         with:
           submodules: ${{ inputs.submodules }}
           token: ${{ inputs.submodules != '' && secrets.token || github.token }}
-      - run: git config --global "url.https://${{ inputs.submodules != '' && secrets.token || github.token }}@github.com/.insteadOf" "https://github.com/"
+      - run: git config --global "url.https://$GH_TOKEN@github.com/.insteadOf" "https://github.com/"
+        env:
+          GH_TOKEN: ${{ secrets.token || github.token }}
       - name: Run pre-build
         env:
           GH_TOKEN: ${{ secrets.token || github.token }}
