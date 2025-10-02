@@ -61,7 +61,7 @@ on:
       repositories:
         required: false
         type: string
-        default: "cim-measurements-go,logging,protobuf"
+        default: ""
         description: Comma or newline-separated list of repositories to grant access to during the golang build.
 jobs:
   changes:
