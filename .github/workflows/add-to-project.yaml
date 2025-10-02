@@ -44,11 +44,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
       - uses: actions/add-to-project@v1.0.2
         id: add-project
         with:
