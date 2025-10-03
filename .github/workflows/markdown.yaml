@@ -111,6 +111,7 @@ jobs:
           git push
       - uses: reviewdog/action-actionlint@v1
         env:
+          # https://www.shellcheck.net/wiki/
           SHELLCHECK_OPTS: "-e SC2086 -e SC2129"
         with:
           level: warning
