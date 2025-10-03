@@ -87,11 +87,11 @@ jobs:
     if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
       - uses: actions/checkout@v5
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -110,6 +110,9 @@ jobs:
           git commit -am "Automated yaml-lint fixes [dependabot skip]" || echo "No changes to commit"
           git push
       - uses: reviewdog/action-actionlint@v1
+        env:
+          # https://www.shellcheck.net/wiki/
+          SHELLCHECK_OPTS: "-e SC2086 -e SC2129"
         with:
           level: warning
           fail_level: error
@@ -119,11 +122,11 @@ jobs:
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
       - uses: actions/checkout@v5
         with:
           token: ${{ steps.generate-token.outputs.token }}

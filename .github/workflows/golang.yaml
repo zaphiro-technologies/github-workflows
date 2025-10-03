@@ -58,7 +58,11 @@ on:
         default: false
         type: boolean
         description: True to install and configure dvc
-
+      repositories:
+        required: false
+        type: string
+        default: ""
+        description: Comma or newline-separated list of repositories to grant access to during the golang build.
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -93,16 +97,17 @@ jobs:
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
       - uses: actions/checkout@v5
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
           token: ${{ steps.generate-token.outputs.token }}
-      - run: git config --global "url.https://${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
+      - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
@@ -129,11 +134,12 @@ jobs:
       GOPRIVATE: github.com/zaphiro-technologies/*
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
@@ -160,7 +166,7 @@ jobs:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         if: ${{ inputs.pull-dvc-datasets }}
         run: dvc pull
-      - run: git config --global "url.https://${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
+      - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
@@ -228,13 +234,14 @@ jobs:
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
       - uses: actions/checkout@v5
-      - run: git config --global url.https://${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
+      - run: git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod

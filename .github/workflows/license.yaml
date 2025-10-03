@@ -46,11 +46,11 @@ jobs:
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
       - uses: actions/checkout@v5
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -72,7 +72,7 @@ jobs:
           author_name: License Bot
           author_email: bot@zaphiro.ch
           message: "Automatic application of license header"
-      - run: git config --global "url.https://${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
+      - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - if: ${{ (! inputs.skip-dependecy || inputs.skip-dependecy == '') && hashFiles('go.mod') != '' }}
         name: Set up Go (Go project)
         uses: actions/setup-go@v6

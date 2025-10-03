@@ -20,10 +20,6 @@ concurrency:
 
 on:
   workflow_call:
-    secrets:
-      token:
-        required: false
-        description: Token to be used for submodules or for docker builds
     inputs:
       image-name:
         required: false
@@ -64,12 +60,11 @@ on:
         type: string
         default: ""
         description: True or Recursive to initialize git submodules
-
-# Permissions needed
-# permissions:
-#   contents: read
-#   packages: write
-#   pull-requests: read
+      repositories:
+        required: false
+        type: string
+        default: ""
+        description: Comma or newline-separated list of repositories to grant access to during the docker build.
 
 jobs:
   check:
@@ -84,14 +79,20 @@ jobs:
     outputs:
       tags: ${{ steps.meta.outputs.tags }}
     steps:
+      - uses: actions/create-github-app-token@v2
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
       - name: Checkout
         uses: actions/checkout@v5
         with:
           submodules: ${{ inputs.submodules }}
-          token: ${{ inputs.submodules != '' && secrets.token || github.token }}
+          token: ${{ inputs.submodules != '' && steps.generate-token.outputs.token || github.token }}
       - name: Run pre-build
         env:
-          GH_TOKEN: ${{ secrets.token || github.token }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           if test -f "Makefile"; then
               make ci-pre-build
@@ -167,7 +168,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           secrets: |
-            "github_token=${{ secrets.token || github.token }}"
+            "github_token=${{ steps.generate-token.outputs.token }}"
           build-args: |
             GIT_REV=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.revision']}}
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}

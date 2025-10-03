@@ -58,6 +58,11 @@ on:
         default: "output"
         type: string
         description: Directory with the artifacts to upload
+      repositories:
+        required: false
+        type: string
+        default: ""
+        description: Comma or newline-separated list of repositories to grant access to during the golang build.
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -83,11 +88,12 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
       - uses: actions/checkout@v5
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -117,11 +123,12 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis

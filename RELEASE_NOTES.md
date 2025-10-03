@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-10-01
+## 0.0.3-dev - 2025-10-03
 
 ### Features
 
+- workflows: use official action to create github app tokens and support
+  additional repositories scoping (PR #207 by @chicco785)
 - python workflow: load python version from `pyproject.yaml` (PR #202 by
   @chicco785)
 - Add linter for github actions (PR #193 by @chicco785)

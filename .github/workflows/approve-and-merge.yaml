@@ -32,11 +32,11 @@ jobs:
   approve-and-merge:
     runs-on: ubuntu-latest
     steps:
-      - uses: tibdex/github-app-token@v1
+      - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_SECRET }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
       - name: Approve & Merge Dependabot PRs
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
@@ -51,7 +51,7 @@ jobs:
           echo "Fetching open Dependabot PRs older than 3 days..."
 
           # Get PRs by dependabot, filter by age
-          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while read pr; do
+          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while IFS= read -r pr; do
             number=$(echo "$pr" | jq -r '.number')
             title=$(echo "$pr" | jq -r '.title')
 
