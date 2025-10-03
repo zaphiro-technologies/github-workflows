@@ -97,12 +97,29 @@ jobs:
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
     steps:
+      - name: Prepare repositories list
+        id: prepare
+        run: |
+          repos="${{ inputs.repositories }}"
+          current_repo="${GITHUB_REPOSITORY#*/}"
+
+          # If inputs.repositories is empty, just use current repo
+          if [ -z "$repos" ]; then
+            repos="$current_repo"
+          else
+            repos="$repos,$current_repo"
+          fi
+
+          # Convert CSV to newline-separated list and deduplicate
+          echo "repositories<<EOF" >> $GITHUB_OUTPUT
+          echo "$repos" | tr ',' '\n' | sort -u >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          repositories: ${{ inputs.repositories }}
+          repositories: ${{ steps.prepare.outputs.repositories }}
       - uses: actions/checkout@v5
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
@@ -134,12 +151,29 @@ jobs:
       GOPRIVATE: github.com/zaphiro-technologies/*
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
+      - name: Prepare repositories list
+        id: prepare
+        run: |
+          repos="${{ inputs.repositories }}"
+          current_repo="${GITHUB_REPOSITORY#*/}"
+
+          # If inputs.repositories is empty, just use current repo
+          if [ -z "$repos" ]; then
+            repos="$current_repo"
+          else
+            repos="$repos,$current_repo"
+          fi
+
+          # Convert CSV to newline-separated list and deduplicate
+          echo "repositories<<EOF" >> $GITHUB_OUTPUT
+          echo "$repos" | tr ',' '\n' | sort -u >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          repositories: ${{ inputs.repositories }}
+          repositories: ${{ steps.prepare.outputs.repositories }}
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
