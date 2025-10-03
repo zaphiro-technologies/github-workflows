@@ -51,7 +51,7 @@ jobs:
           echo "Fetching open Dependabot PRs older than 3 days..."
 
           # Get PRs by dependabot, filter by age
-          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while read pr; do
+          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while IFS= read -r pr; do
             number=$(echo "$pr" | jq -r '.number')
             title=$(echo "$pr" | jq -r '.title')
 
