@@ -268,12 +268,29 @@ jobs:
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
     steps:
+      - name: Prepare repositories list
+        id: prepare
+        run: |
+          repos="${{ inputs.repositories }}"
+          current_repo="${GITHUB_REPOSITORY#*/}"
+
+          # If inputs.repositories is empty, just use current repo
+          if [ -z "$repos" ]; then
+            repos="$current_repo"
+          else
+            repos="$repos,$current_repo"
+          fi
+
+          # Convert CSV to newline-separated list and deduplicate
+          echo "repositories<<EOF" >> $GITHUB_OUTPUT
+          echo "$repos" | tr ',' '\n' | sort -u >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          repositories: ${{ inputs.repositories }}
+          repositories: ${{ steps.prepare.outputs.repositories }}
       - uses: actions/checkout@v5
       - run: git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
       - uses: actions/setup-go@v6
