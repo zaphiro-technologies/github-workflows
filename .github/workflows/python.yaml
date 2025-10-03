@@ -58,6 +58,11 @@ on:
         default: "output"
         type: string
         description: Directory with the artifacts to upload
+      repositories:
+        required: false
+        type: string
+        default: ""
+        description: Comma or newline-separated list of repositories to grant access to during the golang build.
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -83,11 +88,29 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
     steps:
+      - name: Prepare repositories list
+        id: prepare
+        run: |
+          repos="${{ inputs.repositories }}"
+          current_repo="${GITHUB_REPOSITORY#*/}"
+
+          # If inputs.repositories is empty, just use current repo
+          if [ -z "$repos" ]; then
+            repos="$current_repo"
+          else
+            repos="$repos,$current_repo"
+          fi
+
+          # Convert CSV to newline-separated list and deduplicate
+          echo "repositories<<EOF" >> $GITHUB_OUTPUT
+          echo "$repos" | tr ',' '\n' | sort -u >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ steps.prepare.outputs.repositories }}
       - uses: actions/checkout@v5
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -117,11 +140,29 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
+      - name: Prepare repositories list
+        id: prepare
+        run: |
+          repos="${{ inputs.repositories }}"
+          current_repo="${GITHUB_REPOSITORY#*/}"
+
+          # If inputs.repositories is empty, just use current repo
+          if [ -z "$repos" ]; then
+            repos="$current_repo"
+          else
+            repos="$repos,$current_repo"
+          fi
+
+          # Convert CSV to newline-separated list and deduplicate
+          echo "repositories<<EOF" >> $GITHUB_OUTPUT
+          echo "$repos" | tr ',' '\n' | sort -u >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
       - uses: actions/create-github-app-token@v2
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ steps.prepare.outputs.repositories }}
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
