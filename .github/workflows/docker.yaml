@@ -185,7 +185,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           secrets: |
-            "github_token=${{ secrets.token || github.token }}"
+            "github_token=${{ steps.generate-token.outputs.token }}"
           build-args: |
             GIT_REV=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.revision']}}
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
