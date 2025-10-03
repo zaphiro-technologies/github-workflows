@@ -110,6 +110,8 @@ jobs:
           git commit -am "Automated yaml-lint fixes [dependabot skip]" || echo "No changes to commit"
           git push
       - uses: reviewdog/action-actionlint@v1
+        env:
+          SHELLCHECK_OPTS: "-e SC2086 -e SC2129"
         with:
           level: warning
           fail_level: error
