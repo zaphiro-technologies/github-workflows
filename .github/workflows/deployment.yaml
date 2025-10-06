@@ -64,6 +64,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
+          repositories: k8s-deployments
       - name: Get image tag from git tag
         if: github.ref_type == 'tag'
         run: |
