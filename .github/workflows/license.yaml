@@ -102,4 +102,4 @@ jobs:
         name: Check Python dependencies' License
         run: |
           pip install licensecheck
-          poetry run licensecheck --only-licenses mit apache bsd psf-2.0 mpl --show-only-failing --zero
+          licensecheck --only-licenses mit apache bsd psf-2.0 mpl --show-only-failing --zero
