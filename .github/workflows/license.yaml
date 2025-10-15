@@ -101,6 +101,5 @@ jobs:
       - if: ${{ (!inputs.skip-dependecy || inputs.skip-dependecy == '') &&(hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Check Python dependencies' License
         run: |
-          pip install pip-licenses licensecheck
-          pip-licenses --from=mixed --format=json > licenses.json
-          licensecheck licenses.json --allow "Apache-2.0,MIT,BSD-3-Clause,BSD-2-Clause"
+          pip install licensecheck
+          poetry run licensecheck --only-licenses mit apache bsd psf-2.0 mpl --show-only-failing --zero
