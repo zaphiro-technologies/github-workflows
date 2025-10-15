@@ -101,7 +101,8 @@ jobs:
       - if: ${{ (!inputs.skip-dependecy || inputs.skip-dependecy == '') &&(hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Check Python dependencies' License
         run: |
-          pipx install poetry
+          pip install poetry
+          poetry config virtualenvs.in-project true
           poetry install --no-root --without dev
           poetry run pip install licensecheck
           poetry run licensecheck --only-licenses mit apache bsd psf-2.0 mpl --show-only-failing --zero
