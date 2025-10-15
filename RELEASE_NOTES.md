@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-10-03
+## 0.0.3-dev - 2025-10-15
 
 ### Features
 
@@ -48,6 +48,7 @@
 
 ### Bug Fixes
 
+- deployment: fix app token scope (PR #209 by @cosimomeli)
 - release notes: fix not progressive releases and detached head commits (PR #206
   by @chicco785)
 - docker workflow: updated tags type priority values (PR #201 by @frank-flour24)
@@ -75,6 +76,8 @@
 
 ### Dependencies
 
+- Bump stefanzweifel/git-auto-commit-action from 6 to 7 (PR #210 by
+  @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 5.3.1 to 6.0.0 (PR #203 by
   @dependabot[bot])
 - Bump actions/setup-python from 5 to 6 (PR #198 by @dependabot[bot])
