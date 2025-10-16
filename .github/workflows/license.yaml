@@ -74,7 +74,7 @@ jobs:
           message: "Automatic application of license header"
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       # golang license check set-up
-      - if: ${{ (!inputs.skip-dependecy || inputs.skip-dependecy == '') && hashFiles('go.mod') != '' }}
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('go.mod') != '' }}
         name: Set up Go (Go project)
         uses: actions/setup-go@v6
         with:
