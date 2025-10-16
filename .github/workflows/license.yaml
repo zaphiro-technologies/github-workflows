@@ -24,7 +24,7 @@ on:
     types: [opened, reopened, ready_for_review, synchronize]
   workflow_call:
     inputs:
-      skip-dependecy:
+      skip-dependency:
         required: false
         default: false
         type: boolean
