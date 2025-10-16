@@ -98,7 +98,7 @@ jobs:
       # since it uses a old version of golang.
       # The file `.github/config/.licenserc.yaml` is required, or it will fail.
       # python license check set-up
-      - if: ${{ (!inputs.skip-dependecy || inputs.skip-dependecy == '') &&(hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') &&(hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Check Python dependencies' License
         run: |
           pip install poetry
