@@ -80,7 +80,7 @@ jobs:
         with:
           go-version-file: go.mod
       # javascript license check set-up
-      - if: ${{ (!inputs.skip-dependecy || inputs.skip-dependecy == '') && hashFiles('package.json') != '' }}
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('package.json') != '' }}
         name: Set up Go (non-Go project)
         uses: actions/setup-go@v6
         with:
