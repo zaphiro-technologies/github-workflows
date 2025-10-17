@@ -91,7 +91,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          go install github.com/apache/skywalking-eyes/cmd/license-eye@v0.7.0
+          go install github.com/apache/skywalking-eyes/cmd/license-eye@latest
           license-eye -c ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }} dep check
       # NOTE: we are not using the action
       # apache/skywalking-eyes/dependency@v0.6.0
