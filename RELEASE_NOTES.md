@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-10-15
+## 0.0.3-dev - 2025-10-20
 
 ### Features
 
+- license workflow: support python licence check (PR #211 by @chicco785)
 - workflows: use official action to create github app tokens and support
   additional repositories scoping (PR #207 by @chicco785)
 - python workflow: load python version from `pyproject.yaml` (PR #202 by
