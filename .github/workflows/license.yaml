@@ -24,7 +24,7 @@ on:
     types: [opened, reopened, ready_for_review, synchronize]
   workflow_call:
     inputs:
-      skip-dependecy:
+      skip-dependency:
         required: false
         default: false
         type: boolean
@@ -38,6 +38,11 @@ on:
         required: false
         default: ".github/config/.licenserc.yaml"
         type: string
+      repositories:
+        required: false
+        type: string
+        default: ""
+        description: Comma or newline-separated list of repositories to grant access to during the golang build.
 jobs:
   license:
     name: Check licenses
@@ -51,6 +56,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
       - uses: actions/checkout@v5
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -73,18 +79,21 @@ jobs:
           author_email: bot@zaphiro.ch
           message: "Automatic application of license header"
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
-      - if: ${{ (! inputs.skip-dependecy || inputs.skip-dependecy == '') && hashFiles('go.mod') != '' }}
+      # golang license check set-up
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('go.mod') != '' }}
         name: Set up Go (Go project)
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - if: ${{ (! inputs.skip-dependecy || inputs.skip-dependecy == '') && hashFiles('go.mod') == '' }}
+      # javascript license check set-up
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('package.json') != '' }}
         name: Set up Go (non-Go project)
         uses: actions/setup-go@v6
         with:
           go-version: ">=1.20.0"
-      - if: ${{ ! inputs.skip-dependecy || inputs.skip-dependecy == '' }}
-        name: Check Dependencies' License
+      # golang & javascript license check
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('package.json') != '' || hashFiles('go.mod') != '') }}
+        name: Check Go/Javascript Dependencies' License
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -94,3 +103,12 @@ jobs:
       # apache/skywalking-eyes/dependency@v0.6.0
       # since it uses a old version of golang.
       # The file `.github/config/.licenserc.yaml` is required, or it will fail.
+      # python license check set-up
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') &&(hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Check Python dependencies' License
+        run: |
+          pip install poetry
+          pip install poetry-plugin-export
+          poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
+          pip install licensecheck
+          licensecheck --only-licenses mit apache bsd psf-2.0 mpl lgpl --show-only-failing --zero --requirements-paths /tmp/reqs.txt
