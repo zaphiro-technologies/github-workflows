@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-10-20
+## 0.0.3-dev - 2025-10-21
 
 ### Features
 
@@ -77,6 +77,7 @@
 
 ### Dependencies
 
+- Bump actions/setup-node from 5 to 6 (PR #213 by @dependabot[bot])
 - Bump stefanzweifel/git-auto-commit-action from 6 to 7 (PR #210 by
   @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 5.3.1 to 6.0.0 (PR #203 by
