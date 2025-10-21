@@ -111,4 +111,4 @@ jobs:
           pip install poetry-plugin-export
           poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
           pip install licensecheck
-          licensecheck --only-licenses mit apache bsd psf-2.0 mpl lgpl --show-only-failing --zero --requirements-paths /tmp/reqs.txt
+          licensecheck --only-licenses mit apache bsd psf-2.0 mpl mpl-2.0 lgpl --show-only-failing --zero --requirements-paths /tmp/reqs.txt
