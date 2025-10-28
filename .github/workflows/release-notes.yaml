@@ -229,7 +229,7 @@ jobs:
           output: "cyclonedx-sbom.json"
       - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
         name: Upload SBOM as a Github artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: trivy-sbom-report
           path: "${{ github.workspace }}/cyclonedx-sbom.json"
