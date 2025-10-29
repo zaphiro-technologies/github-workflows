@@ -65,35 +65,21 @@ jobs:
                 echo "🔄 Rebasing PR #$number branch ($branch)..."
                 git config --global user.name 'Bot'
                 git config --global user.email 'bot@zaphiro.ch'
+
                 git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
                 cd repo
                 git fetch origin
                 git checkout "$branch"
                 base_branch=$(gh pr view "$number" --json baseRefName --jq '.baseRefName')
-                
-                if ! git rebase "origin/$base_branch"; then
-                  echo "⚠️ Rebase conflict detected for PR #$number — attempting automatic conflict resolution..."
-                  # Auto-resolve RELEASE_NOTES.md in favor of base, if it exists
-                  if [ -f RELEASE_NOTES.md ]; then
-                    echo "🧩 Auto-resolving RELEASE_NOTES.md in favor of base branch"
-                    git checkout --ours RELEASE_NOTES.md
-                    git add RELEASE_NOTES.md
-                    git rebase --continue || true
-                  fi
 
-                  # If still conflicted, skip the commit
-                  if git rebase --continue 2>/dev/null; then
-                    echo "✅ Conflict resolved and rebase continued."
-                  elif git rebase --skip 2>/dev/null; then
-                    echo "✅ Conflicted commit skipped."
-                  else
-                    echo "❌ Rebase failed for PR #$number. Aborting and skipping this PR."
-                    git rebase --abort || true
-                    cd ..
-                    rm -rf repo
-                    continue
-                  fi
-                fi
+                # Start rebase and automatically skip RELEASE_NOTES.md conflicts
+                git rebase "origin/$base_branch" || {
+                  echo "⚠️ Rebase conflict detected. Ignoring RELEASE_NOTES.md..."
+                  # Mark RELEASE_NOTES.md as resolved without changing it
+                  git checkout --ours RELEASE_NOTES.md || true
+                  git add RELEASE_NOTES.md
+                  git rebase --continue || git rebase --skip
+                }
 
                 git push --force-with-lease origin "$branch"
                 echo "✅ Rebase complete and branch updated for PR #$number"
@@ -102,8 +88,6 @@ jobs:
               else
                 echo "✅ PR #$number is up to date."
               fi
-              continue
-            fi
 
             echo "🔍 Checking CI status for PR #$number..."
             commit_sha=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
