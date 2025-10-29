@@ -64,6 +64,16 @@ jobs:
               continue
             fi
 
+            echo "🔍 Checking CI status for PR #$number..."
+            commit_sha=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
+
+            checks_state=$(gh api repos/$GITHUB_REPOSITORY/commits/$commit_sha/check-runs --jq '[.check_runs[].conclusion] | unique | join(",")')
+
+            if echo "$checks_state" | grep -Eiq 'failure|timed_out|cancelled|action_required'; then
+              echo "❌ Skipping PR #$number: one or more checks failed ($checks_state)"
+              continue
+            fi
+
             echo "🚀 Approving and merging PR #$number"
             gh pr review "$number" --repo "$GITHUB_REPOSITORY" --approve
             gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
