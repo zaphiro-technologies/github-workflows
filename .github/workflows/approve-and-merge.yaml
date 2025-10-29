@@ -75,21 +75,25 @@ jobs:
                   # Start rebase
                   git rebase "origin/$base_branch" || true
 
-                  # Loop until rebase is done
+                  # Loop until rebase finishes
                   while [ -d .git/rebase-apply ] || [ -d .git/rebase-merge ]; do
-                    conflicts=$(git diff --name-only --diff-filter=U || true)
+                    # Get the current commit message
+                    commit_msg=$(git log -1 --pretty=%B)
 
-                    if echo "$conflicts" | grep -q "^RELEASE_NOTES.md$"; then
-                      echo "🧩 Skipping RELEASE_NOTES.md conflict..."
-                      git checkout --ours RELEASE_NOTES.md
-                      git add RELEASE_NOTES.md
-                      git rebase --continue || git rebase --skip
-                    else
-                      echo "❌ Unresolvable conflict(s) in other files: $conflicts"
+                    # Auto-skip if commit includes [dependabot skip]
+                    if echo "$commit_msg" | grep -q "\[dependabot skip\]"; then
+                      echo "⚡ Skipping commit with '[dependabot skip]': $commit_msg"
+                      git rebase --skip
+                      continue
+                    fi
+
+                    # If other files conflict, abort
+                    if [ -n "$conflicts" ]; then
+                      echo "❌ Unresolvable conflict(s): $conflicts. Aborting PR."
                       git rebase --abort || true
                       cd ..
                       rm -rf repo
-                      continue 2  # skip this PR
+                      continue 2
                     fi
                   done
 
