@@ -62,29 +62,41 @@ jobs:
             if echo "$labels" | grep -q "auto-approved"; then
               mergeable_state=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
               if [ "$mergeable_state" = "DIRTY" ]; then
-                echo "🔄 Rebasing PR #$number branch ($branch)..."
-                git config --global user.name 'Bot'
-                git config --global user.email 'bot@zaphiro.ch'
+                  echo "🔄 Rebasing PR #$number branch ($branch)..."
+                  git config --global user.name 'Bot'
+                  git config --global user.email 'bot@zaphiro.ch'
 
-                git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
-                cd repo
-                git fetch origin
-                git checkout "$branch"
-                base_branch=$(gh pr view "$number" --json baseRefName --jq '.baseRefName')
+                  git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+                  cd repo
+                  git fetch origin
+                  git checkout "$branch"
+                  base_branch=$(gh pr view "$number" --json baseRefName --jq '.baseRefName')
 
-                # Start rebase and automatically skip RELEASE_NOTES.md conflicts
-                git rebase "origin/$base_branch" || {
-                  echo "⚠️ Rebase conflict detected. Ignoring RELEASE_NOTES.md..."
-                  # Mark RELEASE_NOTES.md as resolved without changing it
-                  git checkout --ours RELEASE_NOTES.md || true
-                  git add RELEASE_NOTES.md
-                  git rebase --continue || git rebase --skip
-                }
+                  # Start rebase
+                  git rebase "origin/$base_branch" || true
 
-                git push --force-with-lease origin "$branch"
-                echo "✅ Rebase complete and branch updated for PR #$number"
-                cd ..
-                rm -rf repo
+                  # Loop until rebase is done
+                  while [ -d .git/rebase-apply ] || [ -d .git/rebase-merge ]; do
+                    conflicts=$(git diff --name-only --diff-filter=U || true)
+
+                    if echo "$conflicts" | grep -q "^RELEASE_NOTES.md$"; then
+                      echo "🧩 Skipping RELEASE_NOTES.md conflict..."
+                      git checkout --ours RELEASE_NOTES.md
+                      git add RELEASE_NOTES.md
+                      git rebase --continue || git rebase --skip
+                    else
+                      echo "❌ Unresolvable conflict(s) in other files: $conflicts"
+                      git rebase --abort || true
+                      cd ..
+                      rm -rf repo
+                      continue 2  # skip this PR
+                    fi
+                  done
+
+                  git push --force-with-lease origin "$branch"
+                  echo "✅ Rebase complete and branch updated for PR #$number"
+                  cd ..
+                  rm -rf repo
               else
                 echo "✅ PR #$number is up to date."
               fi
