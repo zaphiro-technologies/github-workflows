@@ -88,6 +88,7 @@ jobs:
               else
                 echo "✅ PR #$number is up to date."
               fi
+            fi
 
             echo "🔍 Checking CI status for PR #$number..."
             commit_sha=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
