@@ -97,6 +97,7 @@ jobs:
                       rm -rf repo
                       continue 2
                     fi
+                    git rebase --continue || true
                   done
 
                   git push --force-with-lease origin "$branch"
