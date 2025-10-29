@@ -60,8 +60,7 @@ jobs:
 
             if echo "$labels" | grep -q "auto-approved"; then
               mergeable_state=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
-              echo "PR state: $mergeable_state"
-              if [ "$mergeable_state" = "BEHIND" ]; then
+              if [ "$mergeable_state" = "DIRTY" ]; then
                 echo "🔄 Rebasing PR #$number branch ($branch)..."
                 git config --global user.name 'Bot'
                 git config --global user.email 'bot@zaphiro.ch'
