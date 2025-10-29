@@ -78,15 +78,15 @@ jobs:
                   # Loop while a rebase is in progress
                   while [ -d .git/rebase-apply ] || [ -d .git/rebase-merge ]; do
                     # Get current commit message
-                    commit_msg=$(git show -s --format=%B HEAD)
+                    current_commit=$(git rev-parse REBASE_HEAD 2>/dev/null || echo "")
 
-                    echo "$commit_msg"
-
-                    # Auto-skip if commit includes [dependabot skip]
-                    if echo "$commit_msg" | tr -d '\r' | grep -iq "\[dependabot skip\]"; then
-                      echo "Skipping commit with '[dependabot skip]': $commit_msg"
-                      git rebase --skip
-                      continue
+                    if [ -n "$current_commit" ]; then
+                      commit_msg=$(git log -1 --pretty=%B "$current_commit")
+                      if echo "$commit_msg" | grep -iq "\[dependabot skip\]"; then
+                        echo "Skipping commit with '[dependabot skip]': $commit_msg"
+                        git rebase --skip
+                        continue
+                      fi
                     fi
 
                     # Detect conflicts
