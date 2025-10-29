@@ -59,8 +59,22 @@ jobs:
             echo "👉 Processing PR #$number: $title"
 
             if echo "$labels" | grep -q "auto-approved"; then
-              gh pr comment "$number" --repo "$GITHUB_REPOSITORY" --body "@dependabot rebase"
-              echo "✅ Rebase PR #$number"
+              mergeable_state=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
+              if [ "$mergeable_state" = "BEHIND" ]; then
+                echo "🔄 Rebasing PR #$number branch ($branch)..."
+                git config --global user.name 'Bot'
+                git config --global user.email 'bot@zaphiro.ch'
+                git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+                cd repo
+                git fetch origin
+                git checkout "$branch"
+                git rebase origin/$(gh pr view "$number" --json baseRefName --jq '.baseRefName') || git rebase --abort
+                git push --force-with-lease origin "$branch"
+                cd ..
+                rm -rf repo
+              else
+                echo "✅ PR #$number is up to date."
+              fi
               continue
             fi
 
