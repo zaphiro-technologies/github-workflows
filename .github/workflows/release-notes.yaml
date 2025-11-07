@@ -126,7 +126,7 @@ jobs:
           more .github/config/release-config-temp.json
       - name: "Build Changelog"
         id: build_changelog_1
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
         with:
           configuration: ".github/config/release-config-temp.json"
@@ -138,7 +138,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Build Changelog"
         id: build_changelog_2
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
         with:
           configuration: ".github/config/release-config-temp.json"
@@ -252,7 +252,7 @@ jobs:
         run: echo "CONFIGURATION=.github/config/release-config.json" >> $GITHUB_ENV
       - name: "Build Changelog"
         id: github_release
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         with:
           configuration: ${{env.CONFIGURATION}}
         env:
