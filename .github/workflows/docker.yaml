@@ -86,7 +86,7 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: ${{ inputs.submodules }}
           token: ${{ inputs.submodules != '' && steps.generate-token.outputs.token || github.token }}
