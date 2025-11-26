@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-10-28
+## 0.0.3-dev - 2025-11-26
 
 ### Features
 
@@ -77,6 +77,12 @@
 
 ### Dependencies
 
+- Bump actions/checkout from 5 to 6 (PR #219 by @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 20 to 21 (PR #218 by
+  @dependabot[bot])
+- Bump golangci/golangci-lint-action from 8 to 9 (PR #217 by @dependabot[bot])
+- Bump mikepenz/release-changelog-builder-action from 5 to 6 (PR #216 by
+  @dependabot[bot])
 - Bump actions/upload-artifact from 4 to 5 (PR #214 by @dependabot[bot])
 - Bump apache/skywalking-eyes from 0.7.0 to 0.8.0 (PR #212 by @dependabot[bot])
 - Bump actions/setup-node from 5 to 6 (PR #213 by @dependabot[bot])
