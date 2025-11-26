@@ -62,7 +62,7 @@ jobs:
       markdown_files: ${{ steps.filter.outputs.markdown_files }}
       github_actions_files_changed: ${{ steps.filter.outputs.github-actions == 'true' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2 # To retrieve the preceding commit.
       - uses: dorny/paths-filter@v3
@@ -92,7 +92,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           token: ${{ steps.generate-token.outputs.token }}
           ref: ${{github.event.pull_request.head.ref}}
@@ -127,7 +127,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           token: ${{ steps.generate-token.outputs.token }}
           ref: ${{github.event.pull_request.head.ref}}
@@ -190,7 +190,7 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true'  && github.event.pull_request.draft == false && (!inputs.skip-spell-check || inputs.skip-spell-check == '') }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
