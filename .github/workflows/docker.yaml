@@ -93,6 +93,7 @@ jobs:
       - name: Run pre-build
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          BUILD_SECRET: ${{ secrets.BUILD_SECRET }}
         run: |
           if test -f "Makefile"; then
               make ci-pre-build
