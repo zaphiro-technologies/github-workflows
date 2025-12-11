@@ -20,6 +20,13 @@ concurrency:
 
 on:
   workflow_call:
+    secrets:
+      BUILD_SECRET:
+        required: false
+      APP_ID:
+        required: true
+      APP_SECRET:
+        required: true
     inputs:
       image-name:
         required: false
@@ -93,6 +100,7 @@ jobs:
       - name: Run pre-build
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          BUILD_SECRET: ${{ secrets.BUILD_SECRET }}
         run: |
           if test -f "Makefile"; then
               make ci-pre-build

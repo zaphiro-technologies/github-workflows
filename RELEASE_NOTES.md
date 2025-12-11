@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-11-26
+## 0.0.3-dev - 2025-12-11
 
 ### Features
 
+- Support secret injection via .env during docker image build (PR #220 by
+  @chicco785)
 - license workflow: support python licence check (PR #211 by @chicco785)
 - workflows: use official action to create github app tokens and support
   additional repositories scoping (PR #207 by @chicco785)
