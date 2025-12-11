@@ -48,19 +48,82 @@ jobs:
           else
             echo "Label auto-approved already exists. Skipping creation."
           fi
-          echo "Fetching open Dependabot PRs older than 3 days..."
 
-          # Get PRs by dependabot, filter by age
-          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while IFS= read -r pr; do
+          echo "Fetching open Dependabot PRs older than 3 days and newer than 30 days ..."
+
+          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title,labels,headRefName --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while IFS= read -r pr; do
             number=$(echo "$pr" | jq -r '.number')
             title=$(echo "$pr" | jq -r '.title')
+            labels=$(echo "$pr" | jq -r '[.labels[].name] | join(",")')
+            branch=$(echo "$pr" | jq -r '.headRefName')
 
             echo "👉 Processing PR #$number: $title"
 
-            #gh pr comment "$number" --repo "$GITHUB_REPOSITORY" --body "@dependabot rebase"
+            if echo "$labels" | grep -q "auto-approved"; then
+              mergeable_state=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
+              if [ "$mergeable_state" = "DIRTY" ]; then
+                  echo "🔄 Rebasing PR #$number branch ($branch)..."
+                  git config --global user.name 'Bot'
+                  git config --global user.email 'bot@zaphiro.ch'
+
+                  git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+                  cd repo
+                  git fetch origin
+                  git checkout "$branch"
+                  base_branch=$(gh pr view "$number" --json baseRefName --jq '.baseRefName')
+
+                  # Start rebase
+                  git rebase "origin/$base_branch" || true
+
+                  # Loop while a rebase is in progress
+                  while [ -d .git/rebase-apply ] || [ -d .git/rebase-merge ]; do
+                    # Get current commit message
+                    current_commit=$(git rev-parse REBASE_HEAD 2>/dev/null || echo "")
+
+                    if [ -n "$current_commit" ]; then
+                      commit_msg=$(git log -1 --pretty=%B "$current_commit")
+                      if echo "$commit_msg" | grep -iq "\[dependabot skip\]"; then
+                        echo "Skipping commit with '[dependabot skip]': $commit_msg"
+                        git rebase --skip
+                        continue
+                      fi
+                    fi
+
+                    # Detect conflicts
+                    conflicts=$(git diff --name-only --diff-filter=U || true)
+
+                    if [ -n "$conflicts" ]; then
+                      echo "❌ Unresolvable conflict(s): $conflicts. Aborting rebase."
+                      git rebase --abort || true
+                      cd ..
+                      rm -rf repo
+                      continue 2
+                    fi
+                    git rebase --continue || true
+                  done
+
+                  git push --force-with-lease origin "$branch"
+                  echo "✅ Rebase complete and branch updated for PR #$number"
+                  cd ..
+                  rm -rf repo
+              else
+                echo "✅ PR #$number is up to date."
+              fi
+            fi
+
+            echo "🔍 Checking CI status for PR #$number..."
+            commit_sha=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
+
+            checks_state=$(gh api repos/$GITHUB_REPOSITORY/commits/$commit_sha/check-runs --jq '[.check_runs[].conclusion] | unique | join(",")')
+
+            if echo "$checks_state" | grep -Eiq 'failure|timed_out|cancelled|action_required'; then
+              echo "❌ Skipping PR #$number: one or more checks failed ($checks_state)"
+              continue
+            fi
+
+            echo "🚀 Approving and merging PR #$number"
             gh pr review "$number" --repo "$GITHUB_REPOSITORY" --approve
             gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
             gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --add-label auto-approved
-
             echo "✅ Done with PR #$number"
           done
