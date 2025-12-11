@@ -23,6 +23,10 @@ on:
     secrets:
       BUILD_SECRET:
         required: false
+      APP_ID:
+        required: true
+      APP_SECRET:
+        required: true
     inputs:
       image-name:
         required: false
