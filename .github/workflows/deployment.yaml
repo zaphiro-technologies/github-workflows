@@ -103,10 +103,24 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
           repository: ${{github.repository_owner}}/k8s-deployments
           ref: main
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
       - name: Get repository name from values-platforms.yaml
         if: github.ref_type != 'tag'
         id: repository-name
-        run: echo "repository=$(yq '.platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.repository' kubernetes/${{env.CLUSTER}}/values-platforms.yaml)" >> $GITHUB_OUTPUT
+        run: |
+          if [ "${{ env.PLATFORM }}" = "ALL" ]; then
+            # pick the first cluster and first platform when ALL
+            first_cluster=$(ls -1 kubernetes | head -n 1)
+            first_platform=$(yq '.platforms | keys | .[0]' kubernetes/$first_cluster/values-platforms.yaml)
+            repo=$(yq ".platforms.\"$first_platform\".${{inputs.app-name}}.image.repository" \
+                  kubernetes/$first_cluster/values-platforms.yaml)
+            echo "repository=$repo" >> $GITHUB_OUTPUT
+          else
+            echo "repository=$(yq '.platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.repository' kubernetes/${{env.CLUSTER}}/values-platforms.yaml)" >> $GITHUB_OUTPUT
+          fi
       - name: Get digest for image tag if not git tag
         if: github.ref_type != 'tag'
         id: digest
@@ -141,6 +155,7 @@ jobs:
         run: |
           echo "IMAGE_TAG=$IMAGE_TAG@$DIGEST" >> $GITHUB_ENV
       - name: Update values-platforms.yaml
+        if: ${{ env.PLATFORM != 'ALL' }}
         uses: fjogeleit/yaml-update-action@v0.16.1
         with:
           valueFile: kubernetes/${{env.CLUSTER}}/values-platforms.yaml
@@ -148,11 +163,35 @@ jobs:
           value: ${{env.IMAGE_TAG}}
           commitChange: false
           createPR: false
+      - name: Update values-platforms.yaml (ALL)
+        if: ${{ env.PLATFORM == 'ALL' }}
+        run: |
+          for cluster in kubernetes/*; do
+            echo "Processing cluster: $cluster"
+
+            platforms=$(yq '.platforms | keys | .[]' "$cluster/values-platforms.yaml")
+            for platform in $platforms; do
+              echo "Updating platform: $platform"
+
+              yq -i ".platforms.\"$platform\"[\"${{ inputs.app-name }}\"].image.tag = \"${IMAGE_TAG}@${DIGEST}\"" \
+                  "$cluster/values-platforms.yaml"
+            done
+          done
       - name: Commit & Push changed tag
+        if: ${{ env.PLATFORM != 'ALL' }}
         uses: actions-js/push@v1.5
         with:
           github_token: ${{ steps.generate-token.outputs.token }}
           branch: main
           message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
           directory: kubernetes/${{env.CLUSTER}}
+          repository: ${{github.repository_owner}}/k8s-deployments
+      - name: Commit & Push changed tag (ALL)
+        if: ${{ env.PLATFORM == 'ALL' }}
+        uses: actions-js/push@v1.5
+        with:
+          github_token: ${{ steps.generate-token.outputs.token }}
+          branch: test
+          message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
+          directory: kubernetes
           repository: ${{github.repository_owner}}/k8s-deployments
