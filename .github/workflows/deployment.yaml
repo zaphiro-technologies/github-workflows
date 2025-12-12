@@ -173,7 +173,7 @@ jobs:
             for platform in $platforms; do
               echo "Updating platform: $platform"
 
-              yq -i ".platforms.\"$platform\"[\"${{ inputs.app-name }}\"].image.tag = \"${IMAGE_TAG}@${DIGEST}\"" \
+              yq -i ".platforms.\"$platform\".${{ inputs.app-name }}.image.tag = \"${IMAGE_TAG}@${DIGEST}\"" \
                   "$cluster/values-platforms.yaml"
             done
           done
@@ -191,7 +191,7 @@ jobs:
         uses: actions-js/push@v1.5
         with:
           github_token: ${{ steps.generate-token.outputs.token }}
-          branch: test
+          branch: test-2
           message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
           directory: kubernetes
           repository: ${{github.repository_owner}}/k8s-deployments
