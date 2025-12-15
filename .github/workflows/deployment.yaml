@@ -164,7 +164,7 @@ jobs:
           commitChange: false
           createPR: false
       - name: Update values-platforms.yaml (ALL)
-        if: ${{ env.PLATFORM == 'ALL' }}
+        if: env.PLATFORM == 'ALL'
         run: |
           for cluster in kubernetes/*; do
             echo "Processing cluster: $cluster"
