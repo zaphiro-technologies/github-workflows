@@ -173,7 +173,7 @@ jobs:
             for platform in $platforms; do
               echo "Updating platform: $platform"
 
-              yq -i ".platforms.\"$platform\".${{ inputs.app-name }}.image.tag = \"${IMAGE_TAG}@${DIGEST}\"" \
+              yq -i ".platforms.\"$platform\".${{ inputs.app-name }}.image.tag = \"${IMAGE_TAG}\"" \
                   "$cluster/values-platforms.yaml"
             done
           done
