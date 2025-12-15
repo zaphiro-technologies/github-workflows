@@ -174,7 +174,6 @@ jobs:
             done
           done
       - name: Commit & Push changed tag
-        if: ${{ env.PLATFORM != 'ALL' }}
         uses: actions-js/push@v1.5
         with:
           github_token: ${{ steps.generate-token.outputs.token }}
