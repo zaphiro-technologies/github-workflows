@@ -103,10 +103,6 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
           repository: ${{github.repository_owner}}/k8s-deployments
           ref: main
-      - name: Install yq
-        run: |
-          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
-          sudo chmod +x /usr/bin/yq
       - name: Get repository name from values-platforms.yaml
         if: github.ref_type != 'tag'
         id: repository-name
@@ -182,16 +178,7 @@ jobs:
         uses: actions-js/push@v1.5
         with:
           github_token: ${{ steps.generate-token.outputs.token }}
-          branch: main
-          message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
-          directory: kubernetes/${{env.CLUSTER}}
-          repository: ${{github.repository_owner}}/k8s-deployments
-      - name: Commit & Push changed tag (ALL)
-        if: ${{ env.PLATFORM == 'ALL' }}
-        uses: actions-js/push@v1.5
-        with:
-          github_token: ${{ steps.generate-token.outputs.token }}
-          branch: main
+          branch: test-new
           message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
           directory: kubernetes
           repository: ${{github.repository_owner}}/k8s-deployments
