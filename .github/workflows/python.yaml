@@ -183,7 +183,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
