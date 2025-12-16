@@ -80,8 +80,10 @@
 
 ### Dependencies
 
-- Bump actions/cache from 4 to 5 (PR #224 by @dependabot[bot])
 - Bump actions/upload-artifact from 5 to 6 (PR #226 by @dependabot[bot])
+- Bump actions/cache from 4 to 5 (PR #224 by @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 21 to 22 (PR #223 by
+  @dependabot[bot])
 - Bump actions/checkout from 5 to 6 (PR #219 by @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 20 to 21 (PR #218 by
   @dependabot[bot])
