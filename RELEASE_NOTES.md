@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-12-16
+## 0.0.3-dev - 2026-01-12
 
 ### Features
 
@@ -52,6 +52,7 @@
 
 ### Bug Fixes
 
+- Temporary fix for dvc boto3 import issue (PR #228 by @chicco785)
 - deployment: fix app token scope (PR #209 by @cosimomeli)
 - release notes: fix not progressive releases and detached head commits (PR #206
   by @chicco785)
@@ -80,12 +81,14 @@
 
 ### Dependencies
 
+- Bump dawidd6/action-download-artifact from 11 to 12 (PR #227 by
+  @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 6.0.0 to 7.0.0 (PR #225 by
+  @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 21 to 22 (PR #223 by
   @dependabot[bot])
 - Bump actions/upload-artifact from 5 to 6 (PR #226 by @dependabot[bot])
 - Bump actions/cache from 4 to 5 (PR #224 by @dependabot[bot])
-- Bump SonarSource/sonarqube-scan-action from 6.0.0 to 7.0.0 (PR #225 by
-  @dependabot[bot])
 - Bump actions/checkout from 5 to 6 (PR #219 by @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 20 to 21 (PR #218 by
   @dependabot[bot])

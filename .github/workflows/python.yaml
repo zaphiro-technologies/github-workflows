@@ -153,7 +153,10 @@ jobs:
           output-credentials: true
       - name: Install DVC
         if: ${{ inputs.pull-dvc-datasets }}
-        run: pipx install dvc[s3]
+        run: |
+          pipx install dvc[s3]
+          # TODO: waiting for https://github.com/treeverse/dvc/issues/10966
+          pipx runpip dvc install boto3
       - name: Set-up credentials
         if: ${{ inputs.pull-dvc-datasets }}
         env:
