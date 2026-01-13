@@ -154,7 +154,7 @@ jobs:
       - name: Install DVC
         if: ${{ inputs.pull-dvc-datasets }}
         run: |
-          pip install dvc[s3]
+          pipx install dvc[s3]
           # TODO: waiting for https://github.com/treeverse/dvc/issues/10966
           pipx runpip dvc install boto3
       - name: Set-up git credentials for dvc
