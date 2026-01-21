@@ -160,21 +160,48 @@ jobs:
             RAW_PRIORITY=$(echo "$issue" | jq -r '.projectItems.nodes[].fieldValueByName.name // empty' | head -n 1)
             
             # Remove non-ASCII characters (icons/emojis) to get clean label name
-            PRIORITY=$(echo "$RAW_PRIORITY" | tr -cd '\000-\177' | xargs)
+            CLEAN_PRIORITY=$(echo "$RAW_PRIORITY" | tr -cd '\000-\177' | xargs)
             
-            if [ -z "$PRIORITY" ]; then
+            if [ -z "$CLEAN_PRIORITY" ]; then
               echo "Issue #$NUMBER: No priority found in project (or empty after cleanup)."
               continue
             fi
+            
+            # Map Priority to P-labels
+            case "$CLEAN_PRIORITY" in
+              "Low")
+                TARGET_LABEL="P0"
+                LABEL_COLOR="EDEDED"
+                ;;
+              "Medium")
+                TARGET_LABEL="P1"
+                LABEL_COLOR="FBCA04"
+                ;;
+              "High")
+                TARGET_LABEL="P2"
+                LABEL_COLOR="FF9F1C"
+                ;;
+              "Urgent")
+                TARGET_LABEL="P3"
+                LABEL_COLOR="D73A4A"
+                ;;
+              *)
+                TARGET_LABEL="$CLEAN_PRIORITY"
+                LABEL_COLOR="EDEDED"
+                ;;
+            esac
 
             # Check if label already exists
-            HAS_LABEL=$(echo "$issue" | jq -r --arg PRIORITY "$PRIORITY" '.labels.nodes[].name | select(. == $PRIORITY)')
+            HAS_LABEL=$(echo "$issue" | jq -r --arg TARGET_LABEL "$TARGET_LABEL" '.labels.nodes[].name | select(. == $TARGET_LABEL)')
             
             if [ -n "$HAS_LABEL" ]; then
-              echo "Issue #$NUMBER: Already has label '$PRIORITY'."
+              echo "Issue #$NUMBER: Already has label '$TARGET_LABEL'."
             else
-              echo "Issue #$NUMBER: Adding label '$PRIORITY'."
-              gh issue edit "$NUMBER" --repo "$OWNER/$REPO" --add-label "$PRIORITY"
+              echo "Issue #$NUMBER: Adding label '$TARGET_LABEL'."
+              # Create label if it doesn't exist (ignores error if exists)
+              gh label create "$TARGET_LABEL" --repo "$OWNER/$REPO" --color "$LABEL_COLOR" || true
+              
+              gh issue edit "$NUMBER" --repo "$OWNER/$REPO" --add-label "$TARGET_LABEL"
             fi
           done
 
