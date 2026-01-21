@@ -23,7 +23,7 @@ on:
       - labeled
       - ready_for_review
   schedule:
-    - cron: '*/10 * * * *' # Check every 10 minutes
+    - cron: '0 0 * * *' # Run daily at midnight
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -170,23 +170,23 @@ jobs:
             # Map Priority to P-labels
             case "$CLEAN_PRIORITY" in
               "Low")
-                TARGET_LABEL="P0"
+                TARGET_LABEL="P3"
                 LABEL_COLOR="EDEDED"
                 ;;
               "Medium")
-                TARGET_LABEL="P1"
+                TARGET_LABEL="P2"
                 LABEL_COLOR="FBCA04"
                 ;;
               "High")
-                TARGET_LABEL="P2"
+                TARGET_LABEL="P1"
                 LABEL_COLOR="FF9F1C"
                 ;;
               "Urgent")
-                TARGET_LABEL="P3"
+                TARGET_LABEL="P0"
                 LABEL_COLOR="D73A4A"
                 ;;
               *)
-                TARGET_LABEL="$CLEAN_PRIORITY"
+                TARGET_LABEL="P3"
                 LABEL_COLOR="EDEDED"
                 ;;
             esac
@@ -204,4 +204,3 @@ jobs:
               gh issue edit "$NUMBER" --repo "$OWNER/$REPO" --add-label "$TARGET_LABEL"
             fi
           done
-
