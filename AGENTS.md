@@ -1,32 +1,51 @@
 # Repository Agents
 
-This repository contains a collection of GitHub Actions workflows designed to automate various tasks within our GitHub infrastructure. These workflows act as agents to handle CI/CD processes, project management, and code quality checks.
+This repository contains a collection of GitHub Actions workflows designed to
+automate various tasks within our GitHub infrastructure. These workflows act as
+agents to handle CI/CD processes, project management, and code quality checks.
 
 ## Available Workflows
 
 ### Project & Issue Management
 
-- **Project Management** (`add-to-project.yaml`): Automatically adds issues and Pull Requests to a specified GitHub Project. It handles setting status fields, assigning reviewers, and managing permissions for PR creators.
-- **Auto-approve & Auto-merge** (`approve-and-merge.yaml`): Scheduled to run daily, this agent automatically approves and merges Pull Requests created by Dependabot to keep dependencies up-to-date.
-- **Validate PR** (`check-pr.yaml`): Ensures Pull Requests meet specific criteria involved in review processes.
+- **Project Management** (`add-to-project.yaml`): Automatically adds issues and
+  Pull Requests to a specified GitHub Project. It handles setting status fields,
+  assigning reviewers, and managing permissions for PR creators.
+- **Auto-approve & Auto-merge** (`approve-and-merge.yaml`): Scheduled to run
+  daily, this agent automatically approves and merges Pull Requests created by
+  Dependabot to keep dependencies up-to-date.
+- **Validate PR** (`check-pr.yaml`): Ensures Pull Requests meet specific
+  criteria involved in review processes.
 
 ### Build & Deploy
 
-- **Container Deployment** (`deployment.yaml`): Reusable workflow for deploying containerized applications to various environments.
-- **Docker Build** (`docker.yaml`): Reusable workflow to build and push Docker images.
-- **Publish New Release** (`new-release.yaml`): Orchestrates the creation of new software releases, including tagging and release artifact generation.
+- **Container Deployment** (`deployment.yaml`): Reusable workflow for deploying
+  containerized applications to various environments.
+- **Docker Build** (`docker.yaml`): Reusable workflow to build and push Docker
+  images.
+- **Publish New Release** (`new-release.yaml`): Orchestrates the creation of new
+  software releases, including tagging and release artifact generation.
 
 ### Code Quality & Testing
 
-- **Golang Lint & Test** (`golang.yaml`): Provides linting and testing capabilities specifically for Go projects.
-- **Python Lint & Test** (`python.yaml`): Provides linting and testing capabilities specifically for Python projects.
-- **Base Lint** (`markdown.yaml`): Performs lint checks on Markdown files to ensure documentation standards.
-- **License Management** (`license.yaml`): Checks for license compliance within the repository dependencies.
-- **Test Artifact** (`test-upload.yaml`): A workflow to test artifact upload functionality.
+- **Golang Lint & Test** (`golang.yaml`): Provides linting and testing
+  capabilities specifically for Go projects.
+- **Python Lint & Test** (`python.yaml`): Provides linting and testing
+  capabilities specifically for Python projects.
+- **Base Lint** (`markdown.yaml`): Performs lint checks on Markdown files to
+  ensure documentation standards.
+- **License Management** (`license.yaml`): Checks for license compliance within
+  the repository dependencies.
+- **Test Artifact** (`test-upload.yaml`): A workflow to test artifact upload
+  functionality.
 
 ### Housekeeping & Maintenance
 
-- **Clean Up Docker Images** (`clean-up-docker.yaml`): Automatically deletes Docker images associated with a Pull Request when it is closed.
-- **Clean Up Storage** (`clean-up-storage.yaml`): Cleans up storage and caches associated with a branch when its Pull Request is closed.
-- **Update Trivy Cache** (`trivy-cache-update.yaml`): A scheduled job to update the Trivy vulnerability database cache daily.
-- **Release Notes** (`release-notes.yaml`): Generates and manages release notes for the project.
+- **Clean Up Docker Images** (`clean-up-docker.yaml`): Automatically deletes
+  Docker images associated with a Pull Request when it is closed.
+- **Clean Up Storage** (`clean-up-storage.yaml`): Cleans up storage and caches
+  associated with a branch when its Pull Request is closed.
+- **Update Trivy Cache** (`trivy-cache-update.yaml`): A scheduled job to update
+  the Trivy vulnerability database cache daily.
+- **Release Notes** (`release-notes.yaml`): Generates and manages release notes
+  for the project.
