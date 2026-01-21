@@ -130,29 +130,74 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
         run: |
-          # Get all open issues with 'security' label
-          ISSUES=$(gh api graphql -f owner="$OWNER" -f repo="$REPO" -f query='
-            query($owner: String!, $repo: String!) {
-              repository(owner: $owner, name: $repo) {
-                issues(first: 100, states: OPEN, labels: ["security"]) {
-                  nodes {
-                    number
-                    labels(first: 20) {
-                      nodes { name }
-                    }
-                    projectItems(first: 5) {
+          # Get all open issues with 'security' label (with pagination)
+          ISSUES=""
+          CURSOR=""
+          while :; do
+            if [ -z "$CURSOR" ]; then
+              QUERY='
+                query($owner: String!, $repo: String!) {
+                  repository(owner: $owner, name: $repo) {
+                    issues(first: 100, states: OPEN, labels: ["security"]) {
+                      pageInfo {
+                        hasNextPage
+                        endCursor
+                      }
                       nodes {
-                        fieldValueByName(name: "Priority") {
-                          ... on ProjectV2ItemFieldSingleSelectValue { name }
+                        number
+                        labels(first: 20) {
+                          nodes { name }
+                        }
+                        projectItems(first: 5) {
+                          nodes {
+                            fieldValueByName(name: "Priority") {
+                              ... on ProjectV2ItemFieldSingleSelectValue { name }
+                            }
+                          }
                         }
                       }
                     }
                   }
                 }
-              }
-            }
-          ')
+              '
+            else
+              QUERY='
+                query($owner: String!, $repo: String!) {
+                  repository(owner: $owner, name: $repo) {
+                    issues(first: 100, states: OPEN, labels: ["security"], after: "'$CURSOR'") {
+                      pageInfo {
+                        hasNextPage
+                        endCursor
+                      }
+                      nodes {
+                        number
+                        labels(first: 20) {
+                          nodes { name }
+                        }
+                        projectItems(first: 5) {
+                          nodes {
+                            fieldValueByName(name: "Priority") {
+                              ... on ProjectV2ItemFieldSingleSelectValue { name }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              '
+            fi
 
+            PAGE=$(gh api graphql -f owner="$OWNER" -f repo="$REPO" -f query="$QUERY")
+            ISSUES="${ISSUES}${PAGE}"
+
+            HAS_NEXT=$(printf '%s\n' "$PAGE" | jq -r '.data.repository.issues.pageInfo.hasNextPage')
+            if [ "$HAS_NEXT" != "true" ]; then
+              break
+            fi
+
+            CURSOR=$(printf '%s\n' "$PAGE" | jq -r '.data.repository.issues.pageInfo.endCursor')
+          done
           # Loop through issues
           echo "$ISSUES" | jq -c '.data.repository.issues.nodes[]' | while read -r issue; do
             NUMBER=$(echo "$issue" | jq -r '.number')
