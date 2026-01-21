@@ -193,6 +193,14 @@ jobs:
 
             # Check if label already exists
             HAS_LABEL=$(echo "$issue" | jq -r --arg TARGET_LABEL "$TARGET_LABEL" '.labels.nodes[].name | select(. == $TARGET_LABEL)')
+
+            # Remove other priority labels if they exist
+            echo "$issue" | jq -r '.labels.nodes[].name' | while read -r EXISTING_LABEL; do
+                if [[ "$EXISTING_LABEL" =~ ^P[0-9]+$ ]] && [ "$EXISTING_LABEL" != "$TARGET_LABEL" ]; then
+                    echo "Issue #$NUMBER: Removing conflicting label '$EXISTING_LABEL'."
+                    gh issue edit "$NUMBER" --repo "$OWNER/$REPO" --remove-label "$EXISTING_LABEL"
+                fi
+            done
             
             if [ -n "$HAS_LABEL" ]; then
               echo "Issue #$NUMBER: Already has label '$TARGET_LABEL'."
