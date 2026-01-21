@@ -22,6 +22,9 @@ on:
     types:
       - labeled
       - ready_for_review
+  schedule:
+    - cron: '*/10 * * * *' # Check every 10 minutes
+  workflow_dispatch:
   workflow_call:
     inputs:
       labeled:
@@ -40,6 +43,7 @@ on:
         type: string
 jobs:
   add-to-project:
+    if: github.event_name == 'issues' || github.event_name == 'pull_request' || github.event_name == 'workflow_call'
     name: Add issue/PR to a project
     runs-on: ubuntu-latest
     permissions: write-all
@@ -105,3 +109,72 @@ jobs:
           persons: ${{ inputs.reviewers-individuals }} # add individual persons here
           include-draft: false # Draft PRs will be skipped (default: false)
           skip-with-manual-reviewers: 1 # Skip this action, if the number of reviwers was already assigned (default: 0)
+
+  sync-priority:
+    name: Sync Priority Label
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    permissions:
+      issues: write
+      repository-projects: read
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+
+      - name: Sync Priority to Label
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          # Get all open issues with 'security' label
+          ISSUES=$(gh api graphql -f owner="$OWNER" -f repo="$REPO" -f query='
+            query($owner: String!, $repo: String!) {
+              repository(owner: $owner, name: $repo) {
+                issues(first: 100, states: OPEN, labels: ["security"]) {
+                  nodes {
+                    number
+                    labels(first: 20) {
+                      nodes { name }
+                    }
+                    projectItems(first: 5) {
+                      nodes {
+                        fieldValueByName(name: "Priority") {
+                          ... on ProjectV2ItemFieldSingleSelectValue { name }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ')
+
+          # Loop through issues
+          echo "$ISSUES" | jq -c '.data.repository.issues.nodes[]' | while read -r issue; do
+            NUMBER=$(echo "$issue" | jq -r '.number')
+            # Get Priority from project items (take the first one found)
+            RAW_PRIORITY=$(echo "$issue" | jq -r '.projectItems.nodes[].fieldValueByName.name // empty' | head -n 1)
+            
+            # Remove non-ASCII characters (icons/emojis) to get clean label name
+            PRIORITY=$(echo "$RAW_PRIORITY" | tr -cd '\000-\177' | xargs)
+            
+            if [ -z "$PRIORITY" ]; then
+              echo "Issue #$NUMBER: No priority found in project (or empty after cleanup)."
+              continue
+            fi
+
+            # Check if label already exists
+            HAS_LABEL=$(echo "$issue" | jq -r --arg PRIORITY "$PRIORITY" '.labels.nodes[].name | select(. == $PRIORITY)')
+            
+            if [ -n "$HAS_LABEL" ]; then
+              echo "Issue #$NUMBER: Already has label '$PRIORITY'."
+            else
+              echo "Issue #$NUMBER: Adding label '$PRIORITY'."
+              gh issue edit "$NUMBER" --add-label "$PRIORITY"
+            fi
+          done
+
