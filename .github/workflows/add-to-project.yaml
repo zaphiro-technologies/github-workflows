@@ -188,14 +188,14 @@ jobs:
                         projectItems(first: 5) {
                           nodes {
                             id
-                            fieldValueByName(name: "Iteration") {
+                            iteration: fieldValueByName(name: "Iteration") {
                               ... on ProjectV2ItemFieldIterationValue {
                                 title
                                 startDate
                                 duration
                               }
                             }
-                            fieldValueByName(name: "Status") {
+                            status: fieldValueByName(name: "Status") {
                               ... on ProjectV2ItemFieldSingleSelectValue { name }
                             }
                           }
@@ -225,14 +225,14 @@ jobs:
                         projectItems(first: 5) {
                           nodes {
                             id
-                            fieldValueByName(name: "Iteration") {
+                            iteration: fieldValueByName(name: "Iteration") {
                               ... on ProjectV2ItemFieldIterationValue {
                                 title
                                 startDate
                                 duration
                               }
                             }
-                            fieldValueByName(name: "Status") {
+                            status: fieldValueByName(name: "Status") {
                               ... on ProjectV2ItemFieldSingleSelectValue { name }
                             }
                           }
@@ -294,9 +294,9 @@ jobs:
               CURRENT_DATE=$(date -u +%Y-%m-%d)
               
               echo "$issue" | jq -c '.projectItems.nodes[]' | while read -r projectItem; do
-                ITERATION_TITLE=$(echo "$projectItem" | jq -r '.fieldValueByName.title // empty')
-                ITERATION_START=$(echo "$projectItem" | jq -r '.fieldValueByName.startDate // empty')
-                ITERATION_DURATION=$(echo "$projectItem" | jq -r '.fieldValueByName.duration // empty')
+                ITERATION_TITLE=$(echo "$projectItem" | jq -r '.iteration.title // empty')
+                ITERATION_START=$(echo "$projectItem" | jq -r '.iteration.startDate // empty')
+                ITERATION_DURATION=$(echo "$projectItem" | jq -r '.iteration.duration // empty')
                 
                 if [ -n "$ITERATION_START" ] && [ -n "$ITERATION_DURATION" ]; then
                   # Calculate iteration end date
