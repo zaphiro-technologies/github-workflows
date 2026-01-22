@@ -62,6 +62,16 @@ on:
         required: false
         default: false
         type: boolean
+      stale-days:
+        description: 'Number of days before an issue is considered stale'
+        required: false
+        default: 60
+        type: number
+      close-after-days:
+        description: 'Number of days after marking stale before closing'
+        required: false
+        default: 7
+        type: number
 jobs:
   add-to-project:
     if: github.event_name == 'issues' || github.event_name == 'pull_request' || github.event_name == 'workflow_call'
