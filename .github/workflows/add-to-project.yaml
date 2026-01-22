@@ -22,6 +22,9 @@ on:
     types:
       - labeled
       - ready_for_review
+  schedule:
+    - cron: "0 0 * * *" # Run daily at midnight
+  workflow_dispatch:
   workflow_call:
     inputs:
       labeled:
@@ -40,6 +43,7 @@ on:
         type: string
 jobs:
   add-to-project:
+    if: github.event_name == 'issues' || github.event_name == 'pull_request' || github.event_name == 'workflow_call'
     name: Add issue/PR to a project
     runs-on: ubuntu-latest
     permissions: write-all
@@ -105,3 +109,151 @@ jobs:
           persons: ${{ inputs.reviewers-individuals }} # add individual persons here
           include-draft: false # Draft PRs will be skipped (default: false)
           skip-with-manual-reviewers: 1 # Skip this action, if the number of reviwers was already assigned (default: 0)
+
+  sync-priority:
+    name: Sync Priority Label
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    permissions:
+      issues: write
+      repository-projects: read
+    steps:
+      - uses: actions/create-github-app-token@v2
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+
+      - name: Sync Priority to Label
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          # Get all open issues with 'security' label (with pagination)
+          ISSUES=""
+          CURSOR=""
+          while :; do
+            if [ -z "$CURSOR" ]; then
+              QUERY='
+                query($owner: String!, $repo: String!) {
+                  repository(owner: $owner, name: $repo) {
+                    issues(first: 100, states: OPEN, labels: ["security"]) {
+                      pageInfo {
+                        hasNextPage
+                        endCursor
+                      }
+                      nodes {
+                        number
+                        labels(first: 20) {
+                          nodes { name }
+                        }
+                        projectItems(first: 5) {
+                          nodes {
+                            fieldValueByName(name: "Priority") {
+                              ... on ProjectV2ItemFieldSingleSelectValue { name }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              '
+            else
+              QUERY='
+                query($owner: String!, $repo: String!) {
+                  repository(owner: $owner, name: $repo) {
+                    issues(first: 100, states: OPEN, labels: ["security"], after: "'$CURSOR'") {
+                      pageInfo {
+                        hasNextPage
+                        endCursor
+                      }
+                      nodes {
+                        number
+                        labels(first: 20) {
+                          nodes { name }
+                        }
+                        projectItems(first: 5) {
+                          nodes {
+                            fieldValueByName(name: "Priority") {
+                              ... on ProjectV2ItemFieldSingleSelectValue { name }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              '
+            fi
+
+            PAGE=$(gh api graphql -f owner="$OWNER" -f repo="$REPO" -f query="$QUERY")
+            ISSUES="${ISSUES}${PAGE}"
+
+            HAS_NEXT=$(printf '%s\n' "$PAGE" | jq -r '.data.repository.issues.pageInfo.hasNextPage')
+            if [ "$HAS_NEXT" != "true" ]; then
+              break
+            fi
+
+            CURSOR=$(printf '%s\n' "$PAGE" | jq -r '.data.repository.issues.pageInfo.endCursor')
+          done
+          # Loop through issues
+          echo "$ISSUES" | jq -c '.data.repository.issues.nodes[]' | while read -r issue; do
+            NUMBER=$(echo "$issue" | jq -r '.number')
+            # Get Priority from project items (take the first one found)
+            RAW_PRIORITY=$(echo "$issue" | jq -r '.projectItems.nodes[].fieldValueByName.name // empty' | head -n 1)
+            
+            # Remove non-ASCII characters (icons/emojis) to get clean label name
+            CLEAN_PRIORITY=$(echo "$RAW_PRIORITY" | tr -cd '\000-\177' | xargs)
+            
+            if [ -z "$CLEAN_PRIORITY" ]; then
+              echo "Issue #$NUMBER: No priority found in project (or empty after cleanup)."
+              continue
+            fi
+            
+            # Map Priority to P-labels
+            case "$CLEAN_PRIORITY" in
+              "Low")
+                TARGET_LABEL="P3"
+                LABEL_COLOR="EDEDED"
+                ;;
+              "Medium")
+                TARGET_LABEL="P2"
+                LABEL_COLOR="FBCA04"
+                ;;
+              "High")
+                TARGET_LABEL="P1"
+                LABEL_COLOR="FF9F1C"
+                ;;
+              "Urgent")
+                TARGET_LABEL="P0"
+                LABEL_COLOR="D73A4A"
+                ;;
+              *)
+                TARGET_LABEL="P3"
+                LABEL_COLOR="EDEDED"
+                ;;
+            esac
+
+            # Check if label already exists
+            HAS_LABEL=$(echo "$issue" | jq -r --arg TARGET_LABEL "$TARGET_LABEL" '.labels.nodes[].name | select(. == $TARGET_LABEL)')
+
+            # Remove other priority labels if they exist
+            echo "$issue" | jq -r '.labels.nodes[].name' | while read -r EXISTING_LABEL; do
+                if [[ "$EXISTING_LABEL" =~ ^P[0-9]+$ ]] && [ "$EXISTING_LABEL" != "$TARGET_LABEL" ]; then
+                    echo "Issue #$NUMBER: Removing conflicting label '$EXISTING_LABEL'."
+                    gh issue edit "$NUMBER" --repo "$OWNER/$REPO" --remove-label "$EXISTING_LABEL"
+                fi
+            done
+            
+            if [ -n "$HAS_LABEL" ]; then
+              echo "Issue #$NUMBER: Already has label '$TARGET_LABEL'."
+            else
+              echo "Issue #$NUMBER: Adding label '$TARGET_LABEL'."
+              # Create label if it doesn't exist (ignores error if exists)
+              gh label create "$TARGET_LABEL" --repo "$OWNER/$REPO" --color "$LABEL_COLOR" || true
+              
+              gh issue edit "$NUMBER" --repo "$OWNER/$REPO" --add-label "$TARGET_LABEL"
+            fi
+          done
