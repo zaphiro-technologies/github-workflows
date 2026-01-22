@@ -27,17 +27,17 @@ on:
   workflow_dispatch:
     inputs:
       dry-run:
-        description: 'Enable dry-run mode for stale issue detection (no actual changes)'
+        description: "Enable dry-run mode for stale issue detection (no actual changes)"
         required: false
         default: false
         type: boolean
       stale-days:
-        description: 'Number of days before an issue is considered stale'
+        description: "Number of days before an issue is considered stale"
         required: false
         default: 60
         type: number
       close-after-days:
-        description: 'Number of days after marking stale before closing'
+        description: "Number of days after marking stale before closing"
         required: false
         default: 7
         type: number
@@ -58,17 +58,17 @@ on:
         required: false
         type: string
       dry-run:
-        description: 'Enable dry-run mode for stale issue detection (no actual changes)'
+        description: "Enable dry-run mode for stale issue detection (no actual changes)"
         required: false
         default: false
         type: boolean
       stale-days:
-        description: 'Number of days before an issue is considered stale'
+        description: "Number of days before an issue is considered stale"
         required: false
         default: 60
         type: number
       close-after-days:
-        description: 'Number of days after marking stale before closing'
+        description: "Number of days after marking stale before closing"
         required: false
         default: 7
         type: number
@@ -166,15 +166,15 @@ jobs:
         run: |
           # Calculate the date based on STALE_DAYS
           STALE_DATE=$(date -u -d "${STALE_DAYS} days ago" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-${STALE_DAYS}d +%Y-%m-%dT%H:%M:%SZ)
-          
+
           if [ "$DRY_RUN" = "true" ]; then
             echo "🔍 DRY-RUN MODE ENABLED - No changes will be made"
             echo "═══════════════════════════════════════════════════"
           fi
-          
+
           echo "Looking for issues older than $STALE_DATE (${STALE_DAYS} days ago)..."
           echo "Issues will be closed ${CLOSE_AFTER_DAYS} days after being marked stale..."
-          
+
           # Query to get all open issues with their project data
           CURSOR=""
           while :; do
