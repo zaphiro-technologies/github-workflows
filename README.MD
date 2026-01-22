@@ -10,7 +10,17 @@ The repository includes:
   or to the project defined by `project-url` input parameter with status `new`.
   When a new PR is added, the PR is assigned to its creator. When a PR is set to
   ready, reviewers from `reviewers-team` input parameter (default value
-  `backend-devs`) or `reviewers-individuals` (comma separated) are added.
+  `backend-devs`) or `reviewers-individuals` (comma separated) are added. The
+  workflow also includes automated stale issue management:
+  - Identifies issues older than `stale-days` (default: 60) without a current or
+    future iteration and marks them as stale
+  - Automatically removes the stale label if an issue is added to an iteration
+  - Closes stale issues as "not planned" after `close-after-days` (default: 7)
+    without updates or being added to an iteration
+  - Supports `dry-run` mode (default: false) for testing changes without applying
+    them
+  - Runs daily at midnight via schedule, can be triggered manually via
+    workflow_dispatch with custom parameters
 - [`check-pr`](.github/workflows/check-pr.yaml) workflow: when a new PR is added
   to a repository or any change occurs to the PR, the PR is validated to be sure
   that labels are valid.
