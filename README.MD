@@ -17,8 +17,8 @@ The repository includes:
   - Automatically removes the stale label if an issue is added to an iteration
   - Closes stale issues as "not planned" after `close-after-days` (default: 7)
     without updates or being added to an iteration
-  - Supports `dry-run` mode (default: false) for testing changes without applying
-    them
+  - Supports `dry-run` mode (default: false) for testing changes without
+    applying them
   - Runs daily at midnight via schedule, can be triggered manually via
     workflow_dispatch with custom parameters
 - [`check-pr`](.github/workflows/check-pr.yaml) workflow: when a new PR is added
