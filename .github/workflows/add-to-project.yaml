@@ -266,15 +266,49 @@ jobs:
               STALE_TIMESTAMP=$(date -d "$STALE_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$STALE_DATE" +%s)
               CLOSE_THRESHOLD=$(date -d "${CLOSE_AFTER_DAYS} days ago" +%s 2>/dev/null || date -u -v-${CLOSE_AFTER_DAYS}d +%s)
               
-              # If issue has stale label, check if it should be closed
+              # If issue has stale label, check if a plan was added or if it should be closed
               if [ -n "$HAS_STALE_LABEL" ]; then
+                # First, check if issue now has a current or future iteration (was planned meanwhile)
+                HAS_PLANNED_ITERATION=false
+                CURRENT_DATE=$(date -u +%Y-%m-%d)
+                
+                echo "$issue" | jq -c '.projectItems.nodes[]' | while read -r projectItem; do
+                  ITERATION_TITLE=$(echo "$projectItem" | jq -r '.iteration.title // empty')
+                  ITERATION_START=$(echo "$projectItem" | jq -r '.iteration.startDate // empty')
+                  ITERATION_DURATION=$(echo "$projectItem" | jq -r '.iteration.duration // empty')
+                  
+                  if [ -n "$ITERATION_START" ] && [ -n "$ITERATION_DURATION" ]; then
+                    # Calculate iteration end date
+                    ITERATION_END=$(date -d "$ITERATION_START + $ITERATION_DURATION days" +%Y-%m-%d 2>/dev/null || date -j -v+${ITERATION_DURATION}d -f "%Y-%m-%d" "$ITERATION_START" +%Y-%m-%d)
+                    
+                    # Check if iteration is current or future
+                    if [[ "$ITERATION_END" > "$CURRENT_DATE" ]] || [[ "$ITERATION_END" == "$CURRENT_DATE" ]]; then
+                      HAS_PLANNED_ITERATION=true
+                      echo "Issue #$NUMBER: Was stale but now planned for iteration '$ITERATION_TITLE' (ends: $ITERATION_END)"
+                      break
+                    fi
+                  fi
+                done
+                
+                # If issue is now planned, remove stale label
+                if [ "$HAS_PLANNED_ITERATION" = true ]; then
+                  if [ "$DRY_RUN" = "true" ]; then
+                    echo "[DRY-RUN] Issue #$NUMBER: Would remove stale label (now has planned iteration)"
+                  else
+                    echo "Issue #$NUMBER: Removing stale label (now has planned iteration)"
+                    gh issue edit "$NUMBER" --repo "$OWNER/$REPO" --remove-label "stale"
+                  fi
+                  continue
+                fi
+                
+                # If not planned, check if it should be closed
                 if [ "$UPDATED_TIMESTAMP" -lt "$CLOSE_THRESHOLD" ]; then
                   if [ "$DRY_RUN" = "true" ]; then
                     echo "[DRY-RUN] Issue #$NUMBER: Would close stale issue (no updates in ${CLOSE_AFTER_DAYS}+ days)"
-                    echo "[DRY-RUN]   - Would close with comment"
+                    echo "[DRY-RUN]   - Would close as 'not planned' with comment"
                   else
                     echo "Issue #$NUMBER: Closing stale issue (no updates in ${CLOSE_AFTER_DAYS}+ days)"
-                    gh issue close "$NUMBER" --repo "$OWNER/$REPO" --comment "Closing this issue as it has been stale for more than ${CLOSE_AFTER_DAYS} days without updates or being added to an iteration. Feel free to reopen if this is still relevant."
+                    gh issue close "$NUMBER" --repo "$OWNER/$REPO" --reason "not planned" --comment "Closing this issue as it has been stale for more than ${CLOSE_AFTER_DAYS} days without updates or being added to an iteration. Feel free to reopen if this is still relevant."
                   fi
                 else
                   echo "Issue #$NUMBER: Has stale label but recently updated (updated: $UPDATED_AT) - will check again later"
