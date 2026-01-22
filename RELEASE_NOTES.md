@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-01-12
+## 0.0.3-dev - 2026-01-22
 
 ### Features
 
@@ -77,6 +77,8 @@
 
 ### Security
 
+- add-to-project wf: add job to sync priority in projects with labels for Vanta
+  (PR #229 by @chicco785)
 - Pass github token to docker build as secret (PR #163 by @chicco785)
 
 ### Dependencies
