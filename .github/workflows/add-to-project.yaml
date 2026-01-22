@@ -265,7 +265,7 @@ jobs:
               NUMBER=$(echo "$issue" | jq -r '.number')
               TITLE=$(echo "$issue" | jq -r '.title')
               CREATED_AT=$(echo "$issue" | jq -r '.createdAt')
-              UPDATED_AT=$(echo "$issue" | jq -r '.updatedAt')
+              UPDATED_AT=$(echo "$issue" | jq -r '.updatedAt')  # updatedAt includes comments, label changes, edits, etc.
               
               # Check if issue already has stale label
               HAS_STALE_LABEL=$(echo "$issue" | jq -r '.labels.nodes[].name | select(. == "stale")')
@@ -327,9 +327,14 @@ jobs:
               fi
               
               # If issue doesn't have stale label, check if it should be marked as stale
-              # Only mark as stale if old enough
+              # Check both creation and last update - if either is recent, don't mark as stale
               if [ "$CREATED_TIMESTAMP" -gt "$STALE_TIMESTAMP" ]; then
                 echo "Issue #$NUMBER: Not old enough (created: $CREATED_AT)"
+                continue
+              fi
+              
+              if [ "$UPDATED_TIMESTAMP" -gt "$STALE_TIMESTAMP" ]; then
+                echo "Issue #$NUMBER: Recently updated (updated: $UPDATED_AT) - not marking as stale"
                 continue
               fi
               
