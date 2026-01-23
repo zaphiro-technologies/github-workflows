@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-01-22
+## 0.0.3-dev - 2026-01-23
 
 ### Features
 
+- add-to-project wf: add stale issues bot (PR #231 by @chicco785)
 - support ALL for deployment (PR #222 by @chicco785)
 - Support secret injection via .env during docker image build (PR #220 by
   @chicco785)
