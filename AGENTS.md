@@ -17,7 +17,7 @@ agents to handle CI/CD processes, project management, and code quality checks.
   - Automatically removing the stale label if an issue is added to an iteration
   - Closing stale issues after a configurable grace period (default 7 days) if
     they remain unplanned and inactive
-  - Supporting dry-run mode for testing without making changes Runs daily via
+  - Supporting dry-run mode for testing without making changes. Runs daily via
     schedule, with configurable parameters via workflow_dispatch.
 - **Auto-approve & Auto-merge** (`approve-and-merge.yaml`): Scheduled to run
   daily, this agent automatically approves and merges Pull Requests created by
