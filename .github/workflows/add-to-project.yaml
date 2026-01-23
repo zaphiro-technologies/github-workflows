@@ -175,6 +175,9 @@ jobs:
           echo "Looking for issues older than $STALE_DATE (${STALE_DAYS} days ago)..."
           echo "Issues will be closed ${CLOSE_AFTER_DAYS} days after being marked stale..."
 
+          # Calculate close threshold once (used for all stale issues)
+          CLOSE_THRESHOLD=$(date -d "${CLOSE_AFTER_DAYS} days ago" +%s 2>/dev/null || date -v-${CLOSE_AFTER_DAYS}d +%s)
+
           # Query to get all open issues with their project data
           CURSOR=""
           while :; do
@@ -274,7 +277,6 @@ jobs:
               CREATED_TIMESTAMP=$(date -d "$CREATED_AT" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CREATED_AT" +%s)
               UPDATED_TIMESTAMP=$(date -d "$UPDATED_AT" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$UPDATED_AT" +%s)
               STALE_TIMESTAMP=$(date -d "$STALE_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$STALE_DATE" +%s)
-              CLOSE_THRESHOLD=$(date -d "${CLOSE_AFTER_DAYS} days ago" +%s 2>/dev/null || date -v-${CLOSE_AFTER_DAYS}d +%s)
               
               # If issue has stale label, check if a plan was added or if it should be closed
               if [ -n "$HAS_STALE_LABEL" ]; then
