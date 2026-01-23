@@ -265,7 +265,7 @@ jobs:
               NUMBER=$(echo "$issue" | jq -r '.number')
               TITLE=$(echo "$issue" | jq -r '.title')
               CREATED_AT=$(echo "$issue" | jq -r '.createdAt')
-              UPDATED_AT=$(echo "$issue" | jq -r '.updatedAt')  # updatedAt includes comments, label changes, edits, etc.
+              UPDATED_AT=$(echo "$issue" | jq -r '.updatedAt')  # updatedAt changes on comments, label changes (including from this workflow), edits, etc., so bot actions can reset staleness.
               
               # Check if issue already has stale label
               HAS_STALE_LABEL=$(echo "$issue" | jq -r '.labels.nodes[].name | select(. == "stale")')
