@@ -144,7 +144,7 @@ jobs:
   manage-stale-issues:
     name: Manage Stale Unplanned Issues
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
     permissions:
       issues: write
       repository-projects: read
@@ -274,7 +274,7 @@ jobs:
               CREATED_TIMESTAMP=$(date -d "$CREATED_AT" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CREATED_AT" +%s)
               UPDATED_TIMESTAMP=$(date -d "$UPDATED_AT" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$UPDATED_AT" +%s)
               STALE_TIMESTAMP=$(date -d "$STALE_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$STALE_DATE" +%s)
-              CLOSE_THRESHOLD=$(date -d "${CLOSE_AFTER_DAYS} days ago" +%s 2>/dev/null || date -u -v-${CLOSE_AFTER_DAYS}d +%s)
+              CLOSE_THRESHOLD=$(date -d "${CLOSE_AFTER_DAYS} days ago" +%s 2>/dev/null || date -v-${CLOSE_AFTER_DAYS}d +%s)
               
               # If issue has stale label, check if a plan was added or if it should be closed
               if [ -n "$HAS_STALE_LABEL" ]; then
@@ -282,7 +282,8 @@ jobs:
                 HAS_PLANNED_ITERATION=false
                 CURRENT_DATE=$(date -u +%Y-%m-%d)
                 
-                echo "$issue" | jq -c '.projectItems.nodes[]' | while read -r projectItem; do
+                # Use process substitution to avoid subshell issues
+                while read -r projectItem; do
                   ITERATION_TITLE=$(echo "$projectItem" | jq -r '.iteration.title // empty')
                   ITERATION_START=$(echo "$projectItem" | jq -r '.iteration.startDate // empty')
                   ITERATION_DURATION=$(echo "$projectItem" | jq -r '.iteration.duration // empty')
@@ -298,7 +299,7 @@ jobs:
                       break
                     fi
                   fi
-                done
+                done < <(echo "$issue" | jq -c '.projectItems.nodes[]')
                 
                 # If issue is now planned, remove stale label
                 if [ "$HAS_PLANNED_ITERATION" = true ]; then
@@ -342,7 +343,8 @@ jobs:
               HAS_PLANNED_ITERATION=false
               CURRENT_DATE=$(date -u +%Y-%m-%d)
               
-              echo "$issue" | jq -c '.projectItems.nodes[]' | while read -r projectItem; do
+              # Use process substitution to avoid subshell issues
+              while read -r projectItem; do
                 ITERATION_TITLE=$(echo "$projectItem" | jq -r '.iteration.title // empty')
                 ITERATION_START=$(echo "$projectItem" | jq -r '.iteration.startDate // empty')
                 ITERATION_DURATION=$(echo "$projectItem" | jq -r '.iteration.duration // empty')
@@ -358,7 +360,7 @@ jobs:
                     break
                   fi
                 fi
-              done
+              done < <(echo "$issue" | jq -c '.projectItems.nodes[]')
               
               # If old and not planned for current/future iteration, mark as stale
               if [ "$HAS_PLANNED_ITERATION" = false ]; then
@@ -390,7 +392,7 @@ jobs:
   sync-priority:
     name: Sync Priority Label
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
     permissions:
       issues: write
       repository-projects: read
