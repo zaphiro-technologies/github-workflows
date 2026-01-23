@@ -17,6 +17,8 @@ The repository includes:
   - Automatically removes the stale label if an issue is added to an iteration
   - Closes stale issues as "not planned" after `close-after-days` (default: 7)
     without updates or being added to an iteration
+  - Supports `skip-label` (default: "keep") to exclude specific issues from
+    stale processing - issues with this label are never marked stale or closed
   - Supports `dry-run` mode (default: false) for testing changes without
     applying them
   - Runs daily at midnight via schedule, can be triggered manually via

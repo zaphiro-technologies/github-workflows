@@ -41,6 +41,11 @@ on:
         required: false
         default: 7
         type: number
+      skip-label:
+        description: "Label to skip stale processing (issues with this label won't be marked stale or closed)"
+        required: false
+        default: "keep"
+        type: string
   workflow_call:
     inputs:
       labeled:
@@ -72,6 +77,11 @@ on:
         required: false
         default: 7
         type: number
+      skip-label:
+        description: "Label to skip stale processing (issues with this label won't be marked stale or closed)"
+        required: false
+        default: "keep"
+        type: string
 jobs:
   add-to-project:
     if: github.event_name == 'issues' || github.event_name == 'pull_request' || github.event_name == 'workflow_call'
@@ -162,6 +172,7 @@ jobs:
           REPO: ${{ github.event.repository.name }}
           STALE_DAYS: ${{ inputs.stale-days || 60 }}
           CLOSE_AFTER_DAYS: ${{ inputs.close-after-days || 7 }}
+          SKIP_LABEL: ${{ inputs.skip-label || 'keep' }}
           DRY_RUN: ${{ inputs.dry-run || 'false' }}
         run: |
           # Calculate the date based on STALE_DAYS
@@ -269,6 +280,13 @@ jobs:
               TITLE=$(echo "$issue" | jq -r '.title')
               CREATED_AT=$(echo "$issue" | jq -r '.createdAt')
               UPDATED_AT=$(echo "$issue" | jq -r '.updatedAt')  # updatedAt changes on comments, label changes (including from this workflow), edits, etc., so bot actions can reset staleness.
+              
+              # Check if issue has skip label - if so, skip all stale processing
+              HAS_SKIP_LABEL=$(echo "$issue" | jq -r --arg SKIP_LABEL "$SKIP_LABEL" '.labels.nodes[].name | select(. == $SKIP_LABEL)')
+              if [ -n "$HAS_SKIP_LABEL" ]; then
+                echo "Issue #$NUMBER: Has skip label '$SKIP_LABEL' - skipping stale processing"
+                continue
+              fi
               
               # Check if issue already has stale label
               HAS_STALE_LABEL=$(echo "$issue" | jq -r '.labels.nodes[].name | select(. == "stale")')
