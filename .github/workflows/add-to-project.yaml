@@ -341,7 +341,6 @@ jobs:
               
               # Check if issue has a current or future iteration
               HAS_PLANNED_ITERATION=false
-              CURRENT_DATE=$(date -u +%Y-%m-%d)
               
               # Use process substitution to avoid subshell issues
               while read -r projectItem; do
