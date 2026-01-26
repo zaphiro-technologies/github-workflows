@@ -154,7 +154,7 @@ jobs:
   manage-stale-issues:
     name: Manage Stale Unplanned Issues
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_call'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
     permissions:
       issues: write
       repository-projects: read
@@ -411,7 +411,7 @@ jobs:
   sync-priority:
     name: Sync Priority Label
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_call'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call'
     permissions:
       issues: write
       repository-projects: read
