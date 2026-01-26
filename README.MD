@@ -10,19 +10,22 @@ The repository includes:
   or to the project defined by `project-url` input parameter with status `new`.
   When a new PR is added, the PR is assigned to its creator. When a PR is set to
   ready, reviewers from `reviewers-team` input parameter (default value
-  `backend-devs`) or `reviewers-individuals` (comma separated) are added. The
-  workflow also includes automated stale issue management:
-  - Identifies issues older than `stale-days` (default: 60) without a current or
-    future iteration and marks them as stale
-  - Automatically removes the stale label if an issue is added to an iteration
-  - Closes stale issues as "not planned" after `close-after-days` (default: 7)
-    without updates or being added to an iteration
-  - Supports `skip-label` (default: "keep") to exclude specific issues from
-    stale processing - issues with this label are never marked stale or closed
-  - Supports `dry-run` mode (default: false) for testing changes without
-    applying them
-  - Runs daily at midnight via schedule, can be triggered manually via
-    workflow_dispatch with custom parameters
+  `backend-devs`) or `reviewers-individuals` (comma separated) are added.
+- [`manage-issues`](.github/workflows/manage-issues.yaml) workflow: automated
+  issue and PR management including stale issue detection and priority
+  synchronization. The workflow includes two main jobs:
+  - **Stale Issue Management**: Identifies issues older than `stale-days`
+    (default: 60) without a current or future iteration and marks them as stale.
+    Automatically removes the stale label if an issue is added to an iteration.
+    Closes stale issues as "not planned" after `close-after-days` (default: 7)
+    without updates or being added to an iteration. Supports `skip-label`
+    (default: "keep") to exclude specific issues from stale processing - issues
+    with this label are never marked stale or closed. Supports `dry-run` mode
+    (default: false) for testing changes without applying them.
+  - **Priority Synchronization**: Syncs priority values from GitHub Projects to
+    issue labels (P0-P3) for security-labeled issues. Runs daily at midnight via
+    schedule, can be triggered manually via workflow_dispatch with custom
+    parameters, or called by other workflows.
 - [`check-pr`](.github/workflows/check-pr.yaml) workflow: when a new PR is added
   to a repository or any change occurs to the PR, the PR is validated to be sure
   that labels are valid.
