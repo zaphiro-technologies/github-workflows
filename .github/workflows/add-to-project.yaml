@@ -65,7 +65,7 @@ jobs:
           github-token: ${{ steps.generate-token.outputs.token }}
           item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
           field-keys: Status
-          field-values: 🏗 In progress
+          field-values: "\U0001F3D7 In progress"
       - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
         uses: titoportas/update-project-fields@v0.1.0
         with:
@@ -73,7 +73,7 @@ jobs:
           github-token: ${{ steps.generate-token.outputs.token }}
           item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
           field-keys: Status
-          field-values: 🔖 Ready
+          field-values: "\U0001F516 Ready"
       - name: Assign PR to creator
         if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
         uses: thomaseizinger/assign-pr-creator-action@v1.0.0
@@ -81,17 +81,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Add permissions
         if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
-        run: |
-          IFS=,
-          for TEAM in $TEAMS; 
-            do
-              gh api \
-              --method PUT \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              /orgs/$OWNER/teams/$TEAM/repos/$OWNER/$REPO \
-              -f permission='push'
-            done
+        run: "IFS=,\nfor TEAM in $TEAMS; \n  do\n    gh api \\\n    --method PUT \\\n    -H \"Accept: application/vnd.github+json\" \\\n    -H \"X-GitHub-Api-Version: 2022-11-28\" \\\n    /orgs/$OWNER/teams/$TEAM/repos/$OWNER/$REPO \\\n    -f permission='push'\n  done\n"
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           OWNER: ${{ github.repository_owner }}
