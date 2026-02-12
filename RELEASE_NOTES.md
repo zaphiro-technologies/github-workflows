@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-01-23
+## 0.0.3-dev - 2026-02-12
 
 ### Features
 
@@ -71,6 +71,7 @@
 
 ### Continuous Integration
 
+- Separate issue management from project management (PR #236 by @chicco785)
 - new-release workflow: delegate to makefile the update of project files (PR
   #192 by @kwitekrac)
 - docker workflow: support golang build caching (PR #124 by @chicco785)
@@ -84,6 +85,10 @@
 
 ### Dependencies
 
+- Bump aws-actions/configure-aws-credentials from 5 to 6 (PR #243 by
+  @dependabot[bot])
+- Bump dawidd6/action-download-artifact from 12 to 14 (PR #241 by
+  @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 11 to 12 (PR #227 by
   @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 6.0.0 to 7.0.0 (PR #225 by
