@@ -87,6 +87,8 @@
 
 - Bump aws-actions/configure-aws-credentials from 5 to 6 (PR #243 by
   @dependabot[bot])
+- Bump WyriHaximus/github-action-get-previous-tag from 1 to 2 (PR #245 by
+  @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 12 to 14 (PR #241 by
   @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 11 to 12 (PR #227 by
