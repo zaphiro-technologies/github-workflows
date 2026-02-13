@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-02-12
+## 0.0.3-dev - 2026-02-13
 
 ### Features
 
+- python workflow: ensure python version consistency (PR #246 by @chicco785)
 - add-to-project wf: add stale issues bot (PR #231 by @chicco785)
 - support ALL for deployment (PR #222 by @chicco785)
 - Support secret injection via .env during docker image build (PR #220 by
@@ -85,12 +86,12 @@
 
 ### Dependencies
 
+- Bump reproducible-containers/buildkit-cache-dance from 3.3.0 to 3.3.1 (PR #244
+  by @dependabot[bot])
 - Bump WyriHaximus/github-action-get-previous-tag from 1 to 2 (PR #245 by
   @dependabot[bot])
 - Bump aws-actions/configure-aws-credentials from 5 to 6 (PR #243 by
   @dependabot[bot])
-- Bump reproducible-containers/buildkit-cache-dance from 3.3.0 to 3.3.1 (PR #244
-  by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 12 to 14 (PR #241 by
   @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 11 to 12 (PR #227 by
