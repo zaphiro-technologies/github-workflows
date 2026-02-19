@@ -86,9 +86,9 @@
 
 ### Dependencies
 
+- Bump actions/cache from 4 to 5 (PR #248 by @dependabot[bot])
 - Bump aquasecurity/trivy-action from 0.33.1 to 0.34.0 (PR #247 by
   @dependabot[bot])
-- Bump actions/cache from 4 to 5 (PR #248 by @dependabot[bot])
 - Bump reproducible-containers/buildkit-cache-dance from 3.3.0 to 3.3.1 (PR #244
   by @dependabot[bot])
 - Bump WyriHaximus/github-action-get-previous-tag from 1 to 2 (PR #245 by
