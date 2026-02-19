@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-02-13
+## 0.0.3-dev - 2026-02-19
 
 ### Features
 
@@ -86,6 +86,8 @@
 
 ### Dependencies
 
+- Bump aquasecurity/trivy-action from 0.33.1 to 0.34.0 (PR #247 by
+  @dependabot[bot])
 - Bump reproducible-containers/buildkit-cache-dance from 3.3.0 to 3.3.1 (PR #244
   by @dependabot[bot])
 - Bump WyriHaximus/github-action-get-previous-tag from 1 to 2 (PR #245 by
