@@ -108,7 +108,7 @@ jobs:
         env:
           PIPX_DEFAULT_PYTHON: ${{ steps.setup-python.outputs.python-path }}
       - name: Cache Poetry artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cache/pypoetry/artifacts
@@ -152,7 +152,7 @@ jobs:
         env:
           PIPX_DEFAULT_PYTHON: ${{ steps.setup-python.outputs.python-path }}
       - name: Cache Poetry artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cache/pypoetry/artifacts
