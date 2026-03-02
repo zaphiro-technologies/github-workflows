@@ -224,7 +224,7 @@ jobs:
           show-annotations: ""
       - name: Upload code coverage for ref branch
         if: ${{ ! github.event.pull_request }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: cov-result
           path: ./coverage/lcov.info
@@ -287,7 +287,7 @@ jobs:
           summary-always: true
       - name: Upload code coverage for ref branch
         if: ${{ ! github.event.pull_request }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-result
           path: benchmark-data.json
