@@ -191,7 +191,7 @@ jobs:
           make ci-test
       - if: ${{ inputs.upload-artefacts }}
         name: Upload artefacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: artefacts
           path: ${{ inputs.upload-artefacts-dir }}
