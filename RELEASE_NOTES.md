@@ -86,9 +86,11 @@
 
 ### Dependencies
 
-- Bump actions/upload-artifact from 6 to 7 (PR #253 by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 15 to 16 (PR #251 by
   @dependabot[bot])
+- Bump actions/upload-artifact from 6 to 7 (PR #253 by @dependabot[bot])
+- Bump reproducible-containers/buildkit-cache-dance from 3.3.1 to 3.3.2 (PR #252
+  by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 14 to 15 (PR #250 by
   @dependabot[bot])
 - Bump aquasecurity/trivy-action from 0.33.1 to 0.34.0 in /.github/workflows (PR
