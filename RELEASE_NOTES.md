@@ -86,9 +86,11 @@
 
 ### Dependencies
 
+- Bump docker/metadata-action from 5 to 6 (PR #256 by @dependabot[bot])
 - Bump docker/build-push-action from 6 to 7 (PR #254 by @dependabot[bot])
 - Bump docker/setup-buildx-action from 3 to 4 (PR #258 by @dependabot[bot])
-- Bump docker/metadata-action from 5 to 6 (PR #256 by @dependabot[bot])
+- Bump aquasecurity/trivy-action from 0.34.0 to 0.35.0 (PR #257 by
+  @dependabot[bot])
 - Bump aquasecurity/trivy-action from 0.33.1 to 0.34.0 (PR #247 by
   @dependabot[bot])
 - Bump reproducible-containers/buildkit-cache-dance from 3.3.1 to 3.3.2 (PR #252
