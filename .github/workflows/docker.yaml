@@ -155,7 +155,7 @@ jobs:
             }
           skip-extraction: ${{ steps.cache-node.outputs.cache-hit }}
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
       - name: Login to GitHub Container Registry
