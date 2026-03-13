@@ -241,7 +241,7 @@ jobs:
           fi
       # this comes as last or scan results won't be uploaded
       - name: Run Trivy vulnerability scanner (security treshold)
-        uses: aquasecurity/trivy-action@0.34.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: fs
           scan-ref: .
