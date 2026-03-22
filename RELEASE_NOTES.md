@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-03-20
+## 0.0.3-dev - 2026-03-22
 
 ### Features
 
@@ -86,11 +86,12 @@
 
 ### Dependencies
 
+- Bump dorny/paths-filter from 3 to 4 (PR #259 by @dependabot[bot])
 - Bump docker/login-action from 3 to 4 (PR #262 by @dependabot[bot])
 - Bump mikepenz/action-gh-release from 1 to 2 (PR #260 by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 16 to 18 (PR #263 by
   @dependabot[bot])
-- Bump dorny/paths-filter from 3 to 4 (PR #259 by @dependabot[bot])
+- Bump actions/create-github-app-token from 2 to 3 (PR #261 by @dependabot[bot])
 - Bump docker/setup-qemu-action from 3 to 4 (PR #255 by @dependabot[bot])
 - Bump aquasecurity/trivy-action from 0.34.0 to 0.35.0 (PR #257 by
   @dependabot[bot])
