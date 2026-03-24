@@ -62,16 +62,11 @@ on:
         type: string
         default: ""
         description: Use caching mechanism for a given language
-      submodules:
-        required: false
-        type: string
-        default: ""
-        description: True or Recursive to initialize git submodules
       repositories:
         required: false
         type: string
         default: ""
-        description: Comma or newline-separated list of repositories to grant access to during the docker build.
+        description: Comma or newline-separated list of additional repositories needed for Docker build (e.g., private dependencies)
 
 jobs:
   check:
@@ -92,15 +87,15 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          permission-contents: read
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          submodules: ${{ inputs.submodules }}
-          token: ${{ inputs.submodules != '' && steps.generate-token.outputs.token || github.token }}
+          token: ${{ steps.generate-token.outputs.token }}
       - name: Run pre-build
         env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           BUILD_SECRET: ${{ secrets.BUILD_SECRET }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           if test -f "Makefile"; then
               make ci-pre-build
@@ -175,8 +170,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          secrets: |
-            "github_token=${{ steps.generate-token.outputs.token }}"
           build-args: |
             GIT_REV=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.revision']}}
             GIT_VERSION=${{fromJson(steps.meta.outputs.json).labels['org.opencontainers.image.version']}}
@@ -192,7 +185,8 @@ jobs:
         run: |
           echo "tag=$(echo '${{ needs.build.outputs.tags }}' | head -n1)" >> "$GITHUB_OUTPUT"
       - name: Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        # trivy-action v0.35.0 (safe version) - pinned to full commit SHA
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: image
           image-ref: ${{ steps.extract_tag.outputs.tag }}
