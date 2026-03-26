@@ -58,6 +58,7 @@ jobs:
           permission-contents: read
           permission-members: read
           permission-organization-projects: write
+          permission-administration: write
       - uses: actions/add-to-project@v1.0.2
         id: add-project
         with:
