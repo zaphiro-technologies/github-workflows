@@ -113,6 +113,10 @@ jobs:
                         ... on ProjectV2SingleSelectField {
                           id
                           name
+                          options {
+                            id
+                            name
+                          }
                         }
                       }
                     }
@@ -135,6 +139,26 @@ jobs:
                 core.setFailed('Status field not found in project');
                 return;
               }
+
+              const normalize = (value) =>
+                String(value || '')
+                  .replace(/^\s*[^A-Za-z0-9]+\s*/, '')
+                  .trim()
+                  .toLowerCase();
+
+              const statusOptions = statusField.options || [];
+              const statusOption =
+                statusOptions.find((opt) => opt.name === statusValue) ||
+                statusOptions.find((opt) => normalize(opt.name) === normalize(statusValue));
+
+              if (!statusOption) {
+                core.setFailed(
+                  `Status option not found for "${statusValue}". Available options: ${statusOptions
+                    .map((opt) => opt.name)
+                    .join(', ')}`
+                );
+                return;
+              }
               
               // Update the field value
               const updateMutation = `
@@ -144,7 +168,7 @@ jobs:
                     itemId: "${itemId}"
                     fieldId: "${statusField.id}"
                     value: {
-                      text: "${statusValue}"
+                      singleSelectOptionId: "${statusOption.id}"
                     }
                   }) {
                     projectV2Item {
