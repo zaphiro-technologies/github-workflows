@@ -53,8 +53,6 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
           permission-issues: write
           permission-pull-requests: read
           permission-contents: read
@@ -84,6 +82,7 @@ jobs:
               return;
             }
             const projectNumber = match[1];
+            const orgLogin = context.repo.owner;
             
             // Get the project to find the Status field ID
             const projectQuery = `
@@ -102,7 +101,7 @@ jobs:
             // Get project fields
             const fieldsQuery = `
               query($number: Int!, $first: Int) {
-                organization(login: "${github.repository_owner}") {
+                organization(login: "${orgLogin}") {
                   projectV2(number: $number) {
                     id
                     fields(first: $first) {
