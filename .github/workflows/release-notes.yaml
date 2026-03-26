@@ -221,8 +221,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
         name: Generate SBOM
-        # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: "."
@@ -276,8 +275,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Generate SBOM
-        # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: "."

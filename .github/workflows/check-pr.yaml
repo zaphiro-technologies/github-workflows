@@ -40,18 +40,9 @@ jobs:
   pr-label-check:
     if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
     steps:
-      - uses: actions/github-script@v7
+      - uses: docker://agilepathway/pull-request-label-checker:latest
         with:
-          script: |
-            const labels = context.payload.pull_request.labels.map(l => l.name);
-            const required = '${{ inputs.labels != '' && inputs.labels || 'feature,bug,ci,refactor,security,documentation,dependencies,customer,skip-changelog' }}'
-              .split(',')
-              .map(s => s.trim())
-              .filter(Boolean);
-            const hasLabel = required.some(label => labels.includes(label));
-            if (!hasLabel) {
-              core.setFailed(`PR must have one of: ${required.join(', ')}`);
-            }
+          github_enterprise_graphql_url: https://api.github.com/graphql
+          one_of: ${{ inputs.labels !='' && inputs.labels || 'feature,bug,ci,refactor,security,documentation,dependencies,customer,skip-changelog' }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}

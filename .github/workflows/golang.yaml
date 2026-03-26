@@ -299,8 +299,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Run Trivy vulnerability scanner (for summary)
-        # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: .
@@ -324,8 +323,7 @@ jobs:
           fi
       # this comes as last or scan results won't be uploaded
       - name: Run Trivy vulnerability scanner (security treshold)
-        # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: .
