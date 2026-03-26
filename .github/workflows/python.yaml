@@ -86,7 +86,7 @@ jobs:
     # Check if the PR is not from a fork
     runs-on: ubuntu-latest
     needs: changes
-    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
+    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request && github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - uses: actions/create-github-app-token@v3
         id: generate-token
@@ -94,6 +94,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          permission-contents: write
       - uses: actions/checkout@v6
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -139,8 +140,10 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          permission-contents: read
       - uses: actions/checkout@v6
         with:
+          token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up python
         id: setup-python
@@ -185,8 +188,13 @@ jobs:
           gh auth setup-git
           git config --global credential.helper '!gh auth git-credential'
       - name: Run tests
+        if: ${{ !inputs.pull-dvc-datasets }}
         env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }} # Optional: only set when authenticating private repos
+        run: |
+          make ci-test
+      - name: Run tests (with DVC)
+        if: ${{ inputs.pull-dvc-datasets }}
         run: |
           make ci-test
       - if: ${{ inputs.upload-artefacts }}
