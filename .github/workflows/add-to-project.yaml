@@ -55,7 +55,6 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           permission-issues: write
           permission-pull-requests: write
-          permission-contents: read
           permission-members: read
           permission-organization-projects: write
           permission-administration: write
