@@ -43,13 +43,19 @@ jobs:
     if: github.event_name == 'issues' || github.event_name == 'pull_request' || github.event_name == 'workflow_call'
     name: Add issue/PR to a project
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
     steps:
       - uses: actions/create-github-app-token@v3
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
+          permission-issues: write
+          permission-pull-requests: read
+          permission-contents: read
       - uses: actions/add-to-project@v1.0.2
         id: add-project
         with:
@@ -58,27 +64,111 @@ jobs:
           project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
           github-token: ${{ steps.generate-token.outputs.token }}
           labeled: ${{ inputs.labeled }}
-      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == true && steps.add-project.outputs.itemId }}
-        uses: titoportas/update-project-fields@v0.1.0
+      - if: ${{ github.event_name == 'pull_request' && steps.add-project.outputs.itemId }}
+        uses: actions/github-script@v7
         with:
-          project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
           github-token: ${{ steps.generate-token.outputs.token }}
-          item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
-          field-keys: Status
-          field-values: 🏗 In progress
-      - if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
-        uses: titoportas/update-project-fields@v0.1.0
-        with:
-          project-url: ${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}
-          github-token: ${{ steps.generate-token.outputs.token }}
-          item-id: ${{ steps.add-project.outputs.itemId }} # Use the item-id output of the previous step
-          field-keys: Status
-          field-values: 🔖 Ready
+          script: |
+            const projectUrl = '${{ inputs.project-url != '' && inputs.project-url || secrets.PLATFORM_PROJECT_URL }}';
+            const itemId = '${{ steps.add-project.outputs.itemId }}';
+            const isDraft = ${{ github.event.pull_request.draft }};
+            const statusValue = isDraft ? '🏗 In progress' : '🔖 Ready';
+            
+            // Parse project URL to extract owner, repo (if needed), and project number
+            const match = projectUrl.match(/\/projects\/(\d+)/);
+            if (!match) {
+              core.setFailed('Could not parse project URL');
+              return;
+            }
+            const projectNumber = match[1];
+            
+            // Get the project to find the Status field ID
+            const projectQuery = `
+              query {
+                node(id: "${itemId}") {
+                  ... on ProjectV2Item {
+                    id
+                    project {
+                      id
+                    }
+                  }
+                }
+              }
+            `;
+            
+            // Get project fields
+            const fieldsQuery = `
+              query($number: Int!, $first: Int) {
+                organization(login: "${github.repository_owner}") {
+                  projectV2(number: $number) {
+                    id
+                    fields(first: $first) {
+                      nodes {
+                        ... on ProjectV2Field {
+                          id
+                          name
+                        }
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+            
+            try {
+              const fieldsResult = await github.graphql(fieldsQuery, {
+                number: parseInt(projectNumber),
+                first: 20
+              });
+              
+              const statusField = fieldsResult.organization?.projectV2?.fields?.nodes?.find(
+                f => f.name === 'Status'
+              );
+              
+              if (!statusField) {
+                core.setFailed('Status field not found in project');
+                return;
+              }
+              
+              // Update the field value
+              const updateMutation = `
+                mutation {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "${fieldsResult.organization.projectV2.id}"
+                    itemId: "${itemId}"
+                    fieldId: "${statusField.id}"
+                    value: {
+                      text: "${statusValue}"
+                    }
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }
+              `;
+              
+              await github.graphql(updateMutation);
+              console.log(`Updated Status to: ${statusValue}`);
+            } catch (error) {
+              core.setFailed(`Failed to update project field: ${error.message}`);
+            }
       - name: Assign PR to creator
-        if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
-        uses: thomaseizinger/assign-pr-creator-action@v1.0.0
+        if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.draft && steps.add-project.outputs.itemId }}
+        uses: actions/github-script@v7
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              assignees: [context.payload.pull_request.user.login]
+            });
       - name: Add permissions
         if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
         run: |
@@ -98,11 +188,35 @@ jobs:
           REPO: ${{ github.event.repository.name }}
           TEAMS: ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }}
       - name: Add reviewers
-        if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
-        uses: rowi1de/auto-assign-review-teams@v1.1.3
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
+        uses: actions/github-script@v7
         with:
-          repo-token: ${{ steps.generate-token.outputs.token }}
-          teams: ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }} # only works for GitHub Organisation/Teams
-          persons: ${{ inputs.reviewers-individuals }} # add individual persons here
-          include-draft: false # Draft PRs will be skipped (default: false)
-          skip-with-manual-reviewers: 1 # Skip this action, if the number of reviwers was already assigned (default: 0)
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const teams = '${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }}'
+              .split(',')
+              .map(t => t.trim())
+              .filter(t => t);
+            
+            const persons = '${{ inputs.reviewers-individuals }}'
+              .split(',')
+              .map(p => p.trim())
+              .filter(p => p);
+            
+            if (teams.length === 0 && persons.length === 0) {
+              console.log('No reviewers configured');
+              return;
+            }
+            
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                reviewers: persons,
+                team_reviewers: teams
+              });
+              console.log(`Requested reviewers: teams=[${teams}], persons=[${persons}]`);
+            } catch (error) {
+              core.warning(`Failed to request reviewers: ${error.message}`);
+            }
