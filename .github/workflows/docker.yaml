@@ -91,11 +91,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          token: ${{ needs.generate-token.outputs.token }}
+          token: ${{ steps.generate-token.outputs.token }}
       - name: Run pre-build
         env:
           BUILD_SECRET: ${{ secrets.BUILD_SECRET }}
-          GH_TOKEN: ${{ needs.generate-token.outputs.token }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           if test -f "Makefile"; then
               make ci-pre-build
