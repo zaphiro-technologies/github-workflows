@@ -75,7 +75,7 @@ jobs:
             const itemId = '${{ steps.add-project.outputs.itemId }}';
             const isDraft = ${{ github.event.pull_request.draft }};
             const statusValue = isDraft ? '🏗 In progress' : '🔖 Ready';
-            
+
             // Parse project URL, supports both:
             // - https://github.com/orgs/<org>/projects/<number>
             // - https://github.com/users/<user>/projects/<number>
@@ -88,7 +88,7 @@ jobs:
             const projectOwnerLogin = projectMatch[2];
             const projectNumber = Number(projectMatch[3]);
             const isUserProject = projectOwnerType === 'users';
-            
+
             // Get project fields
             const fieldsQuery = isUserProject ? `
               query($number: Int!, $first: Int) {
@@ -139,7 +139,7 @@ jobs:
                 }
               }
             `;
-            
+
             try {
               const fieldsResult = await github.graphql(fieldsQuery, {
                 number: projectNumber,
@@ -252,17 +252,17 @@ jobs:
               .split(',')
               .map(t => t.trim())
               .filter(t => t);
-            
+
             const persons = '${{ inputs.reviewers-individuals }}'
               .split(',')
               .map(p => p.trim())
               .filter(p => p);
-            
+
             if (teams.length === 0 && persons.length === 0) {
               console.log('No reviewers configured');
               return;
             }
-            
+
             try {
               await github.rest.pulls.requestReviewers({
                 owner: context.repo.owner,
