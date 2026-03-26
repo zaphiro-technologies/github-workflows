@@ -53,9 +53,12 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
           permission-issues: write
           permission-pull-requests: read
           permission-contents: read
+          permission-organization-projects: write
       - uses: actions/add-to-project@v1.0.2
         id: add-project
         with:
