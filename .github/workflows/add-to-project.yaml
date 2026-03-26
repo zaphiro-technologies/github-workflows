@@ -75,33 +75,47 @@ jobs:
             const isDraft = ${{ github.event.pull_request.draft }};
             const statusValue = isDraft ? '🏗 In progress' : '🔖 Ready';
             
-            // Parse project URL to extract owner, repo (if needed), and project number
-            const match = projectUrl.match(/\/projects\/(\d+)/);
-            if (!match) {
-              core.setFailed('Could not parse project URL');
+            // Parse project URL, supports both:
+            // - https://github.com/orgs/<org>/projects/<number>
+            // - https://github.com/users/<user>/projects/<number>
+            const projectMatch = projectUrl.match(/github\.com\/(?:(orgs|users)\/)?([^/]+)\/projects\/(\d+)/i);
+            if (!projectMatch) {
+              core.setFailed(`Could not parse project URL: ${projectUrl}`);
               return;
             }
-            const projectNumber = match[1];
-            const orgLogin = context.repo.owner;
+            const projectOwnerType = (projectMatch[1] || '').toLowerCase();
+            const projectOwnerLogin = projectMatch[2];
+            const projectNumber = Number(projectMatch[3]);
+            const isUserProject = projectOwnerType === 'users';
             
-            // Get the project to find the Status field ID
-            const projectQuery = `
-              query {
-                node(id: "${itemId}") {
-                  ... on ProjectV2Item {
+            // Get project fields
+            const fieldsQuery = isUserProject ? `
+              query($number: Int!, $first: Int) {
+                user(login: "${projectOwnerLogin}") {
+                  projectV2(number: $number) {
                     id
-                    project {
-                      id
+                    fields(first: $first) {
+                      nodes {
+                        ... on ProjectV2Field {
+                          id
+                          name
+                        }
+                        ... on ProjectV2SingleSelectField {
+                          id
+                          name
+                          options {
+                            id
+                            name
+                          }
+                        }
+                      }
                     }
                   }
                 }
               }
-            `;
-            
-            // Get project fields
-            const fieldsQuery = `
+            ` : `
               query($number: Int!, $first: Int) {
-                organization(login: "${orgLogin}") {
+                organization(login: "${projectOwnerLogin}") {
                   projectV2(number: $number) {
                     id
                     fields(first: $first) {
@@ -127,11 +141,15 @@ jobs:
             
             try {
               const fieldsResult = await github.graphql(fieldsQuery, {
-                number: parseInt(projectNumber),
+                number: projectNumber,
                 first: 20
               });
+
+              const projectNode = isUserProject
+                ? fieldsResult.user?.projectV2
+                : fieldsResult.organization?.projectV2;
               
-              const statusField = fieldsResult.organization?.projectV2?.fields?.nodes?.find(
+              const statusField = projectNode?.fields?.nodes?.find(
                 f => f.name === 'Status'
               );
               
@@ -147,11 +165,12 @@ jobs:
                   .toLowerCase();
 
               const statusOptions = statusField.options || [];
+              const isSingleSelect = Array.isArray(statusField.options);
               const statusOption =
                 statusOptions.find((opt) => opt.name === statusValue) ||
                 statusOptions.find((opt) => normalize(opt.name) === normalize(statusValue));
 
-              if (!statusOption) {
+              if (isSingleSelect && !statusOption) {
                 core.setFailed(
                   `Status option not found for "${statusValue}". Available options: ${statusOptions
                     .map((opt) => opt.name)
@@ -160,15 +179,24 @@ jobs:
                 return;
               }
               
-              // Update the field value
+              const projectId = projectNode?.id;
+              if (!projectId) {
+                core.setFailed('Could not resolve project id from project URL and owner');
+                return;
+              }
+
+              // Update field value using the correct value type
+              const valueFragment = statusOption
+                ? `singleSelectOptionId: "${statusOption.id}"`
+                : `text: "${statusValue.replace(/"/g, '\\"')}"`;
               const updateMutation = `
                 mutation {
                   updateProjectV2ItemFieldValue(input: {
-                    projectId: "${fieldsResult.organization.projectV2.id}"
+                    projectId: "${projectId}"
                     itemId: "${itemId}"
                     fieldId: "${statusField.id}"
                     value: {
-                      singleSelectOptionId: "${statusOption.id}"
+                      ${valueFragment}
                     }
                   }) {
                     projectV2Item {
