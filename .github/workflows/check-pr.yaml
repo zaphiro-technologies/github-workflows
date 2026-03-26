@@ -47,8 +47,11 @@ jobs:
         with:
           script: |
             const labels = context.payload.pull_request.labels.map(l => l.name);
-            const required = '${{ inputs.labels }}'.split(',');
-            const hasLabel = required.some(r => labels.includes(r.trim()));
+            const required = '${{ inputs.labels != '' && inputs.labels || 'feature,bug,ci,refactor,security,documentation,dependencies,customer,skip-changelog' }}'
+              .split(',')
+              .map(s => s.trim())
+              .filter(Boolean);
+            const hasLabel = required.some(label => labels.includes(label));
             if (!hasLabel) {
               core.setFailed(`PR must have one of: ${required.join(', ')}`);
             }
