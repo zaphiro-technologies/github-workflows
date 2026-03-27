@@ -86,6 +86,9 @@ jobs:
           git tag -a "v${{ env.NEWTAG }}" -m "Release v${{ env.NEWTAG }}"
           git push --follow-tags
       - name: Publish Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "v${{ env.NEWTAG }}"
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          gh release create "v${{ env.NEWTAG }}" \
+            --title "Release v${{ env.NEWTAG }}" \
+            --generate-notes
