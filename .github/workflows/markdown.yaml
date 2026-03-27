@@ -180,10 +180,13 @@ jobs:
       - name: Enable Corepack for modern package managers
         run: |
           corepack enable
+      - name: Prepare reviewdog cache path
+        run: |
+          mkdir -p "$HOME/reviewdog-bin"
       - name: Check links
         uses: umbrelladocs/action-linkspector@v1
         with:
           filter_mode: nofilter
           reporter: github-pr-review
           config_file: ${{ inputs.config-links-path || '.github/config/.linkspector.yml' }}
-          fail_on_error: true
+          fail_level: any
