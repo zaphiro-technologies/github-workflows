@@ -43,8 +43,8 @@ jobs:
     steps:
       - name: Delete all containers from repository without tags
         uses: actions/delete-package-versions@v5
-        with: 
+        with:
           package-name: ${{ inputs.image-name || github.event.repository.name }}
-          package-type: 'container'
-          delete-only-untagged-versions: 'true'
+          package-type: "container"
+          delete-only-untagged-versions: "true"
           token: ${{ secrets.GITHUB_TOKEN }}

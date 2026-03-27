@@ -63,7 +63,7 @@ jobs:
           # Get previous tag or use fallback
           PREVTAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           echo "previous_tag=${PREVTAG}" >> $GITHUB_OUTPUT
-          
+
           # Parse and increment patch version
           IFS='.' read -r MAJOR MINOR PATCH <<< "${PREVTAG#v}"
           PATCH=$((PATCH + 1))
