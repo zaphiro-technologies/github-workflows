@@ -54,6 +54,7 @@
 
 ### Bug Fixes
 
+- Minor fixes: python / auto-approve wf (PR #272 by @chicco785)
 - markdown: Enable Corepack for modern package managers (PR #271 by @chicco785)
 - approve-and-merge: fix continuous approval loops (PR #215 by @chicco785)
 - Temporary fix for dvc boto3 import issue (PR #228 by @chicco785)
