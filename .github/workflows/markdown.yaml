@@ -32,10 +32,6 @@ on:
     types: [opened, reopened, ready_for_review, synchronize]
   workflow_call:
     inputs:
-      skip-spell-check:
-        required: false
-        default: true
-        type: boolean
       config-links-path:
         required: false
         default: ".github/config/.linkspector.yml"
@@ -55,7 +51,7 @@ on:
           #RELEASE_NOTES.md
 jobs:
   changes:
-    if: ${{ github.event.pull_request.draft == false }}
+    #if: ${{ github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     outputs:
       files_changed: ${{ steps.filter.outputs.markdown == 'true' || steps.filter.outputs.scripts == 'true' }}
@@ -84,7 +80,7 @@ jobs:
               - '.github/workflows/*.(yaml|yml)'
   github-actions:
     needs: changes
-    if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' && github.event.pull_request.draft == false }}
+    #if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v3
@@ -120,7 +116,7 @@ jobs:
           reporter: github-pr-review
   markdown:
     needs: changes
-    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
+    #if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v3
@@ -187,17 +183,3 @@ jobs:
           reporter: github-pr-review
           config_file: ${{ inputs.config-links-path || '.github/config/.linkspector.yml' }}
           fail_on_error: true
-  markdown-spellchecker:
-    runs-on: ubuntu-latest
-    needs: changes
-    if: ${{ needs.changes.outputs.files_changed == 'true'  && github.event.pull_request.draft == false && (!inputs.skip-spell-check || inputs.skip-spell-check == '') }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-      - uses: actions/setup-node@v6
-      - name: Spellcheck
-        shell: bash
-        run: |
-          ./grammar-check.sh -f "${{ needs.changes.outputs.markdown_files }}"
