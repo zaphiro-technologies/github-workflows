@@ -154,8 +154,12 @@ jobs:
       - name: Update values-platforms.yaml
         if: env.PLATFORM != 'ALL'
         run: |
-          yq -i \
-            ".platforms.\"${{ env.PLATFORM }}\".\"${{ inputs.app-name }}\".image.tag = \"${IMAGE_TAG}\"" \
+          # Build the yq path by splitting app-name on dots
+          app_path=".platforms[\"${{ env.PLATFORM }}\"]"
+          for part in $(echo "${{ inputs.app-name }}" | tr '.' '\n'); do
+            app_path="$app_path[\"$part\"]"
+          done
+          yq -i "$app_path.image.tag = \"${IMAGE_TAG}\"" \
             "kubernetes/${{ env.CLUSTER }}/values-platforms.yaml"
       - name: Update values-platforms.yaml (ALL)
         if: env.PLATFORM == 'ALL'
@@ -167,7 +171,12 @@ jobs:
             for platform in $platforms; do
               echo "Updating platform: $platform"
 
-              yq -i ".platforms.\"$platform\".${{ inputs.app-name }}.image.tag = \"${IMAGE_TAG}\"" \
+              # Build the yq path by splitting app-name on dots
+              app_path=".platforms[\"$platform\"]"
+              for part in $(echo "${{ inputs.app-name }}" | tr '.' '\n'); do
+                app_path="$app_path[\"$part\"]"
+              done
+              yq -i "$app_path.image.tag = \"${IMAGE_TAG}\"" \
                   "$cluster/values-platforms.yaml"
             done
           done
