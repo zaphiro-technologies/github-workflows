@@ -4,13 +4,15 @@ This repository hosts [Reusable GitHub Workflows][re-usable-github-workflows].
 
 The repository includes:
 
-- [`add-to-project`](.github/workflows/add-to-project.yaml) workflow: when a new
-  issue or PR is added to a repository, it is also added - by default - to the
+- [`add-to-project`](.github/workflows/add-to-project.yaml): when a new issue or
+  PR is added to a repository, it is also added - by default - to the
   [SynchroGuard platform project](https://github.com/orgs/zaphiro-technologies/projects/2)
   or to the project defined by `project-url` input parameter with status `new`.
   When a new PR is added, the PR is assigned to its creator. When a PR is set to
   ready, reviewers from `reviewers-team` input parameter (default value
   `backend-devs`) or `reviewers-individuals` (comma separated) are added.
+- [`approve-and-merge`](.github/workflows/approve-and-merge.yaml): periodically
+  check for dependabot PRs, if their checks pass, approve and merge the PR.
 - [`manage-issues`](.github/workflows/manage-issues.yaml) workflow: automated
   issue and PR management including stale issue detection and priority
   synchronization. The workflow includes two main jobs:
@@ -29,30 +31,33 @@ The repository includes:
 - [`check-pr`](.github/workflows/check-pr.yaml) workflow: when a new PR is added
   to a repository or any change occurs to the PR, the PR is validated to be sure
   that labels are valid.
-- [`clean-up-storage`](.github/workflows/clean-up-storage.yaml) workflow: when a
-  new PR is closed, related cache and artifact are deleted.
-- [`deployment`](.github/workflows/deployment.yaml) workflow: commit a container
-  image tag in the k8s-deployments repository
-- [`markdown`](.github/workflows/markdown.yaml) workflow: lint all Markdown
-  documents and checks that the links referenced in the documents are valid. If
-  `skip-spell-check: false`, also, a spell checker is executed.
-- [`release-notes`](.github/workflows/release-notes.yaml) workflow:
-  automatically updates release notes using PR titles and labels.
-- [`golang`](.github/workflows/golang.yaml) workflow: lint, test and benchmark
-  Go Applications. The workflow includes authentication to GitHub Container
-  Registry in case tests rely on private images. To retrieve the images, you
-  need also to set
-  [`read permission`](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#ensuring-workflow-access-to-your-package)
-  for the repository on the package. The workflow also scans for
+- [`clean-up-docker`](.github/workflows/clean-up-docker.yaml): when a PR is
+  closed, related docker images and untagged ones are deleted
+- [`clean-up-storage`](.github/workflows/clean-up-storage.yaml): when a new PR
+  is closed, related cache and artifact are deleted.
+- [`deployment`](.github/workflows/deployment.yaml): commit a container image
+  tag in the k8s-deployments repository.
+- [`docker`](.github/workflows/docker.yaml): build and push Docker images and
+  scans for vulnerabilities.
+- [`golang`](.github/workflows/golang.yaml): lint, test and benchmark Go
+  Applications. The workflow includes authentication to GitHub Container
+  Registry in case tests rely on private images. The workflow also scans for
   vulnerabilities.
-- [`docker`](.github/workflows/docker.yaml) workflow: build and push Docker
-  images and scans for vulnerabilities.
-- [`clean-up-docker`](.github/workflows/clean-up-docker.yaml) workflow: when a
-  PR is closed, related docker images and untagged ones are deleted
-- [`licensing`](.github/workflows/license.yaml) workflow: add licensing
-  information in file headers and check dependencies licensing compatibility.
-- [`new-release`](.github/workflows/new-release.yaml) workflow: create a new
-  release (leveraging makefile to update packaging file version).
+- [`license`](.github/workflows/license.yaml): add licensing information in file
+  headers and check dependencies licensing compatibility.
+- [`lint`](.github/workflows/markdown.yaml): lint all Markdown and Yaml files.
+  In case of markdown documents, checks that the links referenced in the
+  documents are valid. If `skip-spell-check: false`, also, a spell checker is
+  executed.
+- [`new-release`](.github/workflows/new-release.yaml): create a new release
+  (leveraging makefile to update packaging file version).
+- [`python`](.github/workflows/python.yaml): lint, test python applications. The
+  workflow includes authentication to GitHub Container Registry in case tests
+  rely on private images. The workflow also scans for vulnerabilities.
+- [`release-notes`](.github/workflows/release-notes.yaml): automatically updates
+  release notes using PR titles and labels.
+- [`trivy-cache-update`](.github/workflows/trivy-cache-update.yaml): update
+  trivy cache image.
 
 Some of these workflows are configured as [starter workflows][starter-workflows]
 in the [`.github`][.github] repository, so that you can add them at any time

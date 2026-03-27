@@ -55,6 +55,7 @@
 ### Bug Fixes
 
 - Temporary fix for dvc boto3 import issue (PR #228 by @chicco785)
+- approve-and-merge: fix continuous approval loops (PR #215 by @chicco785)
 - deployment: fix app token scope (PR #209 by @cosimomeli)
 - release notes: fix not progressive releases and detached head commits (PR #206
   by @chicco785)
@@ -88,6 +89,7 @@
 
 ### Dependencies
 
+- Bump EndBug/add-and-commit from 9 to 10 (PR #264 by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 18 to 19 (PR #265 by
   @dependabot[bot])
 - Bump actions/create-github-app-token from 2 to 3 (PR #261 by @dependabot[bot])
