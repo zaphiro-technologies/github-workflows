@@ -205,13 +205,6 @@ jobs:
             echo "NEW_VERSION=$NEW_VERSION"
             sed -i.bak -E "s/^(##[[:space:]]+)[0-9]+\.[0-9]+\.[0-9]+-dev/\1${NEW_VERSION}/" RELEASE_NOTES.md
             rm -f RELEASE_NOTES.md.bak
-            
-            # For final releases, strip prerelease entries from changelog
-            if [[ ! "${{ github.ref_name }}" =~ -rc|-b|-a ]]; then
-              echo "Filtering out prerelease entries..."
-              grep -v -E '\-rc|\-b|\-a' RELEASE_NOTES.md > RELEASE_NOTES.md.tmp && mv RELEASE_NOTES.md.tmp RELEASE_NOTES.md
-            fi
-            
             echo "cleaned release note:"
             more RELEASE_NOTES.md
             rm .github/config/release-config-temp.json
