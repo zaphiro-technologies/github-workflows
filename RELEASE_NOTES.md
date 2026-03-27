@@ -54,8 +54,8 @@
 
 ### Bug Fixes
 
-- Temporary fix for dvc boto3 import issue (PR #228 by @chicco785)
 - approve-and-merge: fix continuous approval loops (PR #215 by @chicco785)
+- Temporary fix for dvc boto3 import issue (PR #228 by @chicco785)
 - deployment: fix app token scope (PR #209 by @cosimomeli)
 - release notes: fix not progressive releases and detached head commits (PR #206
   by @chicco785)
@@ -82,6 +82,8 @@
 ### Security
 
 - Workflow hardening: check-pr / docker / add-to-project (PR #269 by @chicco785)
+- Workflow hardening: markdown / python / license / deployment / golang /
+  release-note / new-release (PR #268 by @chicco785)
 - Fix trivy action to a secure version (PR #266 by @chicco785)
 - add-to-project wf: add job to sync priority in projects with labels for Vanta
   (PR #229 by @chicco785)
