@@ -218,12 +218,25 @@ jobs:
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            await github.rest.issues.addAssignees({
+            // Check if PR already has assignees
+            const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              assignees: [context.payload.pull_request.user.login]
+              pull_number: context.issue.number
             });
+
+            // Only assign PR creator if no assignees exist
+            if (!pr.data.assignees || pr.data.assignees.length === 0) {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                assignees: [context.payload.pull_request.user.login]
+              });
+              console.log('Assigned PR creator as assignee');
+            } else {
+              console.log('PR already has assignees, skipping assignment');
+            }
       - name: Add permissions
         if: ${{ github.event_name == 'pull_request'  &&  github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
         run: |
