@@ -40,11 +40,12 @@ on:
         type: string
 jobs:
   add-to-project:
+    if: github.event_name == 'issues' || github.event_name == 'pull_request' || github.event_name == 'workflow_call'
     name: Add issue/PR to a project
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}

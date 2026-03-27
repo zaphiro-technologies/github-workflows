@@ -1,9 +1,14 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2025-10-28
+## 0.0.3-dev - 2026-03-24
 
 ### Features
 
+- python workflow: ensure python version consistency (PR #246 by @chicco785)
+- add-to-project wf: add stale issues bot (PR #231 by @chicco785)
+- support ALL for deployment (PR #222 by @chicco785)
+- Support secret injection via .env during docker image build (PR #220 by
+  @chicco785)
 - license workflow: support python licence check (PR #211 by @chicco785)
 - workflows: use official action to create github app tokens and support
   additional repositories scoping (PR #207 by @chicco785)
@@ -49,6 +54,7 @@
 
 ### Bug Fixes
 
+- Temporary fix for dvc boto3 import issue (PR #228 by @chicco785)
 - deployment: fix app token scope (PR #209 by @cosimomeli)
 - release notes: fix not progressive releases and detached head commits (PR #206
   by @chicco785)
@@ -66,6 +72,7 @@
 
 ### Continuous Integration
 
+- Separate issue management from project management (PR #236 by @chicco785)
 - new-release workflow: delegate to makefile the update of project files (PR
   #192 by @kwitekrac)
 - docker workflow: support golang build caching (PR #124 by @chicco785)
@@ -73,10 +80,59 @@
 
 ### Security
 
+- Fix trivy action to a secure version (PR #266 by @chicco785)
+- add-to-project wf: add job to sync priority in projects with labels for Vanta
+  (PR #229 by @chicco785)
 - Pass github token to docker build as secret (PR #163 by @chicco785)
 
 ### Dependencies
 
+- Bump actions/create-github-app-token from 2 to 3 (PR #261 by @dependabot[bot])
+- Bump dorny/paths-filter from 3 to 4 (PR #259 by @dependabot[bot])
+- Bump docker/login-action from 3 to 4 (PR #262 by @dependabot[bot])
+- Bump mikepenz/action-gh-release from 1 to 2 (PR #260 by @dependabot[bot])
+- Bump dawidd6/action-download-artifact from 16 to 18 (PR #263 by
+  @dependabot[bot])
+- Bump docker/setup-qemu-action from 3 to 4 (PR #255 by @dependabot[bot])
+- Bump aquasecurity/trivy-action from 0.34.0 to 0.35.0 (PR #257 by
+  @dependabot[bot])
+- Bump docker/metadata-action from 5 to 6 (PR #256 by @dependabot[bot])
+- Bump docker/build-push-action from 6 to 7 (PR #254 by @dependabot[bot])
+- Bump docker/setup-buildx-action from 3 to 4 (PR #258 by @dependabot[bot])
+- Bump aquasecurity/trivy-action from 0.33.1 to 0.34.0 (PR #247 by
+  @dependabot[bot])
+- Bump reproducible-containers/buildkit-cache-dance from 3.3.1 to 3.3.2 (PR #252
+  by @dependabot[bot])
+- Bump dawidd6/action-download-artifact from 15 to 16 (PR #251 by
+  @dependabot[bot])
+- Bump actions/upload-artifact from 6 to 7 (PR #253 by @dependabot[bot])
+- Bump dawidd6/action-download-artifact from 14 to 15 (PR #250 by
+  @dependabot[bot])
+- Bump aquasecurity/trivy-action from 0.33.1 to 0.34.0 in /.github/workflows (PR
+  #249 by @dependabot[bot])
+- Bump actions/cache from 4 to 5 (PR #248 by @dependabot[bot])
+- Bump reproducible-containers/buildkit-cache-dance from 3.3.0 to 3.3.1 (PR #244
+  by @dependabot[bot])
+- Bump WyriHaximus/github-action-get-previous-tag from 1 to 2 (PR #245 by
+  @dependabot[bot])
+- Bump aws-actions/configure-aws-credentials from 5 to 6 (PR #243 by
+  @dependabot[bot])
+- Bump dawidd6/action-download-artifact from 12 to 14 (PR #241 by
+  @dependabot[bot])
+- Bump dawidd6/action-download-artifact from 11 to 12 (PR #227 by
+  @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 6.0.0 to 7.0.0 (PR #225 by
+  @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 21 to 22 (PR #223 by
+  @dependabot[bot])
+- Bump actions/upload-artifact from 5 to 6 (PR #226 by @dependabot[bot])
+- Bump actions/cache from 4 to 5 (PR #224 by @dependabot[bot])
+- Bump actions/checkout from 5 to 6 (PR #219 by @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 20 to 21 (PR #218 by
+  @dependabot[bot])
+- Bump golangci/golangci-lint-action from 8 to 9 (PR #217 by @dependabot[bot])
+- Bump mikepenz/release-changelog-builder-action from 5 to 6 (PR #216 by
+  @dependabot[bot])
 - Bump actions/upload-artifact from 4 to 5 (PR #214 by @dependabot[bot])
 - Bump apache/skywalking-eyes from 0.7.0 to 0.8.0 (PR #212 by @dependabot[bot])
 - Bump actions/setup-node from 5 to 6 (PR #213 by @dependabot[bot])

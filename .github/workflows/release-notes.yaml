@@ -77,19 +77,19 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ ( github.event_name == 'pull_request' && needs.check_reviews.outputs.reviews == 'APPROVED') || github.event.review.state == 'approved' || startsWith(github.ref, 'refs/tags/') }}
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         if: ${{ startsWith(github.ref, 'refs/tags/') == true }}
         with:
           ref: ${{ github.ref }}
@@ -97,7 +97,7 @@ jobs:
           fetch-depth: 0
       - name: "Get Previous tag"
         id: previoustag
-        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+        uses: "WyriHaximus/github-action-get-previous-tag@v2"
         with:
           fallback: 0.0.0 # Optional fallback tag to use when no tag can be found
       - name: "Get next minor version"
@@ -126,7 +126,7 @@ jobs:
           more .github/config/release-config-temp.json
       - name: "Build Changelog"
         id: build_changelog_1
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
         with:
           configuration: ".github/config/release-config-temp.json"
@@ -138,7 +138,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Build Changelog"
         id: build_changelog_2
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
         with:
           configuration: ".github/config/release-config-temp.json"
@@ -221,7 +221,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
         name: Generate SBOM
-        uses: aquasecurity/trivy-action@master
+        # trivy-action v0.35.0 (safe version)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: fs
           scan-ref: "."
@@ -229,7 +230,7 @@ jobs:
           output: "cyclonedx-sbom.json"
       - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
         name: Upload SBOM as a Github artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: trivy-sbom-report
           path: "${{ github.workspace }}/cyclonedx-sbom.json"
@@ -241,7 +242,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Select configuration
@@ -252,13 +253,13 @@ jobs:
         run: echo "CONFIGURATION=.github/config/release-config.json" >> $GITHUB_ENV
       - name: "Build Changelog"
         id: github_release
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         with:
           configuration: ${{env.CONFIGURATION}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
-        uses: mikepenz/action-gh-release@v1
+        uses: mikepenz/action-gh-release@v2
         with:
           body: ${{steps.github_release.outputs.changelog}}
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-b') || contains(github.ref, '-a') }}
@@ -271,11 +272,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Generate SBOM
-        uses: aquasecurity/trivy-action@master
+        # trivy-action v0.35.0 (safe version)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: fs
           scan-ref: "."

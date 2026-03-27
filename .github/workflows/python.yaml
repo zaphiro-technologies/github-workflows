@@ -69,8 +69,8 @@ jobs:
     outputs:
       files_changed: ${{ steps.filter.outputs.python == 'true' }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -88,24 +88,34 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           token: ${{ steps.generate-token.outputs.token }}
           ref: ${{github.event.pull_request.head.ref}}
-      - name: Install poetry
-        run: pipx install poetry
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v6
         with:
           python-version-file: "pyproject.toml"
-          cache: "poetry"
+      - name: Install poetry
+        run: pipx install poetry==2.3.2 || pipx upgrade poetry
+        env:
+          PIPX_DEFAULT_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+      - name: Cache Poetry artifacts
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/pypoetry/artifacts
+            ~/.cache/pip
+          key: poetry-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-
       - name: Install packages
         run: |
           make lint-setup
@@ -123,37 +133,50 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Install poetry
-        run: pipx install poetry
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v6
         with:
           python-version-file: "pyproject.toml"
-          cache: "poetry"
+      - name: Install poetry
+        run: pipx install poetry==2.3.2 || pipx upgrade poetry
+        env:
+          PIPX_DEFAULT_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+      - name: Cache Poetry artifacts
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/pypoetry/artifacts
+            ~/.cache/pip
+          key: poetry-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-
       - name: Install packages
         run: |
           make dev-setup
       - name: Configure AWS Credentials
         if: ${{ inputs.pull-dvc-datasets }}
         id: creds
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: eu-south-1
           role-to-assume: arn:aws:iam::058264335177:role/zaphiro-github-role-demo
           output-credentials: true
       - name: Install DVC
         if: ${{ inputs.pull-dvc-datasets }}
-        run: pipx install dvc[s3]
+        run: |
+          pipx install dvc[s3]
+          # TODO: waiting for https://github.com/treeverse/dvc/issues/10966
+          pipx runpip dvc install boto3
       - name: Set-up credentials
         if: ${{ inputs.pull-dvc-datasets }}
         env:
@@ -168,13 +191,13 @@ jobs:
           make ci-test
       - if: ${{ inputs.upload-artefacts }}
         name: Upload artefacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: artefacts
           path: ${{ inputs.upload-artefacts-dir }}
           if-no-files-found: error
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         if: ${{ inputs.code-scan }}
         # we log in the registry to code check also images
         with:
@@ -183,7 +206,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        uses: SonarSource/sonarqube-scan-action@v7.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -192,9 +215,10 @@ jobs:
     if: ${{ inputs.vulterability-scan}}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Run Trivy vulnerability scanner (for summary)
-        uses: aquasecurity/trivy-action@master
+        # trivy-action v0.35.0 (safe version)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: fs
           scan-ref: .
@@ -218,7 +242,8 @@ jobs:
           fi
       # this comes as last or scan results won't be uploaded
       - name: Run Trivy vulnerability scanner (security treshold)
-        uses: aquasecurity/trivy-action@0.33.1
+        # trivy-action v0.35.0 (safe version)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: fs
           scan-ref: .
