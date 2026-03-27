@@ -84,8 +84,6 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
           permission-contents: write
       - uses: actions/checkout@v6
         if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
