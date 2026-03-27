@@ -178,8 +178,6 @@ jobs:
         if: ${{ inputs.pull-dvc-datasets }}
         run: |
           pipx install dvc[s3]
-          # TODO: waiting for https://github.com/treeverse/dvc/issues/10966
-          pipx runpip dvc install boto3
       - name: Set-up credentials
         if: ${{ inputs.pull-dvc-datasets }}
         env:
@@ -188,13 +186,8 @@ jobs:
           gh auth setup-git
           git config --global credential.helper '!gh auth git-credential'
       - name: Run tests
-        if: ${{ !inputs.pull-dvc-datasets }}
         env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }} # Optional: only set when authenticating private repos
-        run: |
-          make ci-test
-      - name: Run tests (with DVC)
-        if: ${{ inputs.pull-dvc-datasets }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           make ci-test
       - if: ${{ inputs.upload-artefacts }}
