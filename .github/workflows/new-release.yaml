@@ -60,16 +60,12 @@ jobs:
         if: ${{ inputs.tag == '' }}
         shell: bash
         run: |
-          # Get last non-prerelease tag (skip -rc, -b, -a) to compute next stable version
-          PREVTAG=$(git tag -l | grep -v -E '\-rc|\-b|\-a' | sort -V | tail -1 || echo "0.0.0")
+          # Get previous tag or use fallback
+          PREVTAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           echo "previous_tag=${PREVTAG}" >> $GITHUB_OUTPUT
 
-          # Strip 'v' prefix if present, then parse and increment patch version
-          VERSION="${PREVTAG#v}"
-          # Extract only the numeric part (handle cases like 0.0.4-rc by stripping suffix)
-          VERSION="${VERSION%%-*}"
-          
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          # Parse and increment patch version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${PREVTAG#v}"
           PATCH=$((PATCH + 1))
           NEWTAG="${MAJOR}.${MINOR}.${PATCH}"
           echo "patch=${NEWTAG}" >> $GITHUB_OUTPUT
