@@ -214,6 +214,28 @@ jobs:
             if [[ ! "${{ github.ref_name }}" =~ -rc|-b|-a ]]; then
               echo "Filtering out prerelease entries..."
               grep -v -E '\-rc|\-b|\-a' RELEASE_NOTES.md > RELEASE_NOTES.md.tmp && mv RELEASE_NOTES.md.tmp RELEASE_NOTES.md
+
+              # Prepare next dev section (e.g. after 0.0.9, add 0.0.10-dev)
+              IFS='.' read -r MAJOR MINOR PATCH <<< "$NEW_VERSION"
+              if [[ -n "$MAJOR" && -n "$MINOR" && -n "$PATCH" ]]; then
+                NEXT_DEV="${MAJOR}.${MINOR}.$((PATCH + 1))-dev"
+                if ! grep -q "^## ${NEXT_DEV} - " RELEASE_NOTES.md; then
+                  echo "Adding next dev section: ${NEXT_DEV}"
+                  NOW_DATE=$(date +%F)
+                  awk -v next_dev="$NEXT_DEV" -v now_date="$NOW_DATE" '
+                    NR == 1 {
+                      print $0
+                      print ""
+                      print "## " next_dev " - " now_date
+                      print ""
+                      print "- no changes"
+                      print ""
+                      next
+                    }
+                    { print $0 }
+                  ' RELEASE_NOTES.md > RELEASE_NOTES.md.tmp && mv RELEASE_NOTES.md.tmp RELEASE_NOTES.md
+                fi
+              fi
             fi
             
             echo "cleaned release note:"
@@ -226,14 +248,14 @@ jobs:
         uses: stefanzweifel/changelog-updater-action@v1
         if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
         with:
-          latest-version: ${{ steps.semvers.outputs.patch }}-dev
+          latest-version: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('{0}-dev', steps.semvers.outputs.patch) }}
           release-notes: ${{ steps.build_changelog_1.outputs.changelog }}
           path-to-changelog: RELEASE_NOTES.md
       - name: Update Changelog (no tag)
         uses: stefanzweifel/changelog-updater-action@v1
         if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
         with:
-          latest-version: ${{ steps.semvers.outputs.patch }}-dev
+          latest-version: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('{0}-dev', steps.semvers.outputs.patch) }}
           release-notes: ${{ steps.build_changelog_2.outputs.changelog }}
           path-to-changelog: RELEASE_NOTES.md
       - name: Prettify RELEASE_NOTES.md
