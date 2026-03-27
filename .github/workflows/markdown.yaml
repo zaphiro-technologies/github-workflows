@@ -80,7 +80,7 @@ jobs:
               - '.github/workflows/*.(yaml|yml)'
   github-actions:
     needs: changes
-    #if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' && github.event.pull_request.draft == false }}
+    if: ${{ needs.changes.outputs.github_actions_files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v3
@@ -117,7 +117,7 @@ jobs:
           reporter: github-pr-review
   markdown:
     needs: changes
-    #if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
+    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v3
