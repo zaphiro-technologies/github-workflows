@@ -180,6 +180,14 @@ jobs:
       - name: Enable Corepack for modern package managers
         run: |
           corepack enable
+      - name: Prepare Yarn cache path for setup-node
+        shell: bash
+        run: |
+          if [ -f package.json ] && grep -Eq '"packageManager"\s*:\s*"yarn@' package.json; then
+            CACHE_DIR=$(yarn config get cacheFolder | tr -d '"')
+            mkdir -p "$CACHE_DIR"
+            echo "Prepared Yarn cache directory: $CACHE_DIR"
+          fi
       - name: Prepare reviewdog cache path
         run: |
           mkdir -p "$HOME/reviewdog-bin"
