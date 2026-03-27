@@ -112,9 +112,7 @@ jobs:
             # Prerelease: get last tag (any)
             TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           fi
-
-          echo "Computed previous tag for changelog: $TAG"
-
+          
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
       - name: "Get next minor version"
         id: semvers
@@ -299,11 +297,8 @@ jobs:
             # Prerelease: get last tag (any)
             TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           fi
-
-          echo "Computed previous tag for changelog: $TAG"
           
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          
       - name: Select configuration
         if: ${{ github.event_name == 'workflow_call' }}
         run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
