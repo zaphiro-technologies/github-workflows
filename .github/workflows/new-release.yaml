@@ -89,6 +89,11 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
+          # GitHub auto-creates releases for tags, so edit the existing one
+          gh release edit "v${{ env.NEWTAG }}" \
+            --title "Release v${{ env.NEWTAG }}" \
+            --generate-notes \
+            2>/dev/null || \
           gh release create "v${{ env.NEWTAG }}" \
             --title "Release v${{ env.NEWTAG }}" \
             --generate-notes
