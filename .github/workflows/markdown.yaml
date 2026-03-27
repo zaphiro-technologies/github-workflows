@@ -177,6 +177,9 @@ jobs:
             - pattern: '^https://github.com/zaphiro-technologies/'
           EOF
           fi
+      - name: Enable Corepack for modern package managers
+        run: |
+          corepack enable
       - name: Check links
         uses: umbrelladocs/action-linkspector@v1
         with:
