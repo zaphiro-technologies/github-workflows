@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-03-24
+## 0.0.3-dev - 2026-03-27
 
 ### Features
 
@@ -80,6 +80,7 @@
 
 ### Security
 
+- Workflow hardening: check-pr / docker / add-to-project (PR #269 by @chicco785)
 - Fix trivy action to a secure version (PR #266 by @chicco785)
 - add-to-project wf: add job to sync priority in projects with labels for Vanta
   (PR #229 by @chicco785)
@@ -87,7 +88,10 @@
 
 ### Dependencies
 
+- Bump dawidd6/action-download-artifact from 18 to 19 (PR #265 by
+  @dependabot[bot])
 - Bump actions/create-github-app-token from 2 to 3 (PR #261 by @dependabot[bot])
+- Bump EndBug/add-and-commit from 9 to 10 (PR #264 by @dependabot[bot])
 - Bump dorny/paths-filter from 3 to 4 (PR #259 by @dependabot[bot])
 - Bump docker/login-action from 3 to 4 (PR #262 by @dependabot[bot])
 - Bump mikepenz/action-gh-release from 1 to 2 (PR #260 by @dependabot[bot])
