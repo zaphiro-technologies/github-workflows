@@ -110,7 +110,7 @@ jobs:
         run: |
           if [ "${{ env.PLATFORM }}" = "ALL" ]; then
             # pick the first cluster and first platform when ALL
-            first_cluster=$(ls -1 kubernetes | head -n 1)
+              first_cluster=$(find kubernetes -maxdepth 1 -type d | tail -n 1 | xargs basename)
             first_platform=$(yq '.platforms | keys | .[0]' kubernetes/$first_cluster/values-platforms.yaml)
             repo=$(yq ".platforms.\"$first_platform\".${{inputs.app-name}}.image.repository" \
                   kubernetes/$first_cluster/values-platforms.yaml)
@@ -157,7 +157,7 @@ jobs:
           # Build the yq path by splitting app-name on dots
           app_path=".platforms[\"${{ env.PLATFORM }}\"]"
           for part in $(echo "${{ inputs.app-name }}" | tr '.' '\n'); do
-            app_path="$app_path[\"$part\"]"
+              app_path="${app_path}[\"$part\"]"
           done
           yq -i "$app_path.image.tag = \"${IMAGE_TAG}\"" \
             "kubernetes/${{ env.CLUSTER }}/values-platforms.yaml"
@@ -174,7 +174,7 @@ jobs:
               # Build the yq path by splitting app-name on dots
               app_path=".platforms[\"$platform\"]"
               for part in $(echo "${{ inputs.app-name }}" | tr '.' '\n'); do
-                app_path="$app_path[\"$part\"]"
+                  app_path="${app_path}[\"$part\"]"
               done
               yq -i "$app_path.image.tag = \"${IMAGE_TAG}\"" \
                   "$cluster/values-platforms.yaml"
