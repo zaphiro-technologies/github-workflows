@@ -65,7 +65,11 @@ jobs:
                 echo "❌ Skipping PR #$number: merge conflicts detected"
                 continue
               else
-                echo "✅ PR #$number is up to date."
+                echo "✅ PR #$number is up to date and already approved."
+                echo "🔀 Merging PR #$number"
+                gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
+                echo "✅ Done with PR #$number"
+                continue
               fi
             fi
 
