@@ -47,7 +47,7 @@ jobs:
   license:
     name: Check licenses
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft == false }}
+    #if: ${{ github.event.pull_request.draft == false }}
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
     steps:
@@ -57,6 +57,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          permission-contents: write
       - uses: actions/checkout@v6
         with:
           token: ${{ steps.generate-token.outputs.token }}
