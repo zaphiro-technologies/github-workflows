@@ -103,17 +103,15 @@ jobs:
         shell: bash
         run: |
           CURRENT="${{ github.ref_name }}"
-
-          # Exclude CURRENT so changelog never compares a tag with itself.
+          
+          # If this is a final release (not prerelease), skip prerelease tags
           if [[ ! "$CURRENT" =~ -rc|-b|-a ]]; then
-            # Final release: previous stable tag (no prerelease suffixes).
-            TAG=$(git tag -l | grep -v -E '\-rc|\-b|\-a' | grep -Fvx "$CURRENT" | sort -Vr | head -1)
+            # Final release: get last non-prerelease tag
+            TAG=$(git tag -l | grep -v -E '\-rc|\-b|\-a' | sort -V | tail -1 || echo "0.0.0")
           else
-            # Prerelease: previous tag of any type, but not CURRENT.
-            TAG=$(git tag -l | grep -Fvx "$CURRENT" | sort -Vr | head -1)
+            # Prerelease: get last tag (any)
+            TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           fi
-
-          TAG="${TAG:-0.0.0}"
 
           echo "Computed previous tag for changelog: $TAG"
 
@@ -292,17 +290,15 @@ jobs:
         shell: bash
         run: |
           CURRENT="${{ github.ref_name }}"
-
-          # Exclude CURRENT so changelog never compares a tag with itself.
+          
+          # If this is a final release (not prerelease), skip prerelease tags
           if [[ ! "$CURRENT" =~ -rc|-b|-a ]]; then
-            # Final release: previous stable tag (no prerelease suffixes).
-            TAG=$(git tag -l | grep -v -E '\-rc|\-b|\-a' | grep -Fvx "$CURRENT" | sort -Vr | head -1)
+            # Final release: get last non-prerelease tag
+            TAG=$(git tag -l | grep -v -E '\-rc|\-b|\-a' | sort -V | tail -1 || echo "0.0.0")
           else
-            # Prerelease: previous tag of any type, but not CURRENT.
-            TAG=$(git tag -l | grep -Fvx "$CURRENT" | sort -Vr | head -1)
+            # Prerelease: get last tag (any)
+            TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           fi
-
-          TAG="${TAG:-0.0.0}"
 
           echo "Computed previous tag for changelog: $TAG"
           
