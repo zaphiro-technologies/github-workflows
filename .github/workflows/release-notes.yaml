@@ -204,7 +204,7 @@ jobs:
         run: |
           if [ -f "RELEASE_NOTES.md" ]; then
             more RELEASE_NOTES.md
-            TAG=${{ steps.previoustag.outputs.tag }}
+            TAG=${{ github.ref_name }}
             NEW_VERSION=${TAG#v}
             echo "NEW_VERSION=$NEW_VERSION"
             sed -i.bak -E "s/^(##[[:space:]]+)[0-9]+\.[0-9]+\.[0-9]+-dev/\1${NEW_VERSION}/" RELEASE_NOTES.md
