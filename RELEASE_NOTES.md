@@ -91,6 +91,7 @@
 - Bump dawidd6/action-download-artifact from 18 to 19 (PR #265 by
   @dependabot[bot])
 - Bump actions/create-github-app-token from 2 to 3 (PR #261 by @dependabot[bot])
+- Bump EndBug/add-and-commit from 9 to 10 (PR #264 by @dependabot[bot])
 - Bump dorny/paths-filter from 3 to 4 (PR #259 by @dependabot[bot])
 - Bump docker/login-action from 3 to 4 (PR #262 by @dependabot[bot])
 - Bump mikepenz/action-gh-release from 1 to 2 (PR #260 by @dependabot[bot])
