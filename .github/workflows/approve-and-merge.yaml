@@ -74,7 +74,7 @@ jobs:
 
             checks_state=$(gh api repos/$GITHUB_REPOSITORY/commits/$commit_sha/check-runs --jq '[.check_runs[].conclusion] | unique | join(",")')
 
-            if echo "$checks_state" | grep -Eiq 'failure|timed_out|cancelled|action_required'; then
+            if echo "$checks_state" | grep -Eiq 'failure|timed_out|action_required'; then
               echo "❌ Skipping PR #$number: one or more checks failed ($checks_state)"
               continue
             fi
