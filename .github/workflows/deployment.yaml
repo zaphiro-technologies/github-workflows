@@ -65,6 +65,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: k8s-deployments
+          permission-contents: write
       - name: Get image tag from git tag
         if: github.ref_type == 'tag'
         run: |
@@ -109,7 +110,7 @@ jobs:
         run: |
           if [ "${{ env.PLATFORM }}" = "ALL" ]; then
             # pick the first cluster and first platform when ALL
-            first_cluster=$(ls -1 kubernetes | head -n 1)
+              first_cluster=$(find kubernetes -maxdepth 1 -type d | tail -n 1 | xargs basename)
             first_platform=$(yq '.platforms | keys | .[0]' kubernetes/$first_cluster/values-platforms.yaml)
             repo=$(yq ".platforms.\"$first_platform\".${{inputs.app-name}}.image.repository" \
                   kubernetes/$first_cluster/values-platforms.yaml)
@@ -152,13 +153,14 @@ jobs:
           echo "IMAGE_TAG=$IMAGE_TAG@$DIGEST" >> $GITHUB_ENV
       - name: Update values-platforms.yaml
         if: env.PLATFORM != 'ALL'
-        uses: fjogeleit/yaml-update-action@v0.16.1
-        with:
-          valueFile: kubernetes/${{env.CLUSTER}}/values-platforms.yaml
-          propertyPath: platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.tag
-          value: ${{env.IMAGE_TAG}}
-          commitChange: false
-          createPR: false
+        run: |
+          # Build the yq path by splitting app-name on dots
+          app_path=".platforms[\"${{ env.PLATFORM }}\"]"
+          for part in $(echo "${{ inputs.app-name }}" | tr '.' '\n'); do
+              app_path="${app_path}[\"$part\"]"
+          done
+          yq -i "$app_path.image.tag = \"${IMAGE_TAG}\"" \
+            "kubernetes/${{ env.CLUSTER }}/values-platforms.yaml"
       - name: Update values-platforms.yaml (ALL)
         if: env.PLATFORM == 'ALL'
         run: |
@@ -169,15 +171,18 @@ jobs:
             for platform in $platforms; do
               echo "Updating platform: $platform"
 
-              yq -i ".platforms.\"$platform\".${{ inputs.app-name }}.image.tag = \"${IMAGE_TAG}\"" \
+              # Build the yq path by splitting app-name on dots
+              app_path=".platforms[\"$platform\"]"
+              for part in $(echo "${{ inputs.app-name }}" | tr '.' '\n'); do
+                  app_path="${app_path}[\"$part\"]"
+              done
+              yq -i "$app_path.image.tag = \"${IMAGE_TAG}\"" \
                   "$cluster/values-platforms.yaml"
             done
           done
       - name: Commit & Push changed tag
-        uses: actions-js/push@v1.5
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          github_token: ${{ steps.generate-token.outputs.token }}
+          commit_message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
           branch: main
-          message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
-          directory: kubernetes
-          repository: ${{github.repository_owner}}/k8s-deployments
+          file_pattern: kubernetes/**/*.yaml

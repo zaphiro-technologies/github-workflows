@@ -142,34 +142,6 @@ developers in the `new action` page:
 You can find more information in [starter workflows][starter-workflows]
 documentation.
 
-## Grammar check support
-
-To support it in your repo, you need to download and install the grammar check
-[script](grammar-check.sh) in your repository. You can customise parameters or
-just use what's in the script. In the GitHub action mode (the default mode), the
-script uses the set of parameters included in [`.gramma.json`](.gramma.json).
-
-You can include files that you want to be ignored in the
-[`.grammarignore`](.grammarignore) file.
-
-To use the local mode, that uses additional rules, run:
-
-```bash
-./grammar-check.sh -m local
-```
-
-To check a single file using the interactive mode, run:
-
-```bash
-./grammar-check.sh -m local -f filename.md
-```
-
-To check a list of file using the interactive mode, run:
-
-```bash
-./grammar-check.sh -f "filename1.md filename2.md"
-```
-
 ## References
 
 - [Reusable GitHub Workflows][re-usable-github-workflows]

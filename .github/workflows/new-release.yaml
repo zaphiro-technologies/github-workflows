@@ -37,6 +37,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
+          permission-contents: write
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.head_ref }}
@@ -54,22 +55,24 @@ jobs:
               echo "${{ inputs.tag }} is NOT a valid SemVer."
               exit 1
           fi
-      - name: "Get Previous tag"
-        id: previoustag
+      - name: "Get previous tag and compute next version"
+        id: version
         if: ${{ inputs.tag == '' }}
-        uses: "WyriHaximus/github-action-get-previous-tag@v2"
-        with:
-          fallback: 0.0.0 # Optional fallback tag to use when no tag can be found
-      - name: "Get next minor version"
-        id: semvers
-        if: ${{ inputs.tag == '' }}
-        uses: "WyriHaximus/github-action-next-semvers@v1"
-        with:
-          version: ${{ steps.previoustag.outputs.tag }}
+        shell: bash
+        run: |
+          # Get previous tag or use fallback
+          PREVTAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+          echo "previous_tag=${PREVTAG}" >> $GITHUB_OUTPUT
+
+          # Parse and increment patch version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${PREVTAG#v}"
+          PATCH=$((PATCH + 1))
+          NEWTAG="${MAJOR}.${MINOR}.${PATCH}"
+          echo "patch=${NEWTAG}" >> $GITHUB_OUTPUT
       - name: "Set tag"
         if: ${{ inputs.tag == '' }}
         run: |
-          echo "NEWTAG=${{ steps.semvers.outputs.patch }}" >> $GITHUB_ENV
+          echo "NEWTAG=${{ steps.version.outputs.patch }}" >> $GITHUB_ENV
       - name: "Update version using make"
         run: |
           make release TAG=${{ env.NEWTAG }}
@@ -83,6 +86,14 @@ jobs:
           git tag -a "v${{ env.NEWTAG }}" -m "Release v${{ env.NEWTAG }}"
           git push --follow-tags
       - name: Publish Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "v${{ env.NEWTAG }}"
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          # GitHub auto-creates releases for tags, so edit the existing one
+          gh release edit "v${{ env.NEWTAG }}" \
+            --title "Release v${{ env.NEWTAG }}" \
+            --generate-notes \
+            2>/dev/null || \
+          gh release create "v${{ env.NEWTAG }}" \
+            --title "Release v${{ env.NEWTAG }}" \
+            --generate-notes

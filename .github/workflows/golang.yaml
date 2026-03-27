@@ -103,6 +103,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          permission-contents: write
       - uses: actions/checkout@v6
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
@@ -140,6 +141,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          permission-contents: read
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
@@ -203,32 +205,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - name: Download code coverage report from base branch
-        uses: dawidd6/action-download-artifact@v19
-        if: github.actor != 'dependabot[bot]'
-        with:
-          name: cov-result
-          github_token: ${{ steps.generate-token.outputs.token }}
-          branch: ${{github.base_ref}}
-          if_no_artifact_found: warn
-      - name: Generate Code Coverage report
-        id: code-coverage
-        uses: barecheck/code-coverage-action@v1
-        if: github.actor != 'dependabot[bot]'
-        with:
-          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: "./coverage/lcov.info"
-          base-lcov-file: ${{ hashFiles('./lcov.info') != ''  && './lcov.info' || null }}
-          minimum-ratio: 70
-          send-summary-comment: true
-          show-annotations: ""
-      - name: Upload code coverage for ref branch
-        if: ${{ ! github.event.pull_request }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: cov-result
-          path: ./coverage/lcov.info
-          retention-days: 400
 
   benchmark:
     needs: changes
@@ -262,12 +238,11 @@ jobs:
         run: make ci-bench | tee output.txt
       # Download previous benchmark result from cache (if exists)
       - name: Download benchmark report from base branch
-        uses: dawidd6/action-download-artifact@v19
+        uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: benchmark-result
-          github_token: ${{ steps.generate-token.outputs.token }}
-          branch: ${{ github.base_ref || github.ref_name }}
-          if_no_artifact_found: warn
+          github-token: ${{ steps.generate-token.outputs.token }}
       # Run `github-action-benchmark` action
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
