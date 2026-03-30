@@ -238,7 +238,7 @@ jobs:
         run: make ci-bench | tee output.txt
       # Download previous benchmark result from cache (if exists)
       - name: Download benchmark report from base branch
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: benchmark-result
