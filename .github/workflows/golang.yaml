@@ -164,12 +164,12 @@ jobs:
         run: |
           gh auth setup-git
           git config --global credential.helper '!/usr/bin/gh auth git-credential'
-      - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - name: Pull DVC Data
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         if: ${{ inputs.pull-dvc-datasets }}
-        run: dvc pull
+        run: dvc pull -v
+      - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
