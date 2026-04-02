@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-03-27
+## 0.0.3-dev - 2026-04-02
 
 ### Features
 
@@ -54,6 +54,7 @@
 
 ### Bug Fixes
 
+- Fix DVC version 3.66.1 (PR #278 by @cosimomeli)
 - Minor fixes: python / auto-approve wf (PR #272 by @chicco785)
 - markdown: Enable Corepack for modern package managers (PR #271 by @chicco785)
 - approve-and-merge: fix continuous approval loops (PR #215 by @chicco785)
@@ -93,6 +94,7 @@
 
 ### Dependencies
 
+- Support dvc[s3]==3.67.0 (PR #277 by @chicco785)
 - Bump EndBug/add-and-commit from 9 to 10 (PR #264 by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 18 to 19 (PR #265 by
   @dependabot[bot])
