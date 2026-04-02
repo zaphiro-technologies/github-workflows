@@ -168,7 +168,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         if: ${{ inputs.pull-dvc-datasets }}
-        run: dvc pull -v
+        run: dvc pull -v --allow-missing
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
         uses: actions/setup-go@v6
