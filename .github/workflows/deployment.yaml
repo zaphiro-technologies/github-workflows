@@ -181,7 +181,7 @@ jobs:
             done
           done
       - name: Commit & Push changed tag
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
           branch: main
