@@ -141,6 +141,13 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: read
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        # we log in the registry to code check also images
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v6
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -197,14 +204,6 @@ jobs:
           name: artefacts
           path: ${{ inputs.upload-artefacts-dir }}
           if-no-files-found: error
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        if: ${{ inputs.code-scan }}
-        # we log in the registry to code check also images
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
         uses: SonarSource/sonarqube-scan-action@v7.0.0
