@@ -177,7 +177,7 @@ jobs:
       - name: Install DVC
         if: ${{ inputs.pull-dvc-datasets }}
         run: |
-          pipx install dvc[s3]
+          pipx install 'dvc[s3]==3.67.0'
       - name: Set-up credentials
         if: ${{ inputs.pull-dvc-datasets }}
         env:
