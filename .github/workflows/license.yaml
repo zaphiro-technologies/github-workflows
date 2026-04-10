@@ -102,3 +102,4 @@ jobs:
           ort-config-repository: ${{ inputs.ort-config-repository || format('https://x-access-token:{0}@github.com/zaphiro-technologies/github-workflows.git', steps.generate-token.outputs.token) }}
           ort-config-path: .github/config/ort
           ort-config-revision: ${{ inputs.ort-config-revision || 'license-workflow-fix-js-support' }}
+
