@@ -97,26 +97,7 @@ jobs:
           if [[ -f yarn.lock && ! -f package-lock.json && ! -f npm-shrinkwrap.json ]]; then
             echo "Yarn project detected without npm lockfile; creating temporary npm metadata for license resolution"
             cp package.json package.json.license-eye.bak
-            node <<'EOF'
-            const fs = require('fs');
-            const pkgPath = 'package.json';
-            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-            const sections = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
-
-            for (const section of sections) {
-              if (!pkg[section]) continue;
-              for (const [name, spec] of Object.entries(pkg[section])) {
-                if (typeof spec !== 'string' || !spec.startsWith('npm:')) continue;
-                const target = spec.slice(4);
-                // Yarn accepts npm:<version> as shorthand; npm needs npm:<name>@<version>.
-                if (!target.startsWith('@') && !target.includes('@')) {
-                  pkg[section][name] = `npm:${name}@${target}`;
-                }
-              }
-            }
-
-            fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\\n');
-            EOF
+            node -e 'const fs=require("fs");const pkgPath="package.json";const pkg=JSON.parse(fs.readFileSync(pkgPath,"utf8"));const sections=["dependencies","devDependencies","peerDependencies","optionalDependencies"];for(const section of sections){if(!pkg[section])continue;for(const [name,spec] of Object.entries(pkg[section])){if(typeof spec!=="string"||!spec.startsWith("npm:"))continue;const target=spec.slice(4);if(!target.startsWith("@")&&!target.includes("@")){pkg[section][name]=`npm:${name}@${target}`;}}}fs.writeFileSync(pkgPath,JSON.stringify(pkg,null,2)+"\\n");'
             npm install --package-lock-only --ignore-scripts --no-audit --no-fund --legacy-peer-deps
           else
             echo "npm lockfile already present or Yarn lock not detected; no preprocessing needed"
