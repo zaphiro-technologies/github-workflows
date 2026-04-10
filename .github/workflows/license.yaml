@@ -54,11 +54,11 @@ on:
         default: "license-workflow-fix-js-support"
         type: string
         description: Git revision / branch for the ORT global configuration repository.
-      ort-cli-analyze-args:
+      ort-cli-args:
         required: false
         default: "-P ort.analyzer.enabledPackageManagers=GoMod,Yarn2,Poetry"
         type: string
-        description: Extra ORT analyzer arguments. Override to tune enabled package managers.
+        description: Extra ORT global CLI arguments. Override to tune enabled package managers.
       repositories:
         required: false
         type: string
@@ -140,7 +140,7 @@ jobs:
         uses: oss-review-toolkit/ort-ci-github-action@v1.1.0
         with:
           run: "cache-dependencies,labels,analyzer,evaluator,upload-results,upload-evaluation-result"
-          ort-cli-analyze-args: ${{ inputs.ort-cli-analyze-args || '-P ort.analyzer.enabledPackageManagers=GoMod,Yarn2,Poetry' }}
+          ort-cli-args: ${{ inputs.ort-cli-args || '-P ort.analyzer.enabledPackageManagers=GoMod,Yarn2,Poetry' }}
           fail-on: violations
           ort-config-repository: ${{ inputs.ort-config-repository || format('https://x-access-token:{0}@github.com/zaphiro-technologies/github-workflows.git', steps.generate-token.outputs.token) }}
           ort-config-revision: ${{ inputs.ort-config-revision || 'license-workflow-fix-js-support' }}
