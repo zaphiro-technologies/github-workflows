@@ -95,9 +95,29 @@ jobs:
         shell: bash
         run: |
           if [[ -f yarn.lock && ! -f package-lock.json && ! -f npm-shrinkwrap.json ]]; then
-            echo "Yarn project detected without npm lockfile; installing dependencies with yarn for license resolution"
-            corepack enable
-            yarn install --immutable
+            echo "Yarn project detected without npm lockfile; creating temporary npm metadata for license resolution"
+            cp package.json package.json.license-eye.bak
+            node <<'EOF'
+            const fs = require('fs');
+            const pkgPath = 'package.json';
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+            const sections = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
+
+            for (const section of sections) {
+              if (!pkg[section]) continue;
+              for (const [name, spec] of Object.entries(pkg[section])) {
+                if (typeof spec !== 'string' || !spec.startsWith('npm:')) continue;
+                const target = spec.slice(4);
+                // Yarn accepts npm:<version> as shorthand; npm needs npm:<name>@<version>.
+                if (!target.startsWith('@') && !target.includes('@')) {
+                  pkg[section][name] = `npm:${name}@${target}`;
+                }
+              }
+            }
+
+            fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\\n');
+            EOF
+            npm install --package-lock-only --ignore-scripts --no-audit --no-fund --legacy-peer-deps
           else
             echo "npm lockfile already present or Yarn lock not detected; no preprocessing needed"
           fi
@@ -109,6 +129,10 @@ jobs:
         run: |
           go install github.com/apache/skywalking-eyes/cmd/license-eye@v0.8.0
           license-eye -c ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }} dep check
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('package.json.license-eye.bak') != '' }}
+        name: Restore original package.json
+        shell: bash
+        run: mv package.json.license-eye.bak package.json
       # NOTE: we are not using the action
       # apache/skywalking-eyes/dependency@v0.6.0
       # since it uses a old version of golang.
