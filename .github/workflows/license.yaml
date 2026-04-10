@@ -116,10 +116,17 @@ jobs:
 
           echo "Downloaded fallback ORT repository configuration to: $cfg_path"
       - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Prepare ORT repository configuration
+        shell: bash
+        run: |
+          cfg_path="${{ inputs.license-config-path || '.github/config/.ort.yaml' }}"
+          cp "$cfg_path" .ort.yml
+          echo "Prepared .ort.yml from: $cfg_path"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Check Dependencies' License (ORT)
         uses: oss-review-toolkit/ort-ci-github-action@v1.1.0
         with:
+          run: "cache-dependencies,labels,analyzer,evaluator,reporter,upload-results"
           fail-on: violations
-          ort-yml-path: ${{ inputs.license-config-path || '.github/config/.ort.yaml' }}
           ort-config-repository: ${{ inputs.ort-config-repository || format('https://x-access-token:{0}@github.com/zaphiro-technologies/github-workflows.git', steps.generate-token.outputs.token) }}
           ort-config-revision: ${{ inputs.ort-config-revision || 'license-workflow-fix-js-support' }}
