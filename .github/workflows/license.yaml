@@ -223,67 +223,55 @@ jobs:
             if [[ $checker_status -ne 0 ]]; then
               status=$checker_status
             elif [[ -f "$NODE_LICENSE_JSON" ]]; then
-              node - "$NODE_LICENSE_JSON" "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}" "$root_pkg_name" "$root_pkg_version" <<'NODE'
-              const fs = require('fs');
+              node -e '
+                const fs = require("fs");
 
-              const jsonPath = process.argv[2];
-              const allowedRaw = process.argv[3] || '';
-              const rootName = process.argv[4] || '';
-              const rootVersion = process.argv[5] || '';
+                const jsonPath = process.argv[1];
+                const allowedRaw = process.argv[2] || "";
+                const rootName = process.argv[3] || "";
+                const rootVersion = process.argv[4] || "";
 
-              const allowed = new Set(
-                allowedRaw.split(';').map((s) => s.trim()).filter(Boolean)
-              );
+                const allowed = new Set(allowedRaw.split(";").map((s) => s.trim()).filter(Boolean));
 
-              function normalizeAtom(s) {
-                return s
-                  .trim()
-                  .replace(/^\(+|\)+$/g, '')
-                  .replace(/\*$/, '')
-                  .trim();
-              }
-
-              function expressionAllowed(expr) {
-                const raw = String(expr || '').trim();
-                if (!raw) return false;
-                if (allowed.has(raw) || allowed.has(normalizeAtom(raw))) return true;
-
-                const parts = raw.split(/\s+(?:OR|AND|WITH)\s+/i).map(normalizeAtom).filter(Boolean);
-                if (parts.length > 1) {
-                  return parts.every((p) => allowed.has(p) || allowed.has(normalizeAtom(p)));
+                function normalizeAtom(s) {
+                  return s.trim().replace(/^\(+|\)+$/g, "").replace(/\*$/, "").trim();
                 }
-                return false;
-              }
 
-              function pkgExcluded(pkg) {
-                if (!rootName) return false;
-                if (pkg === rootName) return true;
-                if (pkg.startsWith(rootName + '@')) return true;
-                if (rootVersion && pkg === `${rootName}@${rootVersion}`) return true;
-                return false;
-              }
-
-              const report = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-              const violations = [];
-
-              for (const pkg of Object.keys(report).sort()) {
-                if (pkgExcluded(pkg)) continue;
-
-                const licenses = report[pkg] && report[pkg].licenses;
-                const licenseList = Array.isArray(licenses) ? licenses : [licenses];
-                const text = licenseList.map((x) => String(x || '').trim()).filter(Boolean).join(' OR ');
-                if (!text || !expressionAllowed(text)) {
-                  violations.push({ pkg, license: text || 'UNKNOWN' });
+                function expressionAllowed(expr) {
+                  const raw = String(expr || "").trim();
+                  if (!raw) return false;
+                  if (allowed.has(raw) || allowed.has(normalizeAtom(raw))) return true;
+                  const parts = raw.split(/\s+(?:OR|AND|WITH)\s+/i).map(normalizeAtom).filter(Boolean);
+                  if (parts.length > 1) return parts.every((p) => allowed.has(p) || allowed.has(normalizeAtom(p)));
+                  return false;
                 }
-              }
 
-              if (violations.length > 0) {
-                for (const item of violations) {
-                  console.log(`Package "${item.pkg}" is licensed under "${item.license}" which is not permitted by the --onlyAllow flag.`);
+                function pkgExcluded(pkg) {
+                  if (!rootName) return false;
+                  if (pkg === rootName) return true;
+                  if (pkg.startsWith(rootName + "@")) return true;
+                  if (rootVersion && pkg === (rootName + "@" + rootVersion)) return true;
+                  return false;
                 }
-                process.exit(1);
-              }
-              NODE
+
+                const report = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+                const violations = [];
+
+                for (const pkg of Object.keys(report).sort()) {
+                  if (pkgExcluded(pkg)) continue;
+                  const licenses = report[pkg] && report[pkg].licenses;
+                  const licenseList = Array.isArray(licenses) ? licenses : [licenses];
+                  const text = licenseList.map((x) => String(x || "").trim()).filter(Boolean).join(" OR ");
+                  if (!text || !expressionAllowed(text)) violations.push({ pkg, license: text || "UNKNOWN" });
+                }
+
+                if (violations.length > 0) {
+                  for (const item of violations) {
+                    console.log("Package \"" + item.pkg + "\" is licensed under \"" + item.license + "\" which is not permitted by the --onlyAllow flag.");
+                  }
+                  process.exit(1);
+                }
+              ' "$NODE_LICENSE_JSON" "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}" "$root_pkg_name" "$root_pkg_version"
               checker_status=$?
               if [[ $checker_status -ne 0 ]]; then
                 status=$checker_status
