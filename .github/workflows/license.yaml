@@ -74,6 +74,7 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: write
+          permission-workflows: write
       - uses: actions/checkout@v6
         with:
           token: ${{ steps.generate-token.outputs.token }}
