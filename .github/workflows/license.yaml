@@ -95,8 +95,9 @@ jobs:
         shell: bash
         run: |
           if [[ -f yarn.lock && ! -f package-lock.json && ! -f npm-shrinkwrap.json ]]; then
-            echo "Yarn project detected without npm lockfile; generating temporary package-lock.json for license resolution"
-            npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+            echo "Yarn project detected without npm lockfile; installing dependencies with yarn for license resolution"
+            corepack enable
+            yarn install --immutable
           else
             echo "npm lockfile already present or Yarn lock not detected; no preprocessing needed"
           fi
