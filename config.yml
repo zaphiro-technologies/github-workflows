@@ -1,0 +1,13 @@
+# ORT global configuration file.
+# See: https://github.com/oss-review-toolkit/ort/blob/main/model/src/main/resources/reference.yml
+
+ort:
+  packageCurationProviders:
+    # Load manual curations from curations.yml in this config repo if present.
+    - type: File
+      id: DefaultFile
+    # Load manual curations from curations/ directory in this config repo if present.
+    - type: Dir
+      id: DefaultDir
+    # Spring curation provider is disabled: it fetches Spring OSS metadata which
+    # is irrelevant for Go / Yarn2 / Poetry projects and adds unnecessary latency.
