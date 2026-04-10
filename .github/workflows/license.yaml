@@ -361,53 +361,7 @@ jobs:
               if [[ $pip_licenses_status -ne 0 ]]; then
                 status=$pip_licenses_status
               elif [[ -f "$PYTHON_LICENSE_JSON" ]]; then
-                python - "$PYTHON_LICENSE_JSON" "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}" <<'PY'
-                import json
-                import re
-                import sys
-
-                json_path = sys.argv[1]
-                allowed_raw = sys.argv[2] if len(sys.argv) > 2 else ""
-                allowed = {x.strip() for x in allowed_raw.split(";") if x.strip()}
-
-                def normalize_atom(s: str) -> str:
-                    s = s.strip()
-                    s = re.sub(r"^\(+|\)+$", "", s)
-                    s = re.sub(r"\*$", "", s)
-                    return s.strip()
-
-                def expression_allowed(expr: str) -> bool:
-                    raw = (expr or "").strip()
-                    if not raw:
-                        return False
-                    nraw = normalize_atom(raw)
-                    if raw in allowed or nraw in allowed:
-                        return True
-
-                    parts = [
-                        normalize_atom(p)
-                        for p in re.split(r"\s+(?:OR|AND|WITH)\s+|[;,/]", raw, flags=re.IGNORECASE)
-                        if normalize_atom(p)
-                    ]
-                    if len(parts) > 1:
-                        return all((p in allowed) or (normalize_atom(p) in allowed) for p in parts)
-                    return False
-
-                with open(json_path, "r", encoding="utf-8") as f:
-                    report = json.load(f)
-
-                violations = []
-                for item in report:
-                    name = item.get("Name") or item.get("name") or "UNKNOWN"
-                    license_expr = item.get("License") or item.get("license") or "UNKNOWN"
-                    if not expression_allowed(str(license_expr)):
-                        violations.append((name, str(license_expr).strip() or "UNKNOWN"))
-
-                if violations:
-                    for name, lic in sorted(violations, key=lambda x: x[0].lower()):
-                        print(f'Package "{name}" is licensed under "{lic}" which is not permitted by the --allow-only policy.')
-                    sys.exit(1)
-                PY
+                python -c 'import json,re,sys; p=sys.argv[1]; a={x.strip() for x in (sys.argv[2] if len(sys.argv)>2 else "").split(";") if x.strip()}; n=lambda s: re.sub(r"\*$","",re.sub(r"^\(+|\)+$","",str(s).strip())).strip(); ok=lambda e: (lambda r:(r and ((r in a) or (n(r) in a) or (len([n(x) for x in re.split(r"\\s+(?:OR|AND|WITH)\\s+|[;,/]",r,flags=re.IGNORECASE) if n(x)])>1 and all((x in a) or (n(x) in a) for x in [n(y) for y in re.split(r"\\s+(?:OR|AND|WITH)\\s+|[;,/]",r,flags=re.IGNORECASE) if n(y)])))))(str(e or "").strip()); report=json.load(open(p,"r",encoding="utf-8")); v=sorted([(i.get("Name") or i.get("name") or "UNKNOWN", (i.get("License") or i.get("license") or "UNKNOWN").strip() or "UNKNOWN") for i in report if not ok(i.get("License") or i.get("license"))], key=lambda t:t[0].lower()); [print("Package \"{}\" is licensed under \"{}\" which is not permitted by the --allow-only policy.".format(nm,lc)) for nm,lc in v]; sys.exit(1 if v else 0)' "$PYTHON_LICENSE_JSON" "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}"
                 python_eval_status=$?
                 if [[ $python_eval_status -ne 0 ]]; then
                   status=$python_eval_status
