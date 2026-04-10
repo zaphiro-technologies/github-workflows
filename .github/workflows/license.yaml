@@ -61,9 +61,9 @@ on:
         description: Comma-separated list of ORT workflow steps to run. Remove 'scanner' for ecosystems where declared licenses are sufficient (e.g. JS/Python).
       ort-cli-args:
         required: false
-        default: "-P ort.analyzer.enabledPackageManagers=GoMod,Yarn2,Poetry"
+        default: ""
         type: string
-        description: Extra ORT global CLI arguments. Override to tune enabled package managers.
+        description: Extra ORT global CLI arguments. If empty, enabled package managers are auto-detected from manifest files (go.mod → GoMod, package.json → Yarn2, requirements.txt/pyproject.toml → Poetry).
       ort-image:
         required: false
         default: "ghcr.io/oss-review-toolkit/ort:83.1.0"
@@ -145,12 +145,23 @@ jobs:
           cp "$cfg_path" .ort.yml
           echo "Prepared .ort.yml from: $cfg_path"
       - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Detect ORT package managers
+        id: detect-pm
+        shell: bash
+        run: |
+          managers=()
+          [[ -f "go.mod" ]] && managers+=("GoMod")
+          [[ -f "package.json" ]] && managers+=("Yarn2")
+          [[ -f "requirements.txt" || -f "pyproject.toml" ]] && managers+=("Poetry")
+          pm_list=$(IFS=','; echo "${managers[*]}")
+          echo "ort-cli-args=-P ort.analyzer.enabledPackageManagers=${pm_list}" >> "$GITHUB_OUTPUT"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Check Dependencies' License (ORT)
         id: ort
         uses: oss-review-toolkit/ort-ci-github-action@v1.1.0
         with:
           run: ${{ inputs.ort-run || 'cache-dependencies,labels,analyzer,evaluator,upload-results,upload-evaluation-result' }}
-          ort-cli-args: ${{ inputs.ort-cli-args || '-P ort.analyzer.enabledPackageManagers=GoMod,Yarn2,Poetry' }}
+          ort-cli-args: ${{ inputs.ort-cli-args || steps.detect-pm.outputs.ort-cli-args }}
           image: ${{ inputs.ort-image || 'ghcr.io/oss-review-toolkit/ort:83.1.0' }}
           fail-on: violations
           ort-config-repository: ${{ inputs.ort-config-repository || format('https://x-access-token:{0}@github.com/zaphiro-technologies/github-workflows.git', steps.generate-token.outputs.token) }}
