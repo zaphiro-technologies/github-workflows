@@ -51,7 +51,7 @@ on:
         description: ORT global configuration repository URL containing policy rules. If empty, uses zaphiro-technologies/github-workflows.
       ort-config-revision:
         required: false
-        default: "main"
+        default: "license-workflow-fix-js-support"
         type: string
         description: Git revision / branch for the ORT global configuration repository.
       repositories:
@@ -95,10 +95,31 @@ jobs:
           commit_message: "Automatic application of license header"
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Ensure ORT repository configuration file exists
+        shell: bash
+        run: |
+          cfg_path="${{ inputs.license-config-path || '.github/config/.ort.yaml' }}"
+
+          if [[ -f "$cfg_path" ]]; then
+            echo "Using ORT repository configuration from caller repository: $cfg_path"
+            exit 0
+          fi
+
+          echo "ORT repository configuration '$cfg_path' not found in caller repository. Fetching fallback from github-workflows."
+          mkdir -p "$(dirname "$cfg_path")"
+
+          curl --fail --silent --show-error --location \
+            -H "Authorization: Bearer ${{ steps.generate-token.outputs.token }}" \
+            -H "Accept: application/vnd.github.raw+json" \
+            "https://api.github.com/repos/zaphiro-technologies/github-workflows/contents/$cfg_path?ref=${{ inputs.ort-config-revision || 'license-workflow-fix-js-support' }}" \
+            --output "$cfg_path"
+
+          echo "Downloaded fallback ORT repository configuration to: $cfg_path"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Check Dependencies' License (ORT)
         uses: oss-review-toolkit/ort-ci-github-action@v1.1.0
         with:
           fail-on: violations
           ort-yml-path: ${{ inputs.license-config-path || '.github/config/.ort.yaml' }}
           ort-config-repository: ${{ inputs.ort-config-repository || format('https://x-access-token:{0}@github.com/zaphiro-technologies/github-workflows.git', steps.generate-token.outputs.token) }}
-          ort-config-revision: ${{ inputs.ort-config-revision || 'main' }}
+          ort-config-revision: ${{ inputs.ort-config-revision || 'license-workflow-fix-js-support' }}
