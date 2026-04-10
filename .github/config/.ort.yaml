@@ -1,0 +1,22 @@
+# ORT repository configuration file.
+# This baseline keeps dependency checks focused on runtime-relevant components.
+
+excludes:
+  paths:
+    - pattern: "**/*.{md,MD}"
+      reason: "DOCUMENTATION_OF"
+      comment: "Documentation files are excluded from dependency license evaluation."
+    - pattern: ".github/config/**"
+      reason: "BUILD_TOOL_OF"
+      comment: "CI and tool configuration files are excluded from product scope."
+    - pattern: ".*"
+      reason: "BUILD_TOOL_OF"
+      comment: "Dotfiles are excluded from dependency license evaluation."
+
+  scopes:
+    - pattern: "devDependencies"
+      reason: "DEV_DEPENDENCY_OF"
+      comment: "Packages for development only."
+    - pattern: "(test.*|.*test.*|funTest.*)"
+      reason: "TEST_DEPENDENCY_OF"
+      comment: "Packages for tests only."
