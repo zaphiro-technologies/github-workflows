@@ -41,7 +41,7 @@ on:
         description: Path to the license-eye header configuration file.
       allowed-licenses:
         required: false
-        default: "Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license"
+        default: "Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0"
         type: string
         description: Shared semicolon-separated allowlist used by Go, Node and Python checks.
       repositories:
@@ -114,7 +114,7 @@ jobs:
         run: |
           set -o pipefail
           set +e
-          GO_ALLOWED_LICENSES="$(echo "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}" | tr ';' ',')"
+          GO_ALLOWED_LICENSES="$(echo "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}" | tr ';' ',')"
           GO_LICENSE_LOG="$RUNNER_TEMP/go-license-check.log"
           : > "$GO_LICENSE_LOG"
           mkdir -p "$RUNNER_TEMP/bin"
@@ -207,7 +207,7 @@ jobs:
             echo "Dependency install failed with exit code $install_status"
             status=$install_status
           else
-            npx --yes license-checker-rseidelsohn --production --onlyAllow "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}"
+            npx --yes license-checker-rseidelsohn --production --onlyAllow "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}"
             checker_status=$?
             if [[ $checker_status -ne 0 ]]; then
               status=$checker_status
@@ -246,7 +246,7 @@ jobs:
           fi
 
           python -m pip install pip-licenses
-          pip-licenses --from=mixed --allow-only "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}" 2>&1 | tee "$PYTHON_LICENSE_LOG"
+          pip-licenses --from=mixed --allow-only "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}" 2>&1 | tee "$PYTHON_LICENSE_LOG"
           status=${PIPESTATUS[0]}
           echo "issues-file=$PYTHON_LICENSE_LOG" >> "$GITHUB_OUTPUT"
           exit "$status"
