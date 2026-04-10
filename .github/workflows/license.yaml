@@ -43,32 +43,12 @@ on:
         required: false
         default: ".github/config/.ort.yaml"
         type: string
-        description: Path to the ORT repository configuration file in the scanned repository.
-      ort-config-repository:
+        description: Kept for backward compatibility. Ignored by language-specific checks.
+      allowed-licenses:
         required: false
-        default: ""
+        default: "Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License"
         type: string
-        description: ORT global configuration repository URL containing policy rules. If empty, uses zaphiro-technologies/github-workflows.
-      ort-config-revision:
-        required: false
-        default: "license-workflow-fix-js-support"
-        type: string
-        description: Git revision / branch for the ORT global configuration repository.
-      ort-run:
-        required: false
-        default: "cache-dependencies,labels,analyzer,evaluator,upload-results,upload-evaluation-result"
-        type: string
-        description: Comma-separated list of ORT workflow steps to run. Remove 'scanner' for ecosystems where declared licenses are sufficient (e.g. JS/Python).
-      ort-cli-args:
-        required: false
-        default: ""
-        type: string
-        description: Extra ORT global CLI arguments. If empty, enabled package managers are auto-detected from manifest files (go.mod → GoMod, package.json → Yarn2, requirements.txt/pyproject.toml → Poetry).
-      ort-image:
-        required: false
-        default: "ghcr.io/oss-review-toolkit/ort:83.1.0"
-        type: string
-        description: ORT Docker image to use. Override with a custom/slimmer image if available.
+        description: Shared semicolon-separated allowlist used by Go, Node and Python checks.
       repositories:
         required: false
         type: string
@@ -78,7 +58,7 @@ on:
         required: false
         default: true
         type: boolean
-        description: True to add a PR comment with ORT license results.
+        description: True to add a PR comment with dependency license check results.
 jobs:
   license:
     name: Check licenses
@@ -117,89 +97,121 @@ jobs:
           commit_message: "Automatic application of license header"
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
-        name: Ensure ORT repository configuration file exists
+        name: Detect dependency ecosystems
+        id: detect-ecosystems
         shell: bash
         run: |
-          cfg_path="${{ inputs.license-config-path || '.github/config/.ort.yaml' }}"
-
-          if [[ -f "$cfg_path" ]]; then
-            echo "Using ORT repository configuration from caller repository: $cfg_path"
-            exit 0
-          fi
-
-          echo "ORT repository configuration '$cfg_path' not found in caller repository. Fetching fallback from github-workflows."
-          mkdir -p "$(dirname "$cfg_path")"
-
-          curl --fail --silent --show-error --location \
-            -H "Authorization: Bearer ${{ steps.generate-token.outputs.token }}" \
-            -H "Accept: application/vnd.github.raw+json" \
-            "https://api.github.com/repos/zaphiro-technologies/github-workflows/contents/$cfg_path?ref=${{ inputs.ort-config-revision || 'license-workflow-fix-js-support' }}" \
-            --output "$cfg_path"
-
-          echo "Downloaded fallback ORT repository configuration to: $cfg_path"
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
-        name: Prepare ORT repository configuration
+          [[ -f "go.mod" ]] && echo "has-go=true" >> "$GITHUB_OUTPUT" || echo "has-go=false" >> "$GITHUB_OUTPUT"
+          [[ -f "package.json" ]] && echo "has-node=true" >> "$GITHUB_OUTPUT" || echo "has-node=false" >> "$GITHUB_OUTPUT"
+          [[ -f "requirements.txt" || -f "pyproject.toml" ]] && echo "has-python=true" >> "$GITHUB_OUTPUT" || echo "has-python=false" >> "$GITHUB_OUTPUT"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-go == 'true' }}
+        name: Go license policy check
+        id: go-license-check
+        continue-on-error: true
         shell: bash
         run: |
-          cfg_path="${{ inputs.license-config-path || '.github/config/.ort.yaml' }}"
-          cp "$cfg_path" .ort.yml
-          echo "Prepared .ort.yml from: $cfg_path"
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
-        name: Detect ORT package managers
-        id: detect-pm
-        shell: bash
-        run: |
-          managers=()
-          [[ -f "go.mod" ]] && managers+=("GoMod")
-          [[ -f "package.json" ]] && managers+=("Yarn2")
-          [[ -f "requirements.txt" || -f "pyproject.toml" ]] && managers+=("Poetry")
-          pm_list=$(IFS=','; echo "${managers[*]}")
-          echo "ort-cli-args=-P ort.analyzer.enabledPackageManagers=${pm_list}" >> "$GITHUB_OUTPUT"
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
-        name: Check Dependencies' License (ORT)
-        id: ort
-        uses: oss-review-toolkit/ort-ci-github-action@v1.1.0
+          GO_ALLOWED_LICENSES="$(echo "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}" | tr ';' ',')"
+          mkdir -p "$RUNNER_TEMP/bin"
+          GOBIN="$RUNNER_TEMP/bin" go install github.com/google/go-licenses/v2@latest
+          "$RUNNER_TEMP/bin/go-licenses" check ./... --allowed_licenses="$GO_ALLOWED_LICENSES"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-node == 'true' }}
+        name: Setup Node
+        id: node-setup
+        continue-on-error: true
+        uses: actions/setup-node@v4
         with:
-          run: ${{ inputs.ort-run || 'cache-dependencies,labels,analyzer,evaluator,upload-results,upload-evaluation-result' }}
-          ort-cli-args: ${{ inputs.ort-cli-args || steps.detect-pm.outputs.ort-cli-args }}
-          image: ${{ inputs.ort-image || 'ghcr.io/oss-review-toolkit/ort:83.1.0' }}
-          fail-on: violations
-          ort-config-repository: ${{ inputs.ort-config-repository || format('https://x-access-token:{0}@github.com/zaphiro-technologies/github-workflows.git', steps.generate-token.outputs.token) }}
-          ort-config-revision: ${{ inputs.ort-config-revision || 'license-workflow-fix-js-support' }}
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
-        name: Summarize ORT license results
+          node-version: "22"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-node == 'true' }}
+        name: Node license policy check
+        id: node-license-check
+        continue-on-error: true
         shell: bash
         run: |
-          eval_file="${{ steps.ort.outputs.results-evaluator-path }}"
-
-          if [[ -f "$eval_file" ]]; then
-            violations=$(jq '.ruleViolations | length' "$eval_file")
-            echo "ORT_RULE_VIOLATIONS=$violations" >> "$GITHUB_ENV"
-            {
-              echo "### ORT License Check"
-              echo "- Rule violations: $violations"
-              echo "- Evaluator result file: $eval_file"
-              echo "- Full details: download the workflow artifacts generated by ORT"
-            } >> "$GITHUB_STEP_SUMMARY"
+          if [[ -f "yarn.lock" ]]; then
+            corepack enable
+            yarn install --immutable
+          elif [[ -f "pnpm-lock.yaml" ]]; then
+            corepack enable
+            pnpm install --frozen-lockfile
+          elif [[ -f "package-lock.json" || -f "npm-shrinkwrap.json" ]]; then
+            npm ci --ignore-scripts
           else
-            echo "ORT_RULE_VIOLATIONS=unknown" >> "$GITHUB_ENV"
-            {
-              echo "### ORT License Check"
-              echo "- Evaluator result file not found"
-              echo "- Full details: download the workflow artifacts generated by ORT"
-            } >> "$GITHUB_STEP_SUMMARY"
+            npm install --ignore-scripts --no-audit --no-fund
           fi
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && github.event_name == 'pull_request' && inputs.comment-results }}
-        name: Comment ORT results on PR
+          npx --yes license-checker-rseidelsohn --production --onlyAllow "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-python == 'true' }}
+        name: Setup Python
+        id: python-setup
+        continue-on-error: true
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-python == 'true' }}
+        name: Python license policy check
+        id: python-license-check
+        continue-on-error: true
+        shell: bash
+        run: |
+          python -m venv .license-venv
+          . .license-venv/bin/activate
+          python -m pip install --upgrade pip
+
+          if [[ -f "requirements.txt" ]]; then
+            python -m pip install -r requirements.txt
+          elif [[ -f "pyproject.toml" && -f "poetry.lock" ]]; then
+            python -m pip install poetry
+            poetry export -f requirements.txt --without-hashes -o /tmp/license-requirements.txt
+            python -m pip install -r /tmp/license-requirements.txt
+          elif [[ -f "pyproject.toml" ]]; then
+            echo "No requirements.txt or poetry.lock found. Installing local project metadata dependencies may be incomplete."
+          fi
+
+          python -m pip install pip-licenses
+          pip-licenses --from=mixed --allow-only "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}"
+      - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Summarize dependency license results
+        id: summarize-license-checks
+        shell: bash
+        run: |
+          go_outcome="${{ steps.go-license-check.outcome || 'skipped' }}"
+          node_setup_outcome="${{ steps.node-setup.outcome || 'skipped' }}"
+          node_outcome="${{ steps.node-license-check.outcome || 'skipped' }}"
+          python_setup_outcome="${{ steps.python-setup.outcome || 'skipped' }}"
+          python_outcome="${{ steps.python-license-check.outcome || 'skipped' }}"
+
+          failed=false
+          [[ "$go_outcome" == "failure" ]] && failed=true
+          [[ "$node_setup_outcome" == "failure" || "$node_outcome" == "failure" ]] && failed=true
+          [[ "$python_setup_outcome" == "failure" || "$python_outcome" == "failure" ]] && failed=true
+
+          echo "license-check-failed=$failed" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Dependency License Checks"
+            echo "- Go check: $go_outcome"
+            echo "- Node setup/check: $node_setup_outcome / $node_outcome"
+            echo "- Python setup/check: $python_setup_outcome / $python_outcome"
+            echo "- Overall result: $([[ \"$failed\" == \"true\" ]] && echo failed || echo passed)"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && github.event_name == 'pull_request' && inputs.comment-results && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Comment license results on PR
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const violations = process.env.ORT_RULE_VIOLATIONS || 'unknown';
+            const goOutcome = '${{ steps.go-license-check.outcome || 'skipped' }}';
+            const nodeSetupOutcome = '${{ steps.node-setup.outcome || 'skipped' }}';
+            const nodeOutcome = '${{ steps.node-license-check.outcome || 'skipped' }}';
+            const pythonSetupOutcome = '${{ steps.python-setup.outcome || 'skipped' }}';
+            const pythonOutcome = '${{ steps.python-license-check.outcome || 'skipped' }}';
+            const failed = '${{ steps.summarize-license-checks.outputs.license-check-failed || 'false' }}' === 'true';
+
             const body = [
-              '### ORT License Check',
-              `- Rule violations: ${violations}`,
-              '- Full results are available in workflow artifacts (ORT results and evaluator-result).'
+              '### Dependency License Checks',
+              `- Go check: ${goOutcome}`,
+              `- Node setup/check: ${nodeSetupOutcome} / ${nodeOutcome}`,
+              `- Python setup/check: ${pythonSetupOutcome} / ${pythonOutcome}`,
+              `- Overall result: ${failed ? 'failed' : 'passed'}`
             ].join('\n');
 
             await github.rest.issues.createComment({
@@ -208,3 +220,8 @@ jobs:
               issue_number: context.payload.pull_request.number,
               body
             });
+      - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.summarize-license-checks.outputs.license-check-failed == 'true' && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Fail job on license policy violations
+        run: |
+          echo "One or more dependency license checks failed."
+          exit 1
