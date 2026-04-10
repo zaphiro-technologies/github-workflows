@@ -41,7 +41,7 @@ on:
         description: Path to the license-eye header configuration file.
       allowed-licenses:
         required: false
-        default: "Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License"
+        default: "Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license"
         type: string
         description: Shared semicolon-separated allowlist used by Go, Node and Python checks.
       repositories:
@@ -100,15 +100,30 @@ jobs:
           [[ -f "package.json" ]] && echo "has-node=true" >> "$GITHUB_OUTPUT" || echo "has-node=false" >> "$GITHUB_OUTPUT"
           [[ -f "requirements.txt" || -f "pyproject.toml" ]] && echo "has-python=true" >> "$GITHUB_OUTPUT" || echo "has-python=false" >> "$GITHUB_OUTPUT"
       - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-go == 'true' }}
+        name: Setup Go
+        id: go-setup
+        continue-on-error: true
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-go == 'true' }}
         name: Go license policy check
         id: go-license-check
         continue-on-error: true
         shell: bash
         run: |
+          set -o pipefail
           GO_ALLOWED_LICENSES="$(echo "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}" | tr ';' ',')"
+          GO_LICENSE_LOG="$RUNNER_TEMP/go-license-check.log"
           mkdir -p "$RUNNER_TEMP/bin"
           GOBIN="$RUNNER_TEMP/bin" go install github.com/google/go-licenses/v2@latest
-          "$RUNNER_TEMP/bin/go-licenses" check ./... --allowed_licenses="$GO_ALLOWED_LICENSES"
+          module_path="$(go list -m -f '{{.Path}}' 2>/dev/null || true)"
+          check_target="./..."
+          [[ -n "$module_path" ]] && check_target="${module_path}/..."
+          "$RUNNER_TEMP/bin/go-licenses" check "$check_target" --allowed_licenses="$GO_ALLOWED_LICENSES" 2>&1 | tee "$GO_LICENSE_LOG"
+          status=${PIPESTATUS[0]}
+          echo "issues-file=$GO_LICENSE_LOG" >> "$GITHUB_OUTPUT"
+          exit "$status"
       - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-node == 'true' }}
         name: Setup Node
         id: node-setup
@@ -122,6 +137,8 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
+          set -o pipefail
+          NODE_LICENSE_LOG="$RUNNER_TEMP/node-license-check.log"
           if [[ -f "yarn.lock" ]]; then
             corepack enable
             yarn install --immutable
@@ -133,7 +150,10 @@ jobs:
           else
             npm install --ignore-scripts --no-audit --no-fund
           fi
-          npx --yes license-checker-rseidelsohn --production --onlyAllow "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}"
+          npx --yes license-checker-rseidelsohn --production --onlyAllow "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}" 2>&1 | tee "$NODE_LICENSE_LOG"
+          status=${PIPESTATUS[0]}
+          echo "issues-file=$NODE_LICENSE_LOG" >> "$GITHUB_OUTPUT"
+          exit "$status"
       - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-python == 'true' }}
         name: Setup Python
         id: python-setup
@@ -147,6 +167,8 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
+          set -o pipefail
+          PYTHON_LICENSE_LOG="$RUNNER_TEMP/python-license-check.log"
           python -m venv .license-venv
           . .license-venv/bin/activate
           python -m pip install --upgrade pip
@@ -162,7 +184,10 @@ jobs:
           fi
 
           python -m pip install pip-licenses
-          pip-licenses --from=mixed --allow-only "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}"
+          pip-licenses --from=mixed --allow-only "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License' }}" 2>&1 | tee "$PYTHON_LICENSE_LOG"
+          status=${PIPESTATUS[0]}
+          echo "issues-file=$PYTHON_LICENSE_LOG" >> "$GITHUB_OUTPUT"
+          exit "$status"
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Summarize dependency license results
         id: summarize-license-checks
@@ -180,34 +205,65 @@ jobs:
           [[ "$python_setup_outcome" == "failure" || "$python_outcome" == "failure" ]] && failed=true
 
           echo "license-check-failed=$failed" >> "$GITHUB_OUTPUT"
+          issues_file="$RUNNER_TEMP/license-issues.md"
+          : > "$issues_file"
+
+          if [[ "$go_outcome" == "failure" ]]; then
+            echo "#### Go" >> "$issues_file"
+            if [[ -f "${{ steps.go-license-check.outputs.issues-file }}" ]]; then
+              rg -N "Forbidden license|not have module info|some errors occurred|^E[0-9]{4}|^F[0-9]{4}" "${{ steps.go-license-check.outputs.issues-file }}" | head -n 80 | sed 's/^/- /' >> "$issues_file" || true
+            fi
+            [[ ! -s "$issues_file" || "$(tail -n 1 "$issues_file")" == "#### Go" ]] && echo "- Go check failed. See job logs for details." >> "$issues_file"
+            echo >> "$issues_file"
+          fi
+
+          if [[ "$node_setup_outcome" == "failure" || "$node_outcome" == "failure" ]]; then
+            echo "#### Node" >> "$issues_file"
+            if [[ "$node_setup_outcome" == "failure" ]]; then
+              echo "- Node setup failed (runtime/tooling install)." >> "$issues_file"
+            fi
+            if [[ -f "${{ steps.node-license-check.outputs.issues-file }}" ]]; then
+              rg -N "onlyAllow|fail|error|license" "${{ steps.node-license-check.outputs.issues-file }}" | head -n 80 | sed 's/^/- /' >> "$issues_file" || true
+            fi
+            [[ "$(tail -n 1 "$issues_file")" == "#### Node" ]] && echo "- Node check failed. See job logs for details." >> "$issues_file"
+            echo >> "$issues_file"
+          fi
+
+          if [[ "$python_setup_outcome" == "failure" || "$python_outcome" == "failure" ]]; then
+            echo "#### Python" >> "$issues_file"
+            if [[ "$python_setup_outcome" == "failure" ]]; then
+              echo "- Python setup failed (runtime/tooling install)." >> "$issues_file"
+            fi
+            if [[ -f "${{ steps.python-license-check.outputs.issues-file }}" ]]; then
+              rg -N "allow-only|fail|error|license|unknown" "${{ steps.python-license-check.outputs.issues-file }}" | head -n 80 | sed 's/^/- /' >> "$issues_file" || true
+            fi
+            [[ "$(tail -n 1 "$issues_file")" == "#### Python" ]] && echo "- Python check failed. See job logs for details." >> "$issues_file"
+            echo >> "$issues_file"
+          fi
+
+          if [[ "$failed" == "false" ]]; then
+            echo "No dependency license issues found." > "$issues_file"
+          fi
 
           {
-            echo "### Dependency License Checks"
-            echo "- Go check: $go_outcome"
-            echo "- Node setup/check: $node_setup_outcome / $node_outcome"
-            echo "- Python setup/check: $python_setup_outcome / $python_outcome"
-            echo "- Overall result: $([[ \"$failed\" == \"true\" ]] && echo failed || echo passed)"
+            echo "issues-markdown<<EOF"
+            cat "$issues_file"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Dependency License Issues"
+            cat "$issues_file"
           } >> "$GITHUB_STEP_SUMMARY"
-      - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && github.event_name == 'pull_request' && inputs.comment-results && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+      - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && github.event_name == 'pull_request' && inputs.comment-results && steps.summarize-license-checks.outputs.license-check-failed == 'true' && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Comment license results on PR
         uses: actions/github-script@v8
+        env:
+          ISSUE_LIST: ${{ steps.summarize-license-checks.outputs.issues-markdown }}
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const goOutcome = '${{ steps.go-license-check.outcome || 'skipped' }}';
-            const nodeSetupOutcome = '${{ steps.node-setup.outcome || 'skipped' }}';
-            const nodeOutcome = '${{ steps.node-license-check.outcome || 'skipped' }}';
-            const pythonSetupOutcome = '${{ steps.python-setup.outcome || 'skipped' }}';
-            const pythonOutcome = '${{ steps.python-license-check.outcome || 'skipped' }}';
-            const failed = '${{ steps.summarize-license-checks.outputs.license-check-failed || 'false' }}' === 'true';
-
-            const body = [
-              '### Dependency License Checks',
-              `- Go check: ${goOutcome}`,
-              `- Node setup/check: ${nodeSetupOutcome} / ${nodeOutcome}`,
-              `- Python setup/check: ${pythonSetupOutcome} / ${pythonOutcome}`,
-              `- Overall result: ${failed ? 'failed' : 'passed'}`
-            ].join('\n');
+            const body = ['### Dependency License Issues', process.env.ISSUE_LIST || '- Unable to extract issue details. See job logs.'].join('\n\n');
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
