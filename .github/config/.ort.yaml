@@ -20,6 +20,3 @@ excludes:
     - pattern: "(test.*|.*test.*|funTest.*)"
       reason: "TEST_DEPENDENCY_OF"
       comment: "Packages for tests only."
-    - pattern: "vendor"
-      reason: "DEV_DEPENDENCY_OF"
-      comment: "Vendored packages used for build and test only."

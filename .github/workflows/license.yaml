@@ -54,6 +54,11 @@ on:
         default: "license-workflow-fix-js-support"
         type: string
         description: Git revision / branch for the ORT global configuration repository.
+      ort-run:
+        required: false
+        default: "cache-dependencies,labels,analyzer,evaluator,upload-results,upload-evaluation-result"
+        type: string
+        description: Comma-separated list of ORT workflow steps to run. Remove 'scanner' for ecosystems where declared licenses are sufficient (e.g. JS/Python).
       ort-cli-args:
         required: false
         default: "-P ort.analyzer.enabledPackageManagers=GoMod,Yarn2,Poetry"
@@ -144,7 +149,7 @@ jobs:
         id: ort
         uses: oss-review-toolkit/ort-ci-github-action@v1.1.0
         with:
-          run: "cache-dependencies,labels,analyzer,scanner,evaluator,upload-results,upload-evaluation-result,upload-scan-result"
+          run: ${{ inputs.ort-run || 'cache-dependencies,labels,analyzer,evaluator,upload-results,upload-evaluation-result' }}
           ort-cli-args: ${{ inputs.ort-cli-args || '-P ort.analyzer.enabledPackageManagers=GoMod,Yarn2,Poetry' }}
           image: ${{ inputs.ort-image || 'ghcr.io/oss-review-toolkit/ort:83.1.0' }}
           fail-on: violations
