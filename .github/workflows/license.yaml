@@ -230,24 +230,63 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          set +e
           PYTHON_LICENSE_LOG="$RUNNER_TEMP/python-license-check.log"
+          : > "$PYTHON_LICENSE_LOG"
+          exec > >(tee -a "$PYTHON_LICENSE_LOG") 2>&1
+
+          status=0
           python -m venv .license-venv
           . .license-venv/bin/activate
           python -m pip install --upgrade pip
 
           if [[ -f "requirements.txt" ]]; then
             python -m pip install -r requirements.txt
+            install_status=$?
+            if [[ $install_status -ne 0 ]]; then
+              echo "Dependency installation failed with exit code $install_status"
+              status=$install_status
+            fi
           elif [[ -f "pyproject.toml" && -f "poetry.lock" ]]; then
-            python -m pip install poetry
-            poetry export -f requirements.txt --without-hashes -o /tmp/license-requirements.txt
-            python -m pip install -r /tmp/license-requirements.txt
+            python -m pip install poetry poetry-plugin-export
+            poetry_install_status=$?
+            if [[ $poetry_install_status -ne 0 ]]; then
+              echo "Poetry setup failed with exit code $poetry_install_status"
+              status=$poetry_install_status
+            else
+              poetry export -f requirements.txt --without-hashes -o /tmp/license-requirements.txt
+              export_status=$?
+              if [[ $export_status -ne 0 ]]; then
+                echo "Poetry export failed with exit code $export_status"
+                status=$export_status
+              else
+                python -m pip install -r /tmp/license-requirements.txt
+                install_status=$?
+                if [[ $install_status -ne 0 ]]; then
+                  echo "Dependency installation failed with exit code $install_status"
+                  status=$install_status
+                fi
+              fi
+            fi
           elif [[ -f "pyproject.toml" ]]; then
             echo "No requirements.txt or poetry.lock found. Installing local project metadata dependencies may be incomplete."
           fi
 
-          python -m pip install pip-licenses
-          pip-licenses --from=mixed --allow-only "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}" 2>&1 | tee "$PYTHON_LICENSE_LOG"
-          status=${PIPESTATUS[0]}
+          if [[ $status -eq 0 ]]; then
+            python -m pip install pip-licenses
+            pip_licenses_install_status=$?
+            if [[ $pip_licenses_install_status -ne 0 ]]; then
+              echo "pip-licenses installation failed with exit code $pip_licenses_install_status"
+              status=$pip_licenses_install_status
+            else
+              pip-licenses --from=mixed --allow-only "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}"
+              pip_licenses_status=$?
+              if [[ $pip_licenses_status -ne 0 ]]; then
+                status=$pip_licenses_status
+              fi
+            fi
+          fi
+
           echo "issues-file=$PYTHON_LICENSE_LOG" >> "$GITHUB_OUTPUT"
           exit "$status"
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
@@ -338,6 +377,11 @@ jobs:
             fi
             if [[ -f "${{ steps.python-license-check.outputs.issues-file }}" ]]; then
               awk '
+                /Poetry export failed|The requested command export does not exist|Poetry setup failed|Dependency installation failed|pip-licenses installation failed/ {
+                  line=$0
+                  sub(/^\s+/, "", line)
+                  print "- " line
+                }
                 /not allowed|not permitted|allow-only|fail-on/ {
                   line=$0
                   sub(/^\s+/, "", line)
