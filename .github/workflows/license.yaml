@@ -121,6 +121,16 @@ jobs:
           GOBIN="$RUNNER_TEMP/bin" go install github.com/google/go-licenses@v1.6.0
 
           status=0
+          root_pkg_name="$(node -p \"try{require('./package.json').name||''}catch(e){''}\")"
+          root_pkg_version="$(node -p \"try{require('./package.json').version||''}catch(e){''}\")"
+          root_pkg_excludes=""
+          if [[ -n "$root_pkg_name" ]]; then
+            root_pkg_excludes="$root_pkg_name"
+            if [[ -n "$root_pkg_version" ]]; then
+              root_pkg_excludes="$root_pkg_excludes;${root_pkg_name}@${root_pkg_version}"
+            fi
+            echo "Excluding workspace package(s) from Node license policy: $root_pkg_excludes"
+          fi
           found_mod=false
 
           while IFS= read -r modfile; do
@@ -207,7 +217,11 @@ jobs:
             echo "Dependency install failed with exit code $install_status"
             status=$install_status
           else
-            npx --yes license-checker-rseidelsohn --production --onlyAllow "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}"
+            checker_cmd=(npx --yes license-checker-rseidelsohn --production --onlyAllow "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}")
+            if [[ -n "$root_pkg_excludes" ]]; then
+              checker_cmd+=(--excludePackages "$root_pkg_excludes")
+            fi
+            "${checker_cmd[@]}"
             checker_status=$?
             if [[ $checker_status -ne 0 ]]; then
               status=$checker_status
@@ -240,14 +254,25 @@ jobs:
           . .license-venv/bin/activate
           python -m pip install --upgrade pip
 
-          if [[ -f "requirements.txt" ]]; then
+          # Some Python deps (for example pycairo) need system headers/tools for metadata/build.
+          if command -v apt-get >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y pkg-config libcairo2-dev meson ninja-build
+            sysdeps_status=$?
+            if [[ $sysdeps_status -ne 0 ]]; then
+              echo "System dependency installation failed with exit code $sysdeps_status"
+              status=$sysdeps_status
+            fi
+          fi
+
+          if [[ $status -eq 0 && -f "requirements.txt" ]]; then
             python -m pip install -r requirements.txt
             install_status=$?
             if [[ $install_status -ne 0 ]]; then
               echo "Dependency installation failed with exit code $install_status"
               status=$install_status
             fi
-          elif [[ -f "pyproject.toml" && -f "poetry.lock" ]]; then
+          elif [[ $status -eq 0 && -f "pyproject.toml" && -f "poetry.lock" ]]; then
             python -m pip install poetry poetry-plugin-export
             poetry_install_status=$?
             if [[ $poetry_install_status -ne 0 ]]; then
@@ -268,7 +293,7 @@ jobs:
                 fi
               fi
             fi
-          elif [[ -f "pyproject.toml" ]]; then
+          elif [[ $status -eq 0 && -f "pyproject.toml" ]]; then
             echo "No requirements.txt or poetry.lock found. Installing local project metadata dependencies may be incomplete."
           fi
 
