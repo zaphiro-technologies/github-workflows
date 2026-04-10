@@ -14,5 +14,8 @@ header:
     - ".*"
     - ".vscode/**"
     - "vendor/**"
+    - "evaluator.rules.kts"
+    - "license-classifications.yml"
+    - "resolutions.yml"
 
   comment: on-failure

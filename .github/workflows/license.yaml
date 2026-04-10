@@ -72,7 +72,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          repositories: ${{ github.event.repository.name }},github-workflows${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: write
           permission-workflows: write
       - uses: actions/checkout@v6
@@ -101,5 +101,4 @@ jobs:
           fail-on: violations
           ort-yml-path: ${{ inputs.license-config-path || '.github/config/.ort.yaml' }}
           ort-config-repository: ${{ inputs.ort-config-repository || format('https://x-access-token:{0}@github.com/zaphiro-technologies/github-workflows.git', steps.generate-token.outputs.token) }}
-          ort-config-path: .github/config/ort
-          ort-config-revision: ${{ inputs.ort-config-revision || 'license-workflow-fix-js-support' }}
+          ort-config-revision: ${{ inputs.ort-config-revision || 'main' }}

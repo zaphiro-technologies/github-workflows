@@ -26,7 +26,8 @@
 /**
  * Variables defining the organization using ORT.
  */
-val orgName = "Example Inc."
+
+val orgName = "Zaphiro Technologies"
 val orgScanIssueTrackerName = "FOSS JIRA"
 val orgScanIssueTrackerMdLink = "[$orgScanIssueTrackerName](https://jira.example.com/FOSS)"
 
