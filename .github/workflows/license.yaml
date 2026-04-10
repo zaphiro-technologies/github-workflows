@@ -121,16 +121,6 @@ jobs:
           GOBIN="$RUNNER_TEMP/bin" go install github.com/google/go-licenses@v1.6.0
 
           status=0
-          root_pkg_name="$(node -p \"try{require('./package.json').name||''}catch(e){''}\")"
-          root_pkg_version="$(node -p \"try{require('./package.json').version||''}catch(e){''}\")"
-          root_pkg_excludes=""
-          if [[ -n "$root_pkg_name" ]]; then
-            root_pkg_excludes="$root_pkg_name"
-            if [[ -n "$root_pkg_version" ]]; then
-              root_pkg_excludes="$root_pkg_excludes;${root_pkg_name}@${root_pkg_version}"
-            fi
-            echo "Excluding workspace package(s) from Node license policy: $root_pkg_excludes"
-          fi
           found_mod=false
 
           while IFS= read -r modfile; do
@@ -196,6 +186,16 @@ jobs:
           exec > >(tee -a "$NODE_LICENSE_LOG") 2>&1
 
           status=0
+          root_pkg_name="$(node -p "try{require('./package.json').name||''}catch(e){''}")"
+          root_pkg_version="$(node -p "try{require('./package.json').version||''}catch(e){''}")"
+          root_pkg_excludes=""
+          if [[ -n "$root_pkg_name" ]]; then
+            root_pkg_excludes="$root_pkg_name"
+            if [[ -n "$root_pkg_version" ]]; then
+              root_pkg_excludes="$root_pkg_excludes;${root_pkg_name}@${root_pkg_version}"
+            fi
+            echo "Excluding workspace package(s) from Node license policy: $root_pkg_excludes"
+          fi
 
           if [[ -f "yarn.lock" ]]; then
             corepack enable
