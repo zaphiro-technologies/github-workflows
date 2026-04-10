@@ -33,11 +33,27 @@ on:
         required: false
         default: true
         type: boolean
-        description: True to skip license fix
-      license-config-path:
+        description: True to skip license header fix
+      license-header-config-path:
         required: false
         default: ".github/config/.licenserc.yaml"
         type: string
+        description: Path to the license-eye header configuration file.
+      license-config-path:
+        required: false
+        default: ".github/config/.ort.yaml"
+        type: string
+        description: Path to the ORT repository configuration file in the scanned repository.
+      ort-config-repository:
+        required: false
+        default: ""
+        type: string
+        description: ORT global configuration repository URL containing policy rules. If empty, uses zaphiro-technologies/github-workflows.
+      ort-config-revision:
+        required: false
+        default: "main"
+        type: string
+        description: Git revision / branch for the ORT global configuration repository.
       repositories:
         required: false
         type: string
@@ -67,9 +83,8 @@ jobs:
         if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: apache/skywalking-eyes/header@v0.8.0
         with:
-          config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
+          config: ${{ inputs.license-header-config-path || '.github/config/.licenserc.yaml' }}
           mode: fix
-          # log: debug # optional: set the log level. The default value is `info`.
       - name: Apply Changes
         if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: stefanzweifel/git-auto-commit-action@v7
@@ -78,52 +93,12 @@ jobs:
           commit_user_email: bot@zaphiro.ch
           commit_message: "Automatic application of license header"
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
-      # golang license check set-up
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('go.mod') != '' }}
-        name: Set up Go (Go project)
-        uses: actions/setup-go@v6
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Check Dependencies' License (ORT)
+        uses: oss-review-toolkit/ort-ci-github-action@v1.1.0
         with:
-          go-version-file: go.mod
-      # javascript license check set-up
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('package.json') != '' }}
-        name: Set up Go (non-Go project)
-        uses: actions/setup-go@v6
-        with:
-          go-version: ">=1.20.0"
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('package.json') != '' }}
-        name: Prepare Node dependency metadata (npm/yarn)
-        shell: bash
-        run: |
-          if [[ -f yarn.lock && ! -f package-lock.json && ! -f npm-shrinkwrap.json ]]; then
-            echo "Yarn project detected without npm lockfile; creating temporary npm metadata for license resolution"
-            cp package.json package.json.license-eye.bak
-            node -e 'const fs=require("fs");const pkgPath="package.json";const pkg=JSON.parse(fs.readFileSync(pkgPath,"utf8"));const sections=["dependencies","devDependencies","peerDependencies","optionalDependencies"];for(const section of sections){if(!pkg[section])continue;for(const [name,spec] of Object.entries(pkg[section])){if(typeof spec!=="string"||!spec.startsWith("npm:"))continue;const target=spec.slice(4);if(!target.startsWith("@")&&!target.includes("@")){pkg[section][name]=`npm:${name}@${target}`;}}}fs.writeFileSync(pkgPath,JSON.stringify(pkg,null,2)+"\\n");'
-            npm install --package-lock-only --ignore-scripts --no-audit --no-fund --legacy-peer-deps
-          else
-            echo "npm lockfile already present or Yarn lock not detected; no preprocessing needed"
-          fi
-      # golang & javascript license check
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('package.json') != '' || hashFiles('go.mod') != '') }}
-        name: Check Go/Javascript Dependencies' License
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          go install github.com/apache/skywalking-eyes/cmd/license-eye@v0.8.0
-          license-eye -c ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }} dep check
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('package.json.license-eye.bak') != '' }}
-        name: Restore original package.json
-        shell: bash
-        run: mv package.json.license-eye.bak package.json
-      # NOTE: we are not using the action
-      # apache/skywalking-eyes/dependency@v0.6.0
-      # since it uses a old version of golang.
-      # The file `.github/config/.licenserc.yaml` is required, or it will fail.
-      # python license check set-up
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') &&(hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
-        name: Check Python dependencies' License
-        run: |
-          pip install poetry
-          pip install poetry-plugin-export
-          poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
-          pip install licensecheck
-          licensecheck --only-licenses mit apache bsd psf-2.0 mpl lgpl --show-only-failing --zero --requirements-paths /tmp/reqs.txt
+          fail-on: violations
+          ort-yml-path: ${{ inputs.license-config-path || '.github/config/.ort.yaml' }}
+          ort-config-repository: ${{ inputs.ort-config-repository || format('https://x-access-token:{0}@github.com/zaphiro-technologies/github-workflows.git', steps.generate-token.outputs.token) }}
+          ort-config-path: .github/config/ort
+          ort-config-revision: ${{ inputs.ort-config-revision || 'license-workflow-fix-js-support' }}
