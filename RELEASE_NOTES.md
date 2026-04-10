@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-04-02
+## 0.0.3-dev - 2026-04-10
 
 ### Features
 
@@ -54,6 +54,8 @@
 
 ### Bug Fixes
 
+- python workflow: fix missing registry login to fetch private images (PR #281
+  by @chicco785)
 - Fix DVC version 3.66.1 (PR #278 by @cosimomeli)
 - Minor fixes: python / auto-approve wf (PR #272 by @chicco785)
 - markdown: Enable Corepack for modern package managers (PR #271 by @chicco785)
@@ -94,6 +96,13 @@
 
 ### Dependencies
 
+- Bump stefanzweifel/git-auto-commit-action from 5 to 7 (PR #273 by
+  @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 22 to 23 (PR #275 by
+  @dependabot[bot])
+- Bump actions/download-artifact from 4 to 8 (PR #274 by @dependabot[bot])
+- Bump oras-project/setup-oras from 1 to 2 (PR #280 by @dependabot[bot])
+- Bump actions/github-script from 7 to 8 (PR #276 by @dependabot[bot])
 - Support dvc[s3]==3.67.0 (PR #277 by @chicco785)
 - Bump EndBug/add-and-commit from 9 to 10 (PR #264 by @dependabot[bot])
 - Bump dawidd6/action-download-artifact from 18 to 19 (PR #265 by
