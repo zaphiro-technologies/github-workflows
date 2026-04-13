@@ -67,7 +67,7 @@ jobs:
           github-token: ${{ steps.generate-token.outputs.token }}
           labeled: ${{ inputs.labeled }}
       - if: ${{ github.event_name == 'pull_request' && steps.add-project.outputs.itemId }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
@@ -214,7 +214,7 @@ jobs:
             }
       - name: Assign PR to creator
         if: ${{ github.event_name == 'pull_request' && !github.event.pull_request.draft && steps.add-project.outputs.itemId }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
@@ -257,7 +257,7 @@ jobs:
           TEAMS: ${{ inputs.reviewers-team != '' && inputs.reviewers-team || 'backend-devs,ops' }}
       - name: Add reviewers
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && steps.add-project.outputs.itemId }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
