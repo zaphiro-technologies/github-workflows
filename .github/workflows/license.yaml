@@ -220,17 +220,15 @@ jobs:
             echo "Dependency install failed with exit code $install_status"
             status=$install_status
           else
-            NODE_LICENSE_JSON="$RUNNER_TEMP/node-license-check.json"
-            npx --yes license-checker-rseidelsohn --production --json > "$NODE_LICENSE_JSON"
+            exclude_args=""
+            if [[ -n "$root_pkg_name" ]]; then
+              exclude_args="--excludePackages \"${root_pkg_name};${root_pkg_name}@${root_pkg_version}\""
+            fi
+            allowed_licenses="${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)' }}"
+            npx --yes license-checker-rseidelsohn --production --onlyAllow "$allowed_licenses" $exclude_args
             checker_status=$?
             if [[ $checker_status -ne 0 ]]; then
               status=$checker_status
-            elif [[ -f "$NODE_LICENSE_JSON" ]]; then
-              node -e 'const fs=require("fs"); const jsonPath=process.argv[1]; const allowedRaw=process.argv[2]||""; const rootName=process.argv[3]||""; const rootVersion=process.argv[4]||""; const allowed=new Set(allowedRaw.split(";").map((s)=>s.trim()).filter(Boolean)); const normalizeAtom=(s)=>String(s||"").trim().replace(/^\(+|\)+$/g,"").replace(/[.,;:]+$/,"").replace(/\*$/,"").trim(); const atomAllowed=(s)=>{const a=normalizeAtom(s); return !!a && (allowed.has(s) || allowed.has(a));}; const expressionAllowed=(expr)=>{ const raw=String(expr||"").trim(); if(!raw) return false; if(atomAllowed(raw)) return true; if(/\s+OR\s+/i.test(raw)) return raw.split(/\s+OR\s+/i).map(normalizeAtom).filter(Boolean).some(atomAllowed); if(/\s+(?:AND|WITH)\s+/i.test(raw)) return raw.split(/\s+(?:AND|WITH)\s+/i).map(normalizeAtom).filter(Boolean).every(atomAllowed); return false; }; const pkgExcluded=(pkg)=>rootName && (pkg===rootName || pkg.startsWith(rootName+"@") || (rootVersion && pkg===rootName+"@"+rootVersion)); const report=JSON.parse(fs.readFileSync(jsonPath,"utf8")); const violations=[]; for (const pkg of Object.keys(report).sort()) { if (pkgExcluded(pkg)) continue; const licenses=report[pkg] && report[pkg].licenses; const licenseList=Array.isArray(licenses) ? licenses : [licenses]; const text=licenseList.map((x)=>String(x||"").trim()).filter(Boolean).join(" OR "); if (!text || !expressionAllowed(text)) violations.push({pkg, license:text || "UNKNOWN"}); } if (violations.length>0) { for (const item of violations) console.log("Package \""+item.pkg+"\" is licensed under \""+item.license+"\" which is not permitted by the --onlyAllow flag."); process.exit(1); }' "$NODE_LICENSE_JSON" "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)' }}" "$root_pkg_name" "$root_pkg_version"
-              checker_status=$?
-              if [[ $checker_status -ne 0 ]]; then
-                status=$checker_status
-              fi
             fi
           fi
 
