@@ -281,7 +281,7 @@ jobs:
           if [[ "$install_system_deps_succeeded" == "true" ]]; then
             poetry install --no-interaction --quiet
             poetry run pip install pip-licenses --quiet
-            poetry run pip-licenses --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
+            poetry run pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>&1 | tee "$PYTHON_LICENSE_RESULT"
             exit "${PIPESTATUS[0]}"
           fi
 
@@ -299,7 +299,7 @@ jobs:
             exit $install_status
           fi
 
-          pip-licenses --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
+          pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>&1 | tee "$PYTHON_LICENSE_RESULT"
           exit "${PIPESTATUS[0]}"
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Summarize dependency license results
