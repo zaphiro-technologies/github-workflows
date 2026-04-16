@@ -44,8 +44,6 @@ on:
         default: "Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;Python-2.0;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)"
         type: string
         description: Shared semicolon-separated allowlist used by Go, Node and Python checks.
-        # Example Python-oriented allowlist (licensecheck token style):
-        # allowed-licenses: "mit;apache;bsd;isc;psf-2.0;mpl;lgpl;unlicense"
       repositories:
         required: false
         type: string
@@ -251,12 +249,11 @@ jobs:
           : > "$PYTHON_LICENSE_RESULT"
           echo "issues-file=$PYTHON_LICENSE_RESULT" >> "$GITHUB_OUTPUT"
 
-          pip install poetry
-          pip install poetry-plugin-export
+          pip install poetry poetry-plugin-export pip-licenses --quiet
           poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
-          pip install licensecheck
-          allowed_licenses="$(echo "${{ inputs.allowed-licenses || 'mit;apache;bsd;psf-2.0;mpl;lgpl' }}" | tr ';' '\n' | tr '[:upper:]' '[:lower:]' | tr -s ' ' | xargs)"
-          licensecheck --only-licenses $allowed_licenses --show-only-failing --zero --format markdown --requirements-paths /tmp/reqs.txt 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
+          pip install -r /tmp/reqs.txt --quiet
+          allowed_licenses="${{ inputs.allowed-licenses || 'MIT;Apache;BSD;ISC;PSF;MPL;LGPL;Unlicense' }}"
+          pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Summarize dependency license results
         id: summarize-license-checks
