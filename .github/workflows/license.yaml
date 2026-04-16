@@ -258,7 +258,7 @@ jobs:
           poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
           pip install licensecheck
           allowed_licenses="$(echo "${{ inputs.allowed-licenses || 'mit;apache;bsd;psf-2.0;mpl;lgpl' }}" | tr ';' '\n' | tr '[:upper:]' '[:lower:]' | tr -s ' ' | xargs)"
-          licensecheck --only-licenses $allowed_licenses --show-only-failing --zero --format markdown --requirements-paths /tmp/reqs.txt 2>&1 | tee "$PYTHON_LICENSE_RESULT"
+          licensecheck --only-licenses $allowed_licenses --show-only-failing --zero --format markdown --requirements-paths /tmp/reqs.txt 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Summarize dependency license results
         id: summarize-license-checks
