@@ -253,15 +253,13 @@ jobs:
           pip install poetry poetry-plugin-export pip-licenses --quiet
 
           allowed_licenses="${{ inputs.allowed-licenses || 'MIT;Apache;BSD;ISC;PSF;MPL;LGPL;Unlicense' }}"
-          install_system_deps_ran=false
 
           # In consuming repositories, run project bootstrap if the target exists.
           if command -v make >/dev/null 2>&1; then
             if [[ -f Makefile || -f makefile || -f GNUmakefile ]]; then
               if make -n install-system-deps >/dev/null 2>&1; then
                 echo "Running make install-system-deps before Python license checks"
-                make install-system-deps
-                install_system_deps_ran=true
+                make install-system-deps || echo "make install-system-deps exited non-zero; continuing with license scan"
               else
                 echo "No install-system-deps target found in make files; skipping make install-system-deps"
               fi
@@ -272,15 +270,22 @@ jobs:
             echo "make is not available; skipping make install-system-deps"
           fi
 
-          if [[ "$install_system_deps_ran" == "true" ]]; then
-            # Packages already in the poetry virtualenv — scan directly.
-            poetry run pip install pip-licenses --quiet
-            poetry run pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"; exit "${PIPESTATUS[0]}"
-          else
-            poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
-            pip install -r /tmp/reqs.txt --quiet --prefer-binary --only-binary=:all:
-            pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"; exit "${PIPESTATUS[0]}"
+          poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
+          export_status=$?
+          if [[ $export_status -ne 0 ]]; then
+            echo "Poetry export failed with exit code $export_status" | tee -a "$PYTHON_LICENSE_RESULT"
+            exit $export_status
           fi
+
+          pip install -r /tmp/reqs.txt --quiet --prefer-binary --only-binary=:all:
+          install_status=$?
+          if [[ $install_status -ne 0 ]]; then
+            echo "Dependency installation failed with exit code $install_status (wheel-only mode)." | tee -a "$PYTHON_LICENSE_RESULT"
+            exit $install_status
+          fi
+
+          pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
+          exit "${PIPESTATUS[0]}"
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Summarize dependency license results
         id: summarize-license-checks
