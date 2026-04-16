@@ -251,12 +251,16 @@ jobs:
 
           pip install poetry poetry-plugin-export pip-licenses --quiet
 
+          allowed_licenses="${{ inputs.allowed-licenses || 'MIT;Apache;BSD;ISC;PSF;MPL;LGPL;Unlicense' }}"
+          dev_setup_ran=false
+
           # In consuming repositories, run project bootstrap if the target exists.
           if command -v make >/dev/null 2>&1; then
             if [[ -f Makefile || -f makefile || -f GNUmakefile ]]; then
               if make -n dev-setup >/dev/null 2>&1; then
                 echo "Running make dev-setup before Python license checks"
                 make dev-setup
+                dev_setup_ran=true
               else
                 echo "No dev-setup target found in make files; skipping make dev-setup"
               fi
@@ -266,10 +270,16 @@ jobs:
           else
             echo "make is not available; skipping make dev-setup"
           fi
-          poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
-          pip install -r /tmp/reqs.txt --quiet --prefer-binary --only-binary=:all:
-          allowed_licenses="${{ inputs.allowed-licenses || 'MIT;Apache;BSD;ISC;PSF;MPL;LGPL;Unlicense' }}"
-          pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
+
+          if [[ "$dev_setup_ran" == "true" ]]; then
+            # Packages already in the poetry virtualenv — scan directly.
+            poetry run pip install pip-licenses --quiet
+            poetry run pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
+          else
+            poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
+            pip install -r /tmp/reqs.txt --quiet --prefer-binary --only-binary=:all:
+            pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
+          fi
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Summarize dependency license results
         id: summarize-license-checks
