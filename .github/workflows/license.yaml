@@ -252,7 +252,7 @@ jobs:
           # In consuming repositories, run project bootstrap if the target exists.
           if command -v make >/dev/null 2>&1; then
             if [[ -f Makefile || -f makefile || -f GNUmakefile ]]; then
-              if grep -E '^[[:space:]]*dev-setup[[:space:]]*:' Makefile makefile GNUmakefile 2>/dev/null >/dev/null; then
+              if make -n dev-setup >/dev/null 2>&1; then
                 echo "Running make dev-setup before Python license checks"
                 make dev-setup
               else
