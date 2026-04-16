@@ -41,9 +41,11 @@ on:
         description: Path to the license-eye header configuration file.
       allowed-licenses:
         required: false
-        default: "Apache-2.0;MIT;MIT-0;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;Python-2.0;PSF-2.0;"
+        default: "Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;Python-2.0;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)"
         type: string
         description: Shared semicolon-separated allowlist used by Go, Node and Python checks.
+        # Example Python-oriented allowlist (licensecheck token style):
+        # allowed-licenses: "mit;apache;bsd;isc;psf-2.0;mpl;lgpl;unlicense"
       repositories:
         required: false
         type: string
@@ -114,7 +116,8 @@ jobs:
         run: |
           set -o pipefail
           set +e
-          GO_ALLOWED_LICENSES="$(echo "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}" | tr ';' ',')"
+          GO_ALLOWED_LICENSES_RAW="${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)' }}"
+          GO_ALLOWED_LICENSES="$(echo "$GO_ALLOWED_LICENSES_RAW" | tr ';' ',')"
           GO_LICENSE_LOG="$RUNNER_TEMP/go-license-check.log"
           : > "$GO_LICENSE_LOG"
           mkdir -p "$RUNNER_TEMP/bin"
@@ -223,7 +226,7 @@ jobs:
             if [[ $checker_status -ne 0 ]]; then
               status=$checker_status
             elif [[ -f "$NODE_LICENSE_JSON" ]]; then
-              node -e 'const fs=require("fs"); const jsonPath=process.argv[1]; const allowedRaw=process.argv[2]||""; const rootName=process.argv[3]||""; const rootVersion=process.argv[4]||""; const allowed=new Set(allowedRaw.split(";").map((s)=>s.trim()).filter(Boolean)); const normalizeAtom=(s)=>String(s||"").trim().replace(/^\(+|\)+$/g,"").replace(/[.,;:]+$/,"").replace(/\*$/,"").trim(); const atomAllowed=(s)=>{const a=normalizeAtom(s); return !!a && (allowed.has(s) || allowed.has(a));}; const expressionAllowed=(expr)=>{ const raw=String(expr||"").trim(); if(!raw) return false; if(atomAllowed(raw)) return true; if(/\s+OR\s+/i.test(raw)) return raw.split(/\s+OR\s+/i).map(normalizeAtom).filter(Boolean).some(atomAllowed); if(/\s+(?:AND|WITH)\s+/i.test(raw)) return raw.split(/\s+(?:AND|WITH)\s+/i).map(normalizeAtom).filter(Boolean).every(atomAllowed); return false; }; const pkgExcluded=(pkg)=>rootName && (pkg===rootName || pkg.startsWith(rootName+"@") || (rootVersion && pkg===rootName+"@"+rootVersion)); const report=JSON.parse(fs.readFileSync(jsonPath,"utf8")); const violations=[]; for (const pkg of Object.keys(report).sort()) { if (pkgExcluded(pkg)) continue; const licenses=report[pkg] && report[pkg].licenses; const licenseList=Array.isArray(licenses) ? licenses : [licenses]; const text=licenseList.map((x)=>String(x||"").trim()).filter(Boolean).join(" OR "); if (!text || !expressionAllowed(text)) violations.push({pkg, license:text || "UNKNOWN"}); } if (violations.length>0) { for (const item of violations) console.log("Package \""+item.pkg+"\" is licensed under \""+item.license+"\" which is not permitted by the --onlyAllow flag."); process.exit(1); }' "$NODE_LICENSE_JSON" "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}" "$root_pkg_name" "$root_pkg_version"
+              node -e 'const fs=require("fs"); const jsonPath=process.argv[1]; const allowedRaw=process.argv[2]||""; const rootName=process.argv[3]||""; const rootVersion=process.argv[4]||""; const allowed=new Set(allowedRaw.split(";").map((s)=>s.trim()).filter(Boolean)); const normalizeAtom=(s)=>String(s||"").trim().replace(/^\(+|\)+$/g,"").replace(/[.,;:]+$/,"").replace(/\*$/,"").trim(); const atomAllowed=(s)=>{const a=normalizeAtom(s); return !!a && (allowed.has(s) || allowed.has(a));}; const expressionAllowed=(expr)=>{ const raw=String(expr||"").trim(); if(!raw) return false; if(atomAllowed(raw)) return true; if(/\s+OR\s+/i.test(raw)) return raw.split(/\s+OR\s+/i).map(normalizeAtom).filter(Boolean).some(atomAllowed); if(/\s+(?:AND|WITH)\s+/i.test(raw)) return raw.split(/\s+(?:AND|WITH)\s+/i).map(normalizeAtom).filter(Boolean).every(atomAllowed); return false; }; const pkgExcluded=(pkg)=>rootName && (pkg===rootName || pkg.startsWith(rootName+"@") || (rootVersion && pkg===rootName+"@"+rootVersion)); const report=JSON.parse(fs.readFileSync(jsonPath,"utf8")); const violations=[]; for (const pkg of Object.keys(report).sort()) { if (pkgExcluded(pkg)) continue; const licenses=report[pkg] && report[pkg].licenses; const licenseList=Array.isArray(licenses) ? licenses : [licenses]; const text=licenseList.map((x)=>String(x||"").trim()).filter(Boolean).join(" OR "); if (!text || !expressionAllowed(text)) violations.push({pkg, license:text || "UNKNOWN"}); } if (violations.length>0) { for (const item of violations) console.log("Package \""+item.pkg+"\" is licensed under \""+item.license+"\" which is not permitted by the --onlyAllow flag."); process.exit(1); }' "$NODE_LICENSE_JSON" "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)' }}" "$root_pkg_name" "$root_pkg_version"
               checker_status=$?
               if [[ $checker_status -ne 0 ]]; then
                 status=$checker_status
@@ -241,89 +244,20 @@ jobs:
         with:
           python-version: "3.12"
       - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-python == 'true' }}
-        name: Python license policy check
+        name: Check Python dependencies' License
         id: python-license-check
         continue-on-error: true
         shell: bash
         run: |
-          set -o pipefail
-          set +e
           PYTHON_LICENSE_LOG="$RUNNER_TEMP/python-license-check.log"
           : > "$PYTHON_LICENSE_LOG"
-          exec > >(tee -a "$PYTHON_LICENSE_LOG") 2>&1
-
-          status=0
-          python -m venv .license-venv
-          . .license-venv/bin/activate
-          python -m pip install --upgrade pip
-
-          # Some Python deps (for example pycairo) need system headers/tools for metadata/build.
-          if command -v apt-get >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y pkg-config libcairo2-dev meson ninja-build
-            sysdeps_status=$?
-            if [[ $sysdeps_status -ne 0 ]]; then
-              echo "System dependency installation failed with exit code $sysdeps_status"
-              status=$sysdeps_status
-            fi
-          fi
-
-          if [[ $status -eq 0 && -f "requirements.txt" ]]; then
-            python -m pip install -r requirements.txt
-            install_status=$?
-            if [[ $install_status -ne 0 ]]; then
-              echo "Dependency installation failed with exit code $install_status"
-              status=$install_status
-            fi
-          elif [[ $status -eq 0 && -f "pyproject.toml" && -f "poetry.lock" ]]; then
-            python -m pip install poetry poetry-plugin-export
-            poetry_install_status=$?
-            if [[ $poetry_install_status -ne 0 ]]; then
-              echo "Poetry setup failed with exit code $poetry_install_status"
-              status=$poetry_install_status
-            else
-              poetry export -f requirements.txt --without-hashes -o /tmp/license-requirements.txt
-              export_status=$?
-              if [[ $export_status -ne 0 ]]; then
-                echo "Poetry export failed with exit code $export_status"
-                status=$export_status
-              else
-                python -m pip install -r /tmp/license-requirements.txt
-                install_status=$?
-                if [[ $install_status -ne 0 ]]; then
-                  echo "Dependency installation failed with exit code $install_status"
-                  status=$install_status
-                fi
-              fi
-            fi
-          elif [[ $status -eq 0 && -f "pyproject.toml" ]]; then
-            echo "No requirements.txt or poetry.lock found. Installing local project metadata dependencies may be incomplete."
-          fi
-
-          if [[ $status -eq 0 ]]; then
-            python -m pip install pip-licenses
-            pip_licenses_install_status=$?
-            if [[ $pip_licenses_install_status -ne 0 ]]; then
-              echo "pip-licenses installation failed with exit code $pip_licenses_install_status"
-              status=$pip_licenses_install_status
-            else
-              PYTHON_LICENSE_JSON="$RUNNER_TEMP/python-license-check.json"
-              pip-licenses --from=mixed --format=json > "$PYTHON_LICENSE_JSON"
-              pip_licenses_status=$?
-              if [[ $pip_licenses_status -ne 0 ]]; then
-                status=$pip_licenses_status
-              elif [[ -f "$PYTHON_LICENSE_JSON" ]]; then
-                python -c 'import json,re,sys; p=sys.argv[1]; a={x.strip() for x in (sys.argv[2] if len(sys.argv)>2 else "").split(";") if x.strip()}; n=lambda s: re.sub(r"\*$","",re.sub(r"[.,;:]+$","",re.sub(r"^\(+|\)+$","",str(s).strip()))).strip(); atom_ok=lambda s: bool(n(s)) and (str(s).strip() in a or n(s) in a); ok=lambda e: (lambda r: bool(r) and (atom_ok(r) or (bool(re.search(r"\s+OR\s+",r,re.I)) and any(atom_ok(x) for x in [n(y) for y in re.split(r"\s+OR\s+",r,flags=re.I) if n(y)])) or (bool(re.search(r"\s+(?:AND|WITH)\s+",r,re.I)) and all(atom_ok(x) for x in [n(y) for y in re.split(r"\s+(?:AND|WITH)\s+",r,flags=re.I) if n(y)]))))(str(e or "").strip()); report=json.load(open(p,"r",encoding="utf-8")); v=sorted([(i.get("Name") or i.get("name") or "UNKNOWN", (str(i.get("License") or i.get("license") or "UNKNOWN").strip() or "UNKNOWN")) for i in report if not ok(i.get("License") or i.get("license"))], key=lambda t:t[0].lower()); [print("Package \"{}\" is licensed under \"{}\" which is not permitted by the --allow-only policy.".format(nm,lc)) for nm,lc in v]; sys.exit(1 if v else 0)' "$PYTHON_LICENSE_JSON" "${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT OR X11;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Python-2.0' }}"
-                python_eval_status=$?
-                if [[ $python_eval_status -ne 0 ]]; then
-                  status=$python_eval_status
-                fi
-              fi
-            fi
-          fi
-
           echo "issues-file=$PYTHON_LICENSE_LOG" >> "$GITHUB_OUTPUT"
-          exit "$status"
+          exec > >(tee -a "$PYTHON_LICENSE_LOG") 2>&1
+          pip install poetry
+          pip install poetry-plugin-export
+          poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
+          pip install licensecheck
+          licensecheck --only-licenses mit apache bsd psf-2.0 mpl lgpl --show-only-failing --zero --requirements-paths /tmp/reqs.txt
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Summarize dependency license results
         id: summarize-license-checks
@@ -347,33 +281,7 @@ jobs:
           if [[ "$go_outcome" == "failure" ]]; then
             echo "#### Go" >> "$issues_file"
             if [[ -f "${{ steps.go-license-check.outputs.issues-file }}" ]]; then
-              awk '
-                /Forbidden license type/ {
-                  if (match($0, /Forbidden license type ([^ ]+) for library ([^ ]+)/, m)) {
-                    if (m[2] !~ /^github.com\/zaphiro-technologies\//) {
-                      print "- " m[2] " -> forbidden license type " m[1]
-                    }
-                  }
-                  next
-                }
-                /Failed to find license for / {
-                  if (match($0, /Failed to find license for ([^:]+):/, m)) {
-                    if (m[1] !~ /^github.com\/zaphiro-technologies\//) {
-                      print "- " m[1] " -> license file not found"
-                    }
-                  }
-                  next
-                }
-                /some errors occurred when loading direct and transitive dependency packages/ {
-                  print "- go-licenses failed to load dependency graph"
-                  next
-                }
-                /^F[0-9]{4} / {
-                  # Fatal go-licenses messages can provide the root cause summary.
-                  sub(/^F[0-9]{4} [0-9:.]+ +[0-9]+ [^]]+\] /, "", $0)
-                  print "- " $0
-                }
-              ' "${{ steps.go-license-check.outputs.issues-file }}" | sort -u >> "$issues_file" || true
+              cat "${{ steps.go-license-check.outputs.issues-file }}" >> "$issues_file"
             fi
             [[ ! -s "$issues_file" || "$(tail -n 1 "$issues_file")" == "#### Go" ]] && echo "- Go check failed. See job logs for details." >> "$issues_file"
             echo >> "$issues_file"
@@ -385,21 +293,7 @@ jobs:
               echo "- Node setup failed (runtime/tooling install)." >> "$issues_file"
             fi
             if [[ -f "${{ steps.node-license-check.outputs.issues-file }}" ]]; then
-              awk '
-                /^Package / && /not permitted/ {
-                  # Quoted format: Package "pkg" is licensed under "MIT" which is not permitted by --onlyAllow
-                  if (match($0, /^Package "([^"]+)" is licensed under "([^"]+)"/, m)) {
-                    print "- " m[1] " -> " m[2]
-                    next
-                  }
-                  # Unquoted format fallback: keep full line so details are not lost.
-                  print "- " $0
-                  next
-                }
-                /Dependency install failed with exit code/ || /npm ERR!/ || /ERR_PNPM_/ || /yarn .*error/ || /Command failed with exit code/ {
-                  print "- " $0
-                }
-              ' "${{ steps.node-license-check.outputs.issues-file }}" | sort -u | head -n 80 >> "$issues_file" || true
+              cat "${{ steps.node-license-check.outputs.issues-file }}" >> "$issues_file"
             fi
             [[ "$(tail -n 1 "$issues_file")" == "#### Node" ]] && echo "- Node check failed. See job logs for details." >> "$issues_file"
             echo >> "$issues_file"
@@ -411,24 +305,7 @@ jobs:
               echo "- Python setup failed (runtime/tooling install)." >> "$issues_file"
             fi
             if [[ -f "${{ steps.python-license-check.outputs.issues-file }}" ]]; then
-              awk '
-                /Poetry export failed|The requested command export does not exist|Poetry setup failed|Dependency installation failed|pip-licenses installation failed/ {
-                  line=$0
-                  sub(/^\s+/, "", line)
-                  print "- " line
-                }
-                /not allowed|not permitted|allow-only|fail-on/ {
-                  line=$0
-                  sub(/^\s+/, "", line)
-                  print "- " line
-                }
-                /^\|/ {
-                  # If tool prints tabular rows around failure, keep package rows for context.
-                  line=$0
-                  sub(/^\s+/, "", line)
-                  print "- " line
-                }
-              ' "${{ steps.python-license-check.outputs.issues-file }}" | sort -u >> "$issues_file" || true
+              cat "${{ steps.python-license-check.outputs.issues-file }}" >> "$issues_file"
             fi
             [[ "$(tail -n 1 "$issues_file")" == "#### Python" ]] && echo "- Python check failed. See job logs for details." >> "$issues_file"
             echo >> "$issues_file"
