@@ -249,15 +249,15 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          PYTHON_LICENSE_LOG="$RUNNER_TEMP/python-license-check.log"
-          : > "$PYTHON_LICENSE_LOG"
-          echo "issues-file=$PYTHON_LICENSE_LOG" >> "$GITHUB_OUTPUT"
-          exec > >(tee -a "$PYTHON_LICENSE_LOG") 2>&1
+          PYTHON_LICENSE_RESULT="$RUNNER_TEMP/python-license-result.log"
+          : > "$PYTHON_LICENSE_RESULT"
+          echo "issues-file=$PYTHON_LICENSE_RESULT" >> "$GITHUB_OUTPUT"
+
           pip install poetry
           pip install poetry-plugin-export
           poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
           pip install licensecheck
-          licensecheck --only-licenses mit apache bsd psf-2.0 mpl lgpl --show-only-failing --zero --requirements-paths /tmp/reqs.txt
+          licensecheck --only-licenses mit apache bsd psf-2.0 mpl lgpl --show-only-failing --zero --requirements-paths /tmp/reqs.txt 2>&1 | tee "$PYTHON_LICENSE_RESULT"
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
         name: Summarize dependency license results
         id: summarize-license-checks
