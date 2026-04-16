@@ -249,6 +249,8 @@ jobs:
           : > "$PYTHON_LICENSE_RESULT"
           echo "issues-file=$PYTHON_LICENSE_RESULT" >> "$GITHUB_OUTPUT"
 
+          pip install poetry poetry-plugin-export pip-licenses --quiet
+
           # In consuming repositories, run project bootstrap if the target exists.
           if command -v make >/dev/null 2>&1; then
             if [[ -f Makefile || -f makefile || -f GNUmakefile ]]; then
@@ -264,8 +266,6 @@ jobs:
           else
             echo "make is not available; skipping make dev-setup"
           fi
-
-          pip install poetry poetry-plugin-export pip-licenses --quiet
           poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
           pip install -r /tmp/reqs.txt --quiet --prefer-binary --only-binary=:all:
           allowed_licenses="${{ inputs.allowed-licenses || 'MIT;Apache;BSD;ISC;PSF;MPL;LGPL;Unlicense' }}"
