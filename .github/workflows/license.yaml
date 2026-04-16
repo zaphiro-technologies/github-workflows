@@ -251,7 +251,7 @@ jobs:
 
           pip install poetry poetry-plugin-export pip-licenses --quiet
           poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
-          pip install -r /tmp/reqs.txt --quiet
+          pip install -r /tmp/reqs.txt --quiet --prefer-binary --only-binary=:all:
           allowed_licenses="${{ inputs.allowed-licenses || 'MIT;Apache;BSD;ISC;PSF;MPL;LGPL;Unlicense' }}"
           pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>/dev/null | tee "$PYTHON_LICENSE_RESULT"
       - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
