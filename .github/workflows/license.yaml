@@ -41,7 +41,7 @@ on:
         description: Path to the license-eye header configuration file.
       allowed-licenses:
         required: false
-        default: "Apache-2.0;MIT;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0"
+        default: "Apache-2.0;MIT;MIT-0;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0"
         type: string
         description: Shared semicolon-separated allowlist used by Go, Node and Python checks.
       repositories:
