@@ -38,7 +38,10 @@ The repository includes:
 - [`deployment`](.github/workflows/deployment.yaml): commit a container image
   tag in the k8s-deployments repository.
 - [`docker`](.github/workflows/docker.yaml): build and push Docker images and
-  scans for vulnerabilities.
+  scans for vulnerabilities. Supports optional Docker Hub login through
+  `enable-dhi: true` for builds that need authenticated base image pulls from
+  Docker Hub; callers must then pass `DOCKER_USER` and `DOCKER_PASSWORD`
+  secrets.
 - [`golang`](.github/workflows/golang.yaml): lint, test and benchmark Go
   Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. The workflow also scans for
