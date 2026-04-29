@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-04-15
+## 0.0.3-dev - 2026-04-29
 
 ### Features
 
+- docker wf: support login to docker hub to retrieve dhi.io images (PR #286 by
+  @chicco785)
 - python workflow: ensure python version consistency (PR #246 by @chicco785)
 - add-to-project wf: add stale issues bot (PR #231 by @chicco785)
 - support ALL for deployment (PR #222 by @chicco785)
@@ -96,6 +98,7 @@
 
 ### Dependencies
 
+- Bump oras-project/setup-oras from 1 to 2 (PR #280 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 7.0.0 to 7.1.0 (PR #279 by
   @dependabot[bot])
 - Bump stefanzweifel/git-auto-commit-action from 5 to 7 (PR #273 by
@@ -103,7 +106,6 @@
 - Bump DavidAnson/markdownlint-cli2-action from 22 to 23 (PR #275 by
   @dependabot[bot])
 - Bump actions/download-artifact from 4 to 8 (PR #274 by @dependabot[bot])
-- Bump oras-project/setup-oras from 1 to 2 (PR #280 by @dependabot[bot])
 - Bump actions/github-script from 7 to 8 (PR #276 by @dependabot[bot])
 - Support dvc[s3]==3.67.0 (PR #277 by @chicco785)
 - Bump EndBug/add-and-commit from 9 to 10 (PR #264 by @dependabot[bot])
