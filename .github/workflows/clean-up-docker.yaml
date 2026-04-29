@@ -36,15 +36,3 @@ jobs:
           name: ${{ inputs.image-name || github.event.repository.name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: pr-${{ github.event.pull_request.number }}
-  clean-untagged-api:
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-    steps:
-      - name: Delete all containers from repository without tags
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: ${{ inputs.image-name || github.event.repository.name }}
-          package-type: "container"
-          delete-only-untagged-versions: "true"
-          token: ${{ secrets.GITHUB_TOKEN }}
