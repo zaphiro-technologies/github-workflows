@@ -43,12 +43,12 @@ on:
         default: true
         type: boolean
         description: False to skip code-scan exec
-      vulterability-scan:
+      vulnerability-scan:
         required: false
         default: true
         type: boolean
-        description: False to skip vulterability-scan exec
-      vulterability-scan-skip-dirs:
+        description: False to skip vulnerability-scan exec
+      vulnerability-scan-skip-dirs:
         required: false
         default: "vendor,.github"
         type: string
@@ -259,7 +259,7 @@ jobs:
           retention-days: 400
   vulnerability:
     needs: changes
-    if: ${{ inputs.vulterability-scan}}
+    if: ${{ inputs.vulnerability-scan}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -269,7 +269,7 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
-          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
           scanners: "vuln,secret,misconfig"
           hide-progress: true
           output: trivy.txt
@@ -294,7 +294,7 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
-          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
           scanners: "vuln,secret,misconfig"
           exit-code: "1"
           severity: MEDIUM,HIGH,CRITICAL
