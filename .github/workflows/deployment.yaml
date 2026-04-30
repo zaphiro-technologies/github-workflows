@@ -78,7 +78,7 @@ jobs:
       - name: Search PR of branch not main
         if: github.ref_type == 'branch' && github.ref != 'refs/heads/main'
         id: search-pr
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         with:
@@ -122,7 +122,7 @@ jobs:
         if: github.ref_type != 'tag'
         id: digest
         # Use github APIs to get the digest of the image tag
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const {IMAGE_TAG} = process.env
