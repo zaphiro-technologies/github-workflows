@@ -108,7 +108,7 @@ jobs:
           YARN_ENABLE_SCRIPTS=0 yarn install
       - name: Check types
         run: yarn typecheck
-      - name: lint
+      - name: Lint
         run: |
           yarn fix
       - name: Commit lint changes
