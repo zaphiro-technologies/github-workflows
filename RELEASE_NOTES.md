@@ -4,6 +4,8 @@
 
 ### Features
 
+- js workflow: shared workflow for javascript builds based on yarn2 (PR #287 by
+  @chicco785)
 - docker wf: support login to docker hub to retrieve dhi.io images (PR #286 by
   @chicco785)
 - python workflow: ensure python version consistency (PR #246 by @chicco785)
@@ -98,9 +100,9 @@
 
 ### Dependencies
 
-- Bump actions/github-script from 8 to 9 (PR #283 by @dependabot[bot])
 - Bump aquasecurity/trivy-action from 0.35.0 to 0.36.0 (PR #285 by
   @dependabot[bot])
+- Bump actions/github-script from 8 to 9 (PR #283 by @dependabot[bot])
 - Bump oras-project/setup-oras from 1 to 2 (PR #280 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 7.0.0 to 7.1.0 (PR #279 by
   @dependabot[bot])

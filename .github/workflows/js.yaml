@@ -12,18 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Python Lint & Test
+name: JS Lint & Test
 
 concurrency:
-  group: ${{github.repository}}-${{ github.ref_name }}-python
+  group: ${{github.repository}}-${{ github.ref_name }}-js
   cancel-in-progress: true
 
-# Permissions needed
 # permissions:
-#  contents: read
-#  packages: write
-#  pull-requests: read
-#  id-token: write
+#  id-token: write # This is required for requesting the JWT, which is needed to authenticate with AWS and pull DVC datasets
 
 on:
   workflow_call:
@@ -48,44 +44,42 @@ on:
         default: false
         type: boolean
         description: True to install and configure dvc
-      upload-artefacts:
-        required: false
-        default: false
-        type: boolean
-        description: True to upload files build by test
-      upload-artefacts-dir:
-        required: false
-        default: "output"
-        type: string
-        description: Directory with the artifacts to upload
       repositories:
         required: false
         type: string
         default: ""
-        description: Comma or newline-separated list of repositories to grant access to during the golang build.
+        description: Comma or newline-separated list of repositories to grant access to during the JS build.
 jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      files_changed: ${{ steps.filter.outputs.python == 'true' }}
+      files_changed: ${{ steps.filter.outputs.js == 'true' || steps.filter.outputs.scripts == 'true' }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2 # To retrieve the preceding commit.
       - uses: dorny/paths-filter@v4
         id: filter
         with:
+          list-files: shell
           filters: |
-            python:
-              - '*.py'
-              - '**/*.py'
-              - '.github/workflows/python.yaml'
+            scripts:
+              - 'Makefile'
+              - '.github/workflows/js.*'
+              - '**/*.sql'
               - '.docker/*.yml'
               - '.docker/*.yaml'
-              - 'poetry.lock'
-              - 'pyproject.toml'
+            js:
+              - '**/*.ts'
+              - '**/*.js'
+              - '**/*.tsx'
+              - '**/*.jsx'
+              - 'package.json'
   lint:
-    # Check if the PR is not from a fork
-    runs-on: ubuntu-latest
     needs: changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request && github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - uses: actions/create-github-app-token@v3
@@ -93,36 +87,25 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: write
       - uses: actions/checkout@v6
         with:
+          ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
           token: ${{ steps.generate-token.outputs.token }}
-          ref: ${{github.event.pull_request.head.ref}}
-      - name: Set up python
-        id: setup-python
-        uses: actions/setup-python@v6
+      - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
+      - uses: actions/setup-node@v6
         with:
-          python-version-file: "pyproject.toml"
-      - name: Install poetry
-        run: pipx install poetry==2.3.2 || pipx upgrade poetry
-        env:
-          PIPX_DEFAULT_PYTHON: ${{ steps.setup-python.outputs.python-path }}
-      - name: Cache Poetry artifacts
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cache/pypoetry/artifacts
-            ~/.cache/pip
-          key: poetry-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-
-      - name: Install packages
+          node-version-file: package.json
+      - name: "Enable Corepack"
+        run: corepack enable
+      - name: "Install packages"
         run: |
-          make lint-setup
+          YARN_ENABLE_SCRIPTS=0 yarn install
+      - name: Check types
+        run: yarn typecheck
       - name: Lint
         run: |
-          make lint
+          yarn fix
       - name: Commit lint changes
         run: |
           git config --global user.name 'Bot'
@@ -130,8 +113,8 @@ jobs:
           git commit -am "Automated lint fixes [dependabot skip]" || echo "No changes to commit"
           git push
   test:
-    runs-on: ubuntu-latest
     needs: changes
+    runs-on: ubuntu-latest
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
       - uses: actions/create-github-app-token@v3
@@ -141,38 +124,9 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: read
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        # we log in the registry to code check also images
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v6
         with:
-          token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Set up python
-        id: setup-python
-        uses: actions/setup-python@v6
-        with:
-          python-version-file: "pyproject.toml"
-      - name: Install poetry
-        run: pipx install poetry==2.3.2 || pipx upgrade poetry
-        env:
-          PIPX_DEFAULT_PYTHON: ${{ steps.setup-python.outputs.python-path }}
-      - name: Cache Poetry artifacts
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cache/pypoetry/artifacts
-            ~/.cache/pip
-          key: poetry-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-
-      - name: Install packages
-        run: |
-          make dev-setup
       - name: Configure AWS Credentials
         if: ${{ inputs.pull-dvc-datasets }}
         id: creds
@@ -185,25 +139,45 @@ jobs:
         if: ${{ inputs.pull-dvc-datasets }}
         run: |
           pipx install 'dvc[s3]==3.67.0'
-      - name: Set-up credentials
+      - name: Set-up git credentials for dvc
         if: ${{ inputs.pull-dvc-datasets }}
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           gh auth setup-git
-          git config --global credential.helper '!gh auth git-credential'
-      - name: Run tests
+          git config --global credential.helper '!/usr/bin/gh auth git-credential'
+      - name: Pull DVC Data
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-        run: |
-          make ci-test
-      - if: ${{ inputs.upload-artefacts }}
-        name: Upload artefacts
-        uses: actions/upload-artifact@v7
+        if: ${{ inputs.pull-dvc-datasets }}
+        run: dvc pull -v --allow-missing
+      - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
+      - uses: actions/setup-node@v6
         with:
-          name: artefacts
-          path: ${{ inputs.upload-artefacts-dir }}
-          if-no-files-found: error
+          node-version-file: package.json
+      - name: "Enable Corepack"
+        run: corepack enable
+      - name: "Install packages"
+        run: |
+          YARN_ENABLE_SCRIPTS=0 yarn install
+      - name: Prepare build
+        run: |
+          make ci-pre-build
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Unit tests
+        run: make test
+      - name: Build
+        run: |
+          yarn build
+      - name: Upload build artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./build
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
         uses: SonarSource/sonarqube-scan-action@v7.1.0
@@ -218,7 +192,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: Run Trivy vulnerability scanner (for summary)
         # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: fs
           scan-ref: .
@@ -243,7 +217,7 @@ jobs:
       # this comes as last or scan results won't be uploaded
       - name: Run Trivy vulnerability scanner (security treshold)
         # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: fs
           scan-ref: .

@@ -45,6 +45,10 @@ The repository includes:
   Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. The workflow also scans for
   vulnerabilities.
+- [`js`](.github/workflows/js.yaml): typecheck, lint, test and build JS/TS
+  applications. The workflow can auto-fix lint issues on same-repository pull
+  requests, optionally pull DVC datasets, upload the build artifact, and scan
+  for code quality and vulnerabilities.
 - [`license`](.github/workflows/license.yaml): add licensing information in file
   headers and check dependencies licensing compatibility.
 - [`lint`](.github/workflows/markdown.yaml): lint all Markdown and Yaml files.
