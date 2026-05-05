@@ -58,7 +58,7 @@ jobs:
           permission-members: read
           permission-organization-projects: write
           permission-administration: write
-      - uses: actions/add-to-project@v1.0.2
+      - uses: actions/add-to-project@v2.0.0
         id: add-project
         with:
           # You can target a project in a different organization
