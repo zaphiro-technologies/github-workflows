@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-05-05
+## 0.0.3-dev - 2026-05-08
 
 ### Features
 
@@ -100,8 +100,11 @@
 
 ### Dependencies
 
+- Bump SonarSource/sonarqube-scan-action from 7.1.0 to 8.0.0 (PR #289 by
+  @dependabot[bot])
 - Bump aquasecurity/trivy-action from 0.35.0 to 0.36.0 (PR #285 by
   @dependabot[bot])
+- Bump actions/add-to-project from 1.0.2 to 2.0.0 (PR #288 by @dependabot[bot])
 - Bump actions/github-script from 8 to 9 (PR #283 by @dependabot[bot])
 - Bump oras-project/setup-oras from 1 to 2 (PR #280 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 7.0.0 to 7.1.0 (PR #279 by
