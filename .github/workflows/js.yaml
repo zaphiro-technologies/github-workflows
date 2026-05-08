@@ -12,32 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Golang Lint & Test
+name: JS Lint & Test
 
 concurrency:
-  group: ${{github.repository}}-${{ github.ref_name }}-go
+  group: ${{github.repository}}-${{ github.ref_name }}-js
   cancel-in-progress: true
 
-# Permissions needed
 # permissions:
-#   # Give the default GITHUB_TOKEN write permission to commit and push the
-#   # updated CHANGELOG back to the repository.
-#   # https://github.blog/changelog/2023-02-02-github-actions-updating-the-default-github_token-permissions-to-read-only/
-#   contents: write
+#  id-token: write # This is required for requesting the JWT, which is needed to authenticate with AWS and pull DVC datasets
 
 on:
   workflow_call:
     inputs:
-      alert-threshold-benchmark:
-        required: false
-        default: 150%
-        type: string
-        description: Percent that will trigger benchmark alert
-      skip-benchmark:
-        required: false
-        default: false
-        type: boolean
-        description: True to skip benchmark exec
       code-scan:
         required: false
         default: true
@@ -62,12 +48,12 @@ on:
         required: false
         type: string
         default: ""
-        description: Comma or newline-separated list of repositories to grant access to during the golang build.
+        description: Comma or newline-separated list of repositories to grant access to during the JS build.
 jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      files_changed: ${{ steps.filter.outputs.go == 'true' || steps.filter.outputs.scripts == 'true' }}
+      files_changed: ${{ steps.filter.outputs.js == 'true' || steps.filter.outputs.scripts == 'true' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -78,51 +64,49 @@ jobs:
           list-files: shell
           filters: |
             scripts:
-              - '.golangci.yaml'
               - 'Makefile'
-              - '.github/workflows/golang.*'
+              - '.github/workflows/js.*'
               - '**/*.sql'
               - '.docker/*.yml'
               - '.docker/*.yaml'
-            go:
-              - '**/*.go'
-              - 'go.mod'
-              - 'go.sum'
+            js:
+              - '**/*.ts'
+              - '**/*.js'
+              - '**/*.tsx'
+              - '**/*.jsx'
+              - 'package.json'
   lint:
     needs: changes
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request }}
-    env:
-      GOPRIVATE: github.com/zaphiro-technologies/*
+    if: ${{ needs.changes.outputs.files_changed == 'true' && github.event.pull_request && github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - uses: actions/create-github-app-token@v3
         id: generate-token
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: write
       - uses: actions/checkout@v6
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
           token: ${{ steps.generate-token.outputs.token }}
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - uses: actions/setup-node@v6
         with:
-          go-version-file: go.mod
-      - name: Golines
+          node-version-file: package.json
+      - name: "Enable Corepack"
+        run: corepack enable
+      - name: "Install packages"
         run: |
-          go install github.com/segmentio/golines@latest
-          golines . -w
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          args: --fix
-          version: latest
-      - name: Commit golines & golangci-lint changes
+          YARN_ENABLE_SCRIPTS=0 yarn install
+      - name: Check types
+        run: yarn typecheck
+      - name: Lint
+        run: |
+          yarn fix
+      - name: Commit lint changes
         run: |
           git config --global user.name 'Bot'
           git config --global user.email 'bot@zaphiro.ch'
@@ -131,8 +115,6 @@ jobs:
   test:
     needs: changes
     runs-on: ubuntu-latest
-    env:
-      GOPRIVATE: github.com/zaphiro-technologies/*
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
     steps:
       - uses: actions/create-github-app-token@v3
@@ -170,93 +152,38 @@ jobs:
         if: ${{ inputs.pull-dvc-datasets }}
         run: dvc pull -v --allow-missing
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
-      - name: Set up Go
-        uses: actions/setup-go@v6
+      - uses: actions/setup-node@v6
         with:
-          go-version-file: go.mod
-      - name: Install gcov2lcov
+          node-version-file: package.json
+      - name: "Enable Corepack"
+        run: corepack enable
+      - name: "Install packages"
         run: |
-          go install github.com/jandelgado/gcov2lcov@latest
-      # We Login in GHCR to retrieve owned private images used in docker-compose
-      # This requires to set in the package settings read permission for the
-      # repository where the golang ci is running
+          YARN_ENABLE_SCRIPTS=0 yarn install
+      - name: Prepare build
+        run: |
+          make ci-pre-build
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Test
+      - name: Unit tests
+        run: make test
+      - name: Build
         run: |
-          make ci-test
+          yarn build
+      - name: Upload build artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./build
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
         uses: SonarSource/sonarqube-scan-action@v8.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-  benchmark:
-    needs: changes
-    runs-on: ubuntu-latest
-    if: ${{ needs.changes.outputs.files_changed == 'true' && ! inputs.skip-benchmark}}
-    env:
-      GOPRIVATE: github.com/zaphiro-technologies/*
-    steps:
-      - uses: actions/create-github-app-token@v3
-        id: generate-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_SECRET }}
-          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
-      - uses: actions/checkout@v6
-      - run: git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-      # We Login in GHCR to retrieve owned private images used in docker-compose
-      # This requires to set in the package settings read permission for the
-      # repository where the golang ci is running
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run benchmark
-        shell: bash
-        run: make ci-bench | tee output.txt
-      # Download previous benchmark result from cache (if exists)
-      - name: Download benchmark report from base branch
-        uses: actions/download-artifact@v8
-        continue-on-error: true
-        with:
-          name: benchmark-result
-          github-token: ${{ steps.generate-token.outputs.token }}
-      # Run `github-action-benchmark` action
-      - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          # What benchmark tool the output.txt came from
-          tool: "go"
-          # Where the output from the benchmark tool is stored
-          output-file-path: output.txt
-          # Where the previous data file is stored
-          external-data-json-path: benchmark-data.json
-          # Workflow will fail when an alert happens
-          fail-on-alert: true
-          # Enable alert commit comment
-          comment-on-alert: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          alert-threshold: ${{ inputs.alert-threshold-benchmark }}
-          summary-always: true
-      - name: Upload code coverage for ref branch
-        if: ${{ ! github.event.pull_request }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: benchmark-result
-          path: benchmark-data.json
-          retention-days: 400
   vulnerability:
     needs: changes
     if: ${{ inputs.vulnerability-scan}}
@@ -265,7 +192,7 @@ jobs:
       - uses: actions/checkout@v6
       - name: Run Trivy vulnerability scanner (for summary)
         # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: fs
           scan-ref: .
@@ -290,7 +217,7 @@ jobs:
       # this comes as last or scan results won't be uploaded
       - name: Run Trivy vulnerability scanner (security treshold)
         # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
         with:
           scan-type: fs
           scan-ref: .

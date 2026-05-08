@@ -33,16 +33,16 @@ on:
         default: true
         type: boolean
         description: False to skip code-scan exec
-      vulterability-scan:
+      vulnerability-scan:
         required: false
         default: true
         type: boolean
-        description: False to skip vulterability-scan exec
-      vulterability-scan-skip-dirs:
+        description: False to skip vulnerability-scan exec
+      vulnerability-scan-skip-dirs:
         required: false
         default: "vendor,.github"
         type: string
-        description: Comma separated list of directories where vulterability check is skipped
+        description: Comma separated list of directories where vulnerability check is skipped
       pull-dvc-datasets:
         required: false
         default: false
@@ -206,23 +206,23 @@ jobs:
           if-no-files-found: error
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
-        uses: SonarSource/sonarqube-scan-action@v7.1.0
+        uses: SonarSource/sonarqube-scan-action@v8.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   vulnerability:
     needs: changes
-    if: ${{ inputs.vulterability-scan}}
+    if: ${{ inputs.vulnerability-scan}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - name: Run Trivy vulnerability scanner (for summary)
         # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
           scan-ref: .
-          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
           scanners: "vuln,secret,misconfig"
           hide-progress: true
           output: trivy.txt
@@ -243,11 +243,11 @@ jobs:
       # this comes as last or scan results won't be uploaded
       - name: Run Trivy vulnerability scanner (security treshold)
         # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
           scan-ref: .
-          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
           scanners: "vuln,secret,misconfig"
           exit-code: "1"
           severity: MEDIUM,HIGH,CRITICAL
