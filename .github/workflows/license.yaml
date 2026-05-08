@@ -1,4 +1,4 @@
-# Copyright 2024 Zaphiro Technologies
+# Copyright 2026 Zaphiro Technologies
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,21 +33,32 @@ on:
         required: false
         default: true
         type: boolean
-        description: True to skip license fix
-      license-config-path:
+        description: True to skip license header fix
+      license-header-config-path:
         required: false
         default: ".github/config/.licenserc.yaml"
         type: string
+        description: Path to the license-eye header configuration file.
+      allowed-licenses:
+        required: false
+        default: "Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;Python-2.0;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)"
+        type: string
+        description: Shared semicolon-separated allowlist used by Go, Node and Python checks.
       repositories:
         required: false
         type: string
         default: ""
         description: Comma or newline-separated list of repositories to grant access to during the golang build.
+      comment-results:
+        required: false
+        default: true
+        type: boolean
+        description: True to add a PR comment with dependency license check results.
 jobs:
   license:
     name: Check licenses
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft == false }}
+    #if: ${{ github.event.pull_request.draft == false }}
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
     steps:
@@ -56,8 +67,11 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          repositories: github-workflows,${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+          permission-workflows: write
       - uses: actions/checkout@v6
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -67,9 +81,8 @@ jobs:
         if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: apache/skywalking-eyes/header@v0.8.0
         with:
-          config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
+          config: ${{ inputs.license-header-config-path || '.github/config/.licenserc.yaml' }}
           mode: fix
-          # log: debug # optional: set the log level. The default value is `info`.
       - name: Apply Changes
         if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: stefanzweifel/git-auto-commit-action@v7
@@ -78,36 +91,301 @@ jobs:
           commit_user_email: bot@zaphiro.ch
           commit_message: "Automatic application of license header"
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
-      # golang license check set-up
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('go.mod') != '' }}
-        name: Set up Go (Go project)
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-      # javascript license check set-up
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('package.json') != '' }}
-        name: Set up Go (non-Go project)
-        uses: actions/setup-go@v6
-        with:
-          go-version: ">=1.20.0"
-      # golang & javascript license check
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('package.json') != '' || hashFiles('go.mod') != '') }}
-        name: Check Go/Javascript Dependencies' License
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Detect dependency ecosystems
+        id: detect-ecosystems
+        shell: bash
         run: |
-          go install github.com/apache/skywalking-eyes/cmd/license-eye@v0.8.0
-          license-eye -c ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }} dep check
-      # NOTE: we are not using the action
-      # apache/skywalking-eyes/dependency@v0.6.0
-      # since it uses a old version of golang.
-      # The file `.github/config/.licenserc.yaml` is required, or it will fail.
-      # python license check set-up
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') &&(hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+          [[ -f "go.mod" ]] && echo "has-go=true" >> "$GITHUB_OUTPUT" || echo "has-go=false" >> "$GITHUB_OUTPUT"
+          [[ -f "package.json" ]] && echo "has-node=true" >> "$GITHUB_OUTPUT" || echo "has-node=false" >> "$GITHUB_OUTPUT"
+          [[ -f "requirements.txt" || -f "pyproject.toml" ]] && echo "has-python=true" >> "$GITHUB_OUTPUT" || echo "has-python=false" >> "$GITHUB_OUTPUT"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-go == 'true' }}
+        name: Setup Go
+        id: go-setup
+        continue-on-error: true
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-go == 'true' }}
+        name: Go license policy check
+        id: go-license-check
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          set +e
+          GO_ALLOWED_LICENSES_RAW="${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)' }}"
+          GO_ALLOWED_LICENSES="$(echo "$GO_ALLOWED_LICENSES_RAW" | tr ';' ',')"
+          GO_LICENSE_LOG="$RUNNER_TEMP/go-license-check.log"
+          : > "$GO_LICENSE_LOG"
+          mkdir -p "$RUNNER_TEMP/bin"
+          GOBIN="$RUNNER_TEMP/bin" go install github.com/google/go-licenses@v1.6.0
+
+          status=0
+          found_mod=false
+
+          while IFS= read -r modfile; do
+            found_mod=true
+            moddir="$(dirname "$modfile")"
+            echo "Checking Go module in: $moddir" | tee -a "$GO_LICENSE_LOG"
+
+            module_path="$(cd "$moddir" && go list -m -f '{{.Path}}' 2>/dev/null || true)"
+            check_target="./..."
+            [[ -n "$module_path" ]] && check_target="${module_path}/..."
+
+            ignore_args=(--ignore "github.com/zaphiro-technologies/")
+            [[ -n "$module_path" ]] && ignore_args+=(--ignore "$module_path")
+            module_log="$RUNNER_TEMP/go-license-$(echo "$moddir" | tr '/.' '__').log"
+
+            (
+              cd "$moddir"
+              "$RUNNER_TEMP/bin/go-licenses" check "$check_target" --allowed_licenses="$GO_ALLOWED_LICENSES" "${ignore_args[@]}"
+            ) 2>&1 | tee "$module_log" | tee -a "$GO_LICENSE_LOG"
+
+            step_status=${PIPESTATUS[0]}
+            if [[ $step_status -ne 0 ]]; then
+              if awk '
+                /Forbidden license type/ { found=1 }
+                /Failed to find license for / {
+                  if ($0 !~ /Failed to find license for github.com\/zaphiro-technologies\//) {
+                    found=1
+                  }
+                }
+                END { exit(found ? 0 : 1) }
+              ' "$module_log"; then
+                status=$step_status
+              else
+                echo "Ignoring non-actionable go-licenses loader errors for $moddir" | tee -a "$GO_LICENSE_LOG"
+              fi
+            fi
+          done < <(find . -name go.mod -not -path '*/vendor/*' -not -path './.git/*' | sort)
+
+          if [[ "$found_mod" == "false" ]]; then
+            echo "No go.mod file found during Go license check." | tee -a "$GO_LICENSE_LOG"
+            status=1
+          fi
+
+          echo "issues-file=$GO_LICENSE_LOG" >> "$GITHUB_OUTPUT"
+          exit "$status"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-node == 'true' }}
+        name: Setup Node
+        id: node-setup
+        continue-on-error: true
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-node == 'true' }}
+        name: Node license policy check
+        id: node-license-check
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          set +e
+          NODE_LICENSE_LOG="$RUNNER_TEMP/node-license-check.log"
+          : > "$NODE_LICENSE_LOG"
+          exec > >(tee -a "$NODE_LICENSE_LOG") 2>&1
+
+          status=0
+          root_pkg_name="$(node -p "try{require('./package.json').name||''}catch(e){''}")"
+          root_pkg_version="$(node -p "try{require('./package.json').version||''}catch(e){''}")"
+          root_pkg_excludes=""
+          if [[ -n "$root_pkg_name" ]]; then
+            root_pkg_excludes="$root_pkg_name"
+            if [[ -n "$root_pkg_version" ]]; then
+              root_pkg_excludes="$root_pkg_excludes;${root_pkg_name}@${root_pkg_version}"
+            fi
+            echo "Excluding workspace package(s) from Node license policy: $root_pkg_excludes"
+          fi
+
+          if [[ -f "yarn.lock" ]]; then
+            corepack enable
+            yarn install --immutable
+            install_status=$?
+          elif [[ -f "pnpm-lock.yaml" ]]; then
+            corepack enable
+            pnpm install --frozen-lockfile
+            install_status=$?
+          elif [[ -f "package-lock.json" || -f "npm-shrinkwrap.json" ]]; then
+            npm ci --ignore-scripts
+            install_status=$?
+          else
+            npm install --ignore-scripts --no-audit --no-fund
+            install_status=$?
+          fi
+
+          if [[ $install_status -ne 0 ]]; then
+            echo "Dependency install failed with exit code $install_status"
+            status=$install_status
+          else
+            exclude_args=""
+            if [[ -n "$root_pkg_name" ]]; then
+              exclude_args="--excludePackages \"${root_pkg_name};${root_pkg_name}@${root_pkg_version}\""
+            fi
+            allowed_licenses="${{ inputs.allowed-licenses || 'Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)' }}"
+            npx --yes license-checker-rseidelsohn --production --onlyAllow "$allowed_licenses" $exclude_args
+            checker_status=$?
+            if [[ $checker_status -ne 0 ]]; then
+              status=$checker_status
+            fi
+          fi
+
+          echo "issues-file=$NODE_LICENSE_LOG" >> "$GITHUB_OUTPUT"
+          exit "$status"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-python == 'true' }}
+        name: Setup Python
+        id: python-setup
+        continue-on-error: true
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.detect-ecosystems.outputs.has-python == 'true' }}
         name: Check Python dependencies' License
+        id: python-license-check
+        continue-on-error: true
+        shell: bash
         run: |
-          pip install poetry
-          pip install poetry-plugin-export
+          PYTHON_LICENSE_RESULT="$RUNNER_TEMP/python-license-result.log"
+          : > "$PYTHON_LICENSE_RESULT"
+          echo "issues-file=$PYTHON_LICENSE_RESULT" >> "$GITHUB_OUTPUT"
+          set +e
+
+          pip install poetry poetry-plugin-export pip-licenses --quiet
+
+          allowed_licenses="${{ inputs.allowed-licenses }}"
+
+          install_system_deps_succeeded=false
+
+          # In consuming repositories, run project bootstrap if the target exists.
+          if command -v make >/dev/null 2>&1; then
+            if [[ -f Makefile || -f makefile || -f GNUmakefile ]]; then
+              if make -n install-system-deps >/dev/null 2>&1; then
+                echo "Running make install-system-deps before Python license checks"
+                make install-system-deps
+                make_status=$?
+                if [[ $make_status -eq 0 ]]; then
+                  install_system_deps_succeeded=true
+                else
+                  echo "make install-system-deps exited non-zero; continuing with fallback scan path"
+                fi
+              else
+                echo "No install-system-deps target found in make files; skipping make install-system-deps"
+              fi
+            else
+              echo "No make file found; skipping make install-system-deps"
+            fi
+          else
+            echo "make is not available; skipping make install-system-deps"
+          fi
+
+          if [[ "$install_system_deps_succeeded" == "true" ]]; then
+            poetry install --no-interaction --quiet
+            poetry run pip install pip-licenses --quiet
+            poetry run pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>&1 | tee "$PYTHON_LICENSE_RESULT"
+            exit "${PIPESTATUS[0]}"
+          fi
+
           poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
-          pip install licensecheck
-          licensecheck --only-licenses mit apache bsd psf-2.0 mpl lgpl --show-only-failing --zero --requirements-paths /tmp/reqs.txt
+          export_status=$?
+          if [[ $export_status -ne 0 ]]; then
+            echo "Poetry export failed with exit code $export_status" | tee -a "$PYTHON_LICENSE_RESULT"
+            exit $export_status
+          fi
+
+          pip install -r /tmp/reqs.txt --quiet --prefer-binary --only-binary=:all:
+          install_status=$?
+          if [[ $install_status -ne 0 ]]; then
+            echo "Dependency installation failed with exit code $install_status (wheel-only mode)." | tee -a "$PYTHON_LICENSE_RESULT"
+            exit $install_status
+          fi
+
+          pip-licenses --format=markdown --allow-only="$allowed_licenses" 2>&1 | tee "$PYTHON_LICENSE_RESULT"
+          exit "${PIPESTATUS[0]}"
+      - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Summarize dependency license results
+        id: summarize-license-checks
+        shell: bash
+        run: |
+          go_outcome="${{ steps.go-license-check.outcome || 'skipped' }}"
+          node_setup_outcome="${{ steps.node-setup.outcome || 'skipped' }}"
+          node_outcome="${{ steps.node-license-check.outcome || 'skipped' }}"
+          python_setup_outcome="${{ steps.python-setup.outcome || 'skipped' }}"
+          python_outcome="${{ steps.python-license-check.outcome || 'skipped' }}"
+
+          failed=false
+          [[ "$go_outcome" == "failure" ]] && failed=true
+          [[ "$node_setup_outcome" == "failure" || "$node_outcome" == "failure" ]] && failed=true
+          [[ "$python_setup_outcome" == "failure" || "$python_outcome" == "failure" ]] && failed=true
+
+          echo "license-check-failed=$failed" >> "$GITHUB_OUTPUT"
+          issues_file="$RUNNER_TEMP/license-issues.md"
+          : > "$issues_file"
+
+          if [[ "$go_outcome" == "failure" ]]; then
+            echo "#### Go" >> "$issues_file"
+            if [[ -f "${{ steps.go-license-check.outputs.issues-file }}" ]]; then
+              cat "${{ steps.go-license-check.outputs.issues-file }}" >> "$issues_file"
+            fi
+            [[ ! -s "$issues_file" || "$(tail -n 1 "$issues_file")" == "#### Go" ]] && echo "- Go check failed. See job logs for details." >> "$issues_file"
+            echo >> "$issues_file"
+          fi
+
+          if [[ "$node_setup_outcome" == "failure" || "$node_outcome" == "failure" ]]; then
+            echo "#### Node" >> "$issues_file"
+            if [[ "$node_setup_outcome" == "failure" ]]; then
+              echo "- Node setup failed (runtime/tooling install)." >> "$issues_file"
+            fi
+            if [[ -f "${{ steps.node-license-check.outputs.issues-file }}" ]]; then
+              cat "${{ steps.node-license-check.outputs.issues-file }}" >> "$issues_file"
+            fi
+            [[ "$(tail -n 1 "$issues_file")" == "#### Node" ]] && echo "- Node check failed. See job logs for details." >> "$issues_file"
+            echo >> "$issues_file"
+          fi
+
+          if [[ "$python_setup_outcome" == "failure" || "$python_outcome" == "failure" ]]; then
+            echo "#### Python" >> "$issues_file"
+            if [[ "$python_setup_outcome" == "failure" ]]; then
+              echo "- Python setup failed (runtime/tooling install)." >> "$issues_file"
+            fi
+            if [[ -f "${{ steps.python-license-check.outputs.issues-file }}" ]]; then
+              cat "${{ steps.python-license-check.outputs.issues-file }}" >> "$issues_file"
+            fi
+            [[ "$(tail -n 1 "$issues_file")" == "#### Python" ]] && echo "- Python check failed. See job logs for details." >> "$issues_file"
+            echo >> "$issues_file"
+          fi
+
+          if [[ "$failed" == "false" ]]; then
+            echo "No dependency license issues found." > "$issues_file"
+          fi
+
+          {
+            echo "issues-markdown<<EOF"
+            cat "$issues_file"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Dependency License Issues"
+            cat "$issues_file"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && github.event_name == 'pull_request' && inputs.comment-results && steps.summarize-license-checks.outputs.license-check-failed == 'true' && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Comment license results on PR
+        uses: actions/github-script@v8
+        env:
+          ISSUE_LIST: ${{ steps.summarize-license-checks.outputs.issues-markdown }}
+        with:
+          github-token: ${{ steps.generate-token.outputs.token }}
+          script: |
+            const body = ['### Dependency License Issues', process.env.ISSUE_LIST || '- Unable to extract issue details. See job logs.'].join('\n\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body
+            });
+      - if: ${{ always() && (!inputs.skip-dependency || inputs.skip-dependency == '') && steps.summarize-license-checks.outputs.license-check-failed == 'true' && (hashFiles('go.mod') != '' || hashFiles('package.json') != '' || hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
+        name: Fail job on license policy violations
+        run: |
+          echo "One or more dependency license checks failed."
+          exit 1

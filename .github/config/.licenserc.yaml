@@ -3,7 +3,7 @@
 header:
   license:
     spdx-id: Apache-2.0
-    copyright-year: 2024
+    copyright-year: 2026
     copyright-owner: Zaphiro Technologies
 
   paths-ignore:
@@ -12,13 +12,10 @@ header:
     - "LICENSE"
     - "NOTICE"
     - ".*"
+    - ".vscode/**"
+    - "vendor/**"
+    - "evaluator.rules.kts"
+    - "license-classifications.yml"
+    - "resolutions.yml"
 
   comment: on-failure
-
-# If you don't want to check dependencies' license compatibility, remove the following part
-dependency:
-  files:
-    - pom.xml # If this is a maven project.
-    - Cargo.toml # If this is a rust project.
-    - package.json # If this is a npm project.
-    - go.mod # If this is a Go project.
