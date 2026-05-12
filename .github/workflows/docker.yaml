@@ -130,7 +130,7 @@ jobs:
           key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
       - name: inject go-build-cache into docker
         if: ${{ inputs.go-cache || inputs.language-cache == 'go' }}
-        uses: reproducible-containers/buildkit-cache-dance@v3.3.2
+        uses: reproducible-containers/buildkit-cache-dance@v3.4.0
         with:
           cache-map: |
             {
@@ -148,7 +148,7 @@ jobs:
           key: ${{ runner.os }}-node-build-cache-${{ hashFiles('**/yarn.lock') }}
       - name: inject node-build-cache into docker
         if: ${{ inputs.language-cache == 'javascript' }}
-        uses: reproducible-containers/buildkit-cache-dance@v3.3.2
+        uses: reproducible-containers/buildkit-cache-dance@v3.4.0
         with:
           cache-map: |
             {
