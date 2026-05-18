@@ -84,7 +84,8 @@ jobs:
                 fi
 
                 if [ -n "$pending_required_checks" ]; then
-                  echo "⏳ PR #$number still has required checks in progress ($pending_required_checks). Enabling auto-merge."
+                  echo "⏳ Skipping PR #$number: required checks still in progress ($pending_required_checks)"
+                  continue
                 fi
 
                 echo "✅ PR #$number is up to date and already approved."
@@ -122,7 +123,8 @@ jobs:
             fi
 
             if [ -n "$pending_required_checks" ]; then
-              echo "⏳ PR #$number still has required checks in progress ($pending_required_checks). Enabling auto-merge."
+              echo "⏳ Skipping PR #$number: required checks still in progress ($pending_required_checks)"
+              continue
             fi
 
             echo "🚀 Approving and merging PR #$number"
