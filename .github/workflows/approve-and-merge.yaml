@@ -61,10 +61,32 @@ jobs:
 
             if echo "$labels" | grep -q "auto-approved"; then
               mergeable_state=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
-              if echo "$mergeable_state" | grep -Eiq 'BLOCKED|BEHIND|DIRTY|DRAFT|HAS_HOOKS|UNKNOWN'; then
+              if echo "$mergeable_state" | grep -Eiq 'BEHIND|DIRTY|DRAFT'; then
                 echo "❌ Skipping PR #$number: PR is not mergeable yet ($mergeable_state)"
                 continue
               else
+                set +e
+                required_checks=$(gh pr checks "$number" --repo "$GITHUB_REPOSITORY" --required --json bucket,name,state 2>/dev/null)
+                checks_exit_code=$?
+                set -e
+
+                if [ "$checks_exit_code" -ne 0 ] && [ "$checks_exit_code" -ne 8 ]; then
+                  echo "❌ Skipping PR #$number: unable to inspect required checks"
+                  continue
+                fi
+
+                failed_required_checks=$(echo "${required_checks:-[]}" | jq -r '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")')
+                pending_required_checks=$(echo "${required_checks:-[]}" | jq -r '[.[] | select(.bucket == "pending") | .name] | join(", ")')
+
+                if [ -n "$failed_required_checks" ]; then
+                  echo "❌ Skipping PR #$number: required checks failed ($failed_required_checks)"
+                  continue
+                fi
+
+                if [ -n "$pending_required_checks" ]; then
+                  echo "⏳ PR #$number still has required checks in progress ($pending_required_checks). Enabling auto-merge."
+                fi
+
                 echo "✅ PR #$number is up to date and already approved."
                 echo "🔀 Merging PR #$number"
                 gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
@@ -76,9 +98,31 @@ jobs:
             echo "🔍 Checking CI status for PR #$number..."
             mergeable_state=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
 
-            if echo "$mergeable_state" | grep -Eiq 'BLOCKED|BEHIND|DIRTY|DRAFT|HAS_HOOKS|UNKNOWN'; then
+            if echo "$mergeable_state" | grep -Eiq 'BEHIND|DIRTY|DRAFT'; then
               echo "❌ Skipping PR #$number: PR is not mergeable yet ($mergeable_state)"
               continue
+            fi
+
+            set +e
+            required_checks=$(gh pr checks "$number" --repo "$GITHUB_REPOSITORY" --required --json bucket,name,state 2>/dev/null)
+            checks_exit_code=$?
+            set -e
+
+            if [ "$checks_exit_code" -ne 0 ] && [ "$checks_exit_code" -ne 8 ]; then
+              echo "❌ Skipping PR #$number: unable to inspect required checks"
+              continue
+            fi
+
+            failed_required_checks=$(echo "${required_checks:-[]}" | jq -r '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")')
+            pending_required_checks=$(echo "${required_checks:-[]}" | jq -r '[.[] | select(.bucket == "pending") | .name] | join(", ")')
+
+            if [ -n "$failed_required_checks" ]; then
+              echo "❌ Skipping PR #$number: required checks failed ($failed_required_checks)"
+              continue
+            fi
+
+            if [ -n "$pending_required_checks" ]; then
+              echo "⏳ PR #$number still has required checks in progress ($pending_required_checks). Enabling auto-merge."
             fi
 
             echo "🚀 Approving and merging PR #$number"
