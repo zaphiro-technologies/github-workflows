@@ -61,8 +61,8 @@ jobs:
 
             if echo "$labels" | grep -q "auto-approved"; then
               mergeable_state=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
-              if [ "$mergeable_state" = "DIRTY" ]; then
-                echo "❌ Skipping PR #$number: merge conflicts detected"
+              if echo "$mergeable_state" | grep -Eiq 'BLOCKED|BEHIND|DIRTY|DRAFT|HAS_HOOKS|UNKNOWN'; then
+                echo "❌ Skipping PR #$number: PR is not mergeable yet ($mergeable_state)"
                 continue
               else
                 echo "✅ PR #$number is up to date and already approved."
@@ -74,12 +74,10 @@ jobs:
             fi
 
             echo "🔍 Checking CI status for PR #$number..."
-            commit_sha=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
+            mergeable_state=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
 
-            checks_state=$(gh api repos/$GITHUB_REPOSITORY/commits/$commit_sha/check-runs --jq '[.check_runs[].conclusion] | unique | join(",")')
-
-            if echo "$checks_state" | grep -Eiq 'failure|timed_out|action_required'; then
-              echo "❌ Skipping PR #$number: one or more checks failed ($checks_state)"
+            if echo "$mergeable_state" | grep -Eiq 'BLOCKED|BEHIND|DIRTY|DRAFT|HAS_HOOKS|UNKNOWN'; then
+              echo "❌ Skipping PR #$number: PR is not mergeable yet ($mergeable_state)"
               continue
             fi
 
