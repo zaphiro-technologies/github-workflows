@@ -49,6 +49,46 @@ jobs:
             echo "Label auto-approved already exists. Skipping creation."
           fi
 
+          check_pr_readiness() {
+            local pr_number="$1"
+            local mergeable_state
+            local required_checks
+            local checks_exit_code
+            local failed_required_checks
+            local pending_required_checks
+
+            mergeable_state=$(gh pr view "$pr_number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
+            if echo "$mergeable_state" | grep -Eiq 'BEHIND|DIRTY|DRAFT'; then
+              echo "❌ Skipping PR #$pr_number: PR is not mergeable yet ($mergeable_state)"
+              return 1
+            fi
+
+            set +e
+            required_checks=$(gh pr checks "$pr_number" --repo "$GITHUB_REPOSITORY" --required --json bucket,name,state 2>/dev/null)
+            checks_exit_code=$?
+            set -e
+
+            if [ "$checks_exit_code" -ne 0 ] && [ "$checks_exit_code" -ne 8 ]; then
+              echo "❌ Skipping PR #$pr_number: unable to inspect required checks"
+              return 1
+            fi
+
+            failed_required_checks=$(echo "${required_checks:-[]}" | jq -r '[.[] | select(.bucket == "fail" or .bucket == "cancel") | .name] | join(", ")')
+            pending_required_checks=$(echo "${required_checks:-[]}" | jq -r '[.[] | select(.bucket == "pending") | .name] | join(", ")')
+
+            if [ -n "$failed_required_checks" ]; then
+              echo "❌ Skipping PR #$pr_number: required checks failed ($failed_required_checks)"
+              return 1
+            fi
+
+            if [ -n "$pending_required_checks" ]; then
+              echo "⏳ Skipping PR #$pr_number: required checks still in progress ($pending_required_checks)"
+              return 1
+            fi
+
+            return 0
+          }
+
           echo "Fetching open Dependabot PRs older than 3 days and newer than 30 days ..."
 
           gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title,labels,headRefName --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while IFS= read -r pr; do
@@ -60,26 +100,19 @@ jobs:
             echo "👉 Processing PR #$number: $title"
 
             if echo "$labels" | grep -q "auto-approved"; then
-              mergeable_state=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json mergeStateStatus --jq '.mergeStateStatus')
-              if [ "$mergeable_state" = "DIRTY" ]; then
-                echo "❌ Skipping PR #$number: merge conflicts detected"
-                continue
-              else
-                echo "✅ PR #$number is up to date and already approved."
-                echo "🔀 Merging PR #$number"
-                gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
-                echo "✅ Done with PR #$number"
+              if ! check_pr_readiness "$number"; then
                 continue
               fi
+
+              echo "✅ PR #$number is up to date and already approved."
+              echo "🔀 Merging PR #$number"
+              gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --squash --auto
+              echo "✅ Done with PR #$number"
+              continue
             fi
 
             echo "🔍 Checking CI status for PR #$number..."
-            commit_sha=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
-
-            checks_state=$(gh api repos/$GITHUB_REPOSITORY/commits/$commit_sha/check-runs --jq '[.check_runs[].conclusion] | unique | join(",")')
-
-            if echo "$checks_state" | grep -Eiq 'failure|timed_out|action_required'; then
-              echo "❌ Skipping PR #$number: one or more checks failed ($checks_state)"
+            if ! check_pr_readiness "$number"; then
               continue
             fi
 
