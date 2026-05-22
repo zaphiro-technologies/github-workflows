@@ -104,6 +104,8 @@
 
 - Bump aquasecurity/trivy-action from 0.35.0 to 0.36.0 (PR #291 by
   @dependabot[bot])
+- Bump reproducible-containers/buildkit-cache-dance from 3.3.2 to 3.4.0 (PR #290
+  by @dependabot[bot])
 - Bump actions/add-to-project from 1.0.2 to 2.0.0 (PR #288 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 7.1.0 to 8.0.0 (PR #289 by
   @dependabot[bot])
