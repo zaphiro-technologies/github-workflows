@@ -103,6 +103,8 @@
 
 ### Dependencies
 
+- Bump umbrelladocs/action-linkspector from 1 to 1.5.1 (PR #295 by
+  @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 8.0.0 to 8.1.0 (PR #293 by
   @dependabot[bot])
 - Bump aquasecurity/trivy-action from 0.35.0 to 0.36.0 (PR #291 by
