@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-05-22
+## 0.0.3-dev - 2026-06-01
 
 ### Features
 
@@ -84,6 +84,7 @@
 
 ### Continuous Integration
 
+- Add 3-day Dependabot cooldown (PR #294 by @chicco785)
 - Separate issue management from project management (PR #236 by @chicco785)
 - new-release workflow: delegate to makefile the update of project files (PR
   #192 by @kwitekrac)
@@ -102,10 +103,12 @@
 
 ### Dependencies
 
-- Bump reproducible-containers/buildkit-cache-dance from 3.3.2 to 3.4.0 (PR #290
-  by @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 8.0.0 to 8.1.0 (PR #293 by
+  @dependabot[bot])
 - Bump aquasecurity/trivy-action from 0.35.0 to 0.36.0 (PR #291 by
   @dependabot[bot])
+- Bump reproducible-containers/buildkit-cache-dance from 3.3.2 to 3.4.0 (PR #290
+  by @dependabot[bot])
 - Bump actions/add-to-project from 1.0.2 to 2.0.0 (PR #288 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 7.1.0 to 8.0.0 (PR #289 by
   @dependabot[bot])
