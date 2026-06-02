@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-06-01
+## 0.0.3-dev - 2026-06-02
 
 ### Features
 
@@ -58,6 +58,7 @@
 
 ### Bug Fixes
 
+- Use Linkspector 1.4.1 (PR #296 by @cosimomeli)
 - approve and merge wf: pr were failing checks are not required should be merged
   (PR #292 by @chicco785)
 - python workflow: fix missing registry login to fetch private images (PR #281
