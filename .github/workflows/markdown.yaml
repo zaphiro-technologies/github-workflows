@@ -204,3 +204,4 @@ jobs:
           reporter: github-pr-review
           config_file: ${{ inputs.config-links-path || '.github/config/.linkspector.yml' }}
           fail_level: any
+          show_stats: true
