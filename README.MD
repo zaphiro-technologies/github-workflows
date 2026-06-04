@@ -164,4 +164,4 @@ documentation.
 
 ## Issues
 
-Linkspector 1.5.x is broken.
+Linkspector 1.5.x is broken, so force manual install of Chrome for Puppeteer
