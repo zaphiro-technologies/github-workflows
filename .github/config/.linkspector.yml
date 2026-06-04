@@ -8,7 +8,7 @@ aliveStatusCodes:
   - 204
   - 206
   - 429
-ignorePatterns:
-  - pattern: "^https://localhost"
-  - pattern: "^https://github.com/orgs/zaphiro-technologies/"
-  - pattern: "^https://github.com/zaphiro-technologies/"
+# ignorePatterns:
+#   - pattern: "^https://localhost"
+#   - pattern: "^https://github.com/orgs/zaphiro-technologies/"
+#   - pattern: "^https://github.com/zaphiro-technologies/"
