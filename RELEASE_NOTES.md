@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-06-04
+## 0.0.3-dev - 2026-06-09
 
 ### Features
 
@@ -58,6 +58,7 @@
 
 ### Bug Fixes
 
+- markdown wf: fix chrome for puppeteer (PR #299 by @chicco785)
 - Use Linkspector 1.4.1 (PR #296 by @cosimomeli)
 - approve and merge wf: pr were failing checks are not required should be merged
   (PR #292 by @chicco785)
@@ -104,6 +105,7 @@
 
 ### Dependencies
 
+- Bump actions/checkout from 6 to 6.0.2 (PR #298 by @dependabot[bot])
 - Bump umbrelladocs/action-linkspector from 1.4.1 to 1.5.2 (PR #297 by
   @dependabot[bot])
 - Bump umbrelladocs/action-linkspector from 1 to 1.5.1 (PR #295 by
