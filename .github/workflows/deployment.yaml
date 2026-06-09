@@ -212,7 +212,7 @@ jobs:
             exit 1
           fi
 
-          if ! yq -e 'any(.spec.source.helm.parameters[]?; .name == strenv(PARAMETER_NAME))' "$TARGET_FILE" >/dev/null; then
+          if ! yq -e '.spec.source.helm.parameters[]? | select(.name == strenv(PARAMETER_NAME))' "$TARGET_FILE" >/dev/null; then
             echo "Helm parameter $PARAMETER_NAME not found in $TARGET_FILE" >&2
             exit 1
           fi
