@@ -115,7 +115,7 @@ jobs:
         with:
           token: ${{ steps.generate-token.outputs.token }}
           repository: ${{ github.repository_owner }}/${{ needs.split-environment.outputs.is-corporate == 'true' && 'corporate-apps' || 'k8s-deployments' }}
-          ref: main
+          ref: cim-manager
       - name: Resolve image repository
         if: github.ref_type != 'tag'
         id: repository-name
@@ -223,5 +223,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
-          branch: main
+          branch: cim-manager
           file_pattern: ${{ needs.split-environment.outputs.is-corporate == 'true' && format('argocd/{0}.yaml', inputs.app-name) || 'kubernetes/**/*.yaml' }}
