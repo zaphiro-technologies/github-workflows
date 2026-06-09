@@ -33,7 +33,7 @@ on:
       ghcr-repository:
         required: false
         type: string
-        default: ''
+        default: ""
         description: GitHub container repository used to resolve the image digest
       parameter-prefix:
         required: false
