@@ -36,7 +36,12 @@ The repository includes:
 - [`clean-up-storage`](.github/workflows/clean-up-storage.yaml): when a new PR
   is closed, related cache and artifact are deleted.
 - [`deployment`](.github/workflows/deployment.yaml): commit a container image
-  tag in the k8s-deployments repository.
+  tag in the k8s-deployments repository, or patch a corporate app manifest in
+  the corporate-apps repository when called with `environment: corporate`.
+  Corporate mode updates `argocd/<app-name>.yaml` at
+  `<parameter-prefix>.image.tag`. Use optional `ghcr-repository` to override the
+  package repository used to resolve the image digest. Corporate deployments
+  must provide `ghcr-repository`.
 - [`docker`](.github/workflows/docker.yaml): build and push Docker images and
   scans for vulnerabilities. Supports optional Docker Hub login for builds that
   need authenticated base image pulls from Docker Hub; callers can pass
