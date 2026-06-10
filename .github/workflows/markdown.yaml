@@ -191,12 +191,17 @@ jobs:
       - name: Prepare reviewdog cache path
         run: |
           mkdir -p "$HOME/reviewdog-bin"
-      - name: Install Chrome for Puppeteer
-        run: npx puppeteer browsers install chrome
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
       - name: Check links
         uses: umbrelladocs/action-linkspector@v1.5.2
+        env:
+          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome
         with:
           filter_mode: nofilter
           reporter: github-pr-review
           config_file: ${{ inputs.config-links-path || '.github/config/.linkspector.yml' }}
           fail_level: any
+          show_stats: true

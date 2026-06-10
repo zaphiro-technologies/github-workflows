@@ -58,6 +58,7 @@
 
 ### Bug Fixes
 
+- markdown wf: fix chrome for puppeteer (PR #299 by @chicco785)
 - Use Linkspector 1.4.1 (PR #296 by @cosimomeli)
 - approve and merge wf: pr were failing checks are not required should be merged
   (PR #292 by @chicco785)
