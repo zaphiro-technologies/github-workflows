@@ -4,6 +4,7 @@
 
 ### Features
 
+- Support Corporate deployments (PR #300 by @cosimomeli)
 - js workflow: shared workflow for javascript builds based on yarn2 (PR #287 by
   @chicco785)
 - docker wf: support login to docker hub to retrieve dhi.io images (PR #286 by
