@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-06-04
+## 0.0.3-dev - 2026-06-10
 
 ### Features
 
@@ -104,6 +104,8 @@
 
 ### Dependencies
 
+- Bump actions/checkout from 6.0.2 to 6.0.3 (PR #301 by @dependabot[bot])
+- Bump actions/checkout from 6 to 6.0.2 (PR #298 by @dependabot[bot])
 - Bump umbrelladocs/action-linkspector from 1.4.1 to 1.5.2 (PR #297 by
   @dependabot[bot])
 - Bump umbrelladocs/action-linkspector from 1 to 1.5.1 (PR #295 by
