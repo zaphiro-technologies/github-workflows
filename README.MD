@@ -46,11 +46,10 @@ The repository includes:
   scans for vulnerabilities. Supports optional Docker Hub login for builds that
   need authenticated base image pulls from Docker Hub; callers can pass
   `DOCKER_USER` and `DOCKER_PASSWORD` secrets, which must be provided together.
-  For private GitHub git dependencies during `docker build`, pass the
-  additional private repositories via the `repositories` input so the generated
-  GitHub App token can access them, then consume the forwarded BuildKit secret
-  (`GH_TOKEN`) in the Dockerfile. The Docker build image must also include the
-  `git` binary.
+  For private GitHub git dependencies during `docker build`, pass the additional
+  private repositories via the `repositories` input so the generated GitHub App
+  token can access them, then consume the forwarded BuildKit secret (`GH_TOKEN`)
+  in the Dockerfile. The Docker build image must also include the `git` binary.
 - [`golang`](.github/workflows/golang.yaml): lint, test and benchmark Go
   Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. The workflow also scans for
