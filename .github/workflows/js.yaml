@@ -87,6 +87,7 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: write
       - uses: actions/checkout@v6.0.3
         with:
