@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-06-10
+## 0.0.3-dev - 2026-06-19
 
 ### Features
 
+- js & docker workflow: allow to use private repos during lint & build (PR #304
+  by @chicco785)
 - Support Corporate deployments (PR #300 by @cosimomeli)
 - js workflow: shared workflow for javascript builds based on yarn2 (PR #287 by
   @chicco785)
