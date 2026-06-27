@@ -111,7 +111,7 @@ jobs:
         run: |
           echo "IMAGE_TAG=pr-${{steps.search-pr.outputs.pr}}" >> $GITHUB_ENV
       - name: Checkout of k8s-deployments
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
         with:
           token: ${{ steps.generate-token.outputs.token }}
           repository: ${{ github.repository_owner }}/${{ needs.split-environment.outputs.is-corporate == 'true' && 'corporate-apps' || 'k8s-deployments' }}

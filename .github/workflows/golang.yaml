@@ -69,7 +69,7 @@ jobs:
     outputs:
       files_changed: ${{ steps.filter.outputs.go == 'true' || steps.filter.outputs.scripts == 'true' }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
         with:
           fetch-depth: 2 # To retrieve the preceding commit.
       - uses: dorny/paths-filter@v4
@@ -104,7 +104,7 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: write
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
           token: ${{ steps.generate-token.outputs.token }}
@@ -142,7 +142,7 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: read
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: Configure AWS Credentials
@@ -209,7 +209,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
       - run: git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
       - uses: actions/setup-go@v6
         with:
@@ -262,7 +262,7 @@ jobs:
     if: ${{ inputs.vulnerability-scan}}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
       - name: Run Trivy vulnerability scanner (for summary)
         # trivy-action v0.35.0 (safe version)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
