@@ -124,7 +124,7 @@ jobs:
       - name: Go Build Cache for Docker
         id: cache-go
         if: ${{ inputs.go-cache || inputs.language-cache == 'go' }}
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: go-build-cache
           key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
@@ -140,7 +140,7 @@ jobs:
       - name: Node Build Cache for Docker
         id: cache-node
         if: ${{ inputs.language-cache == 'javascript' }}
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: |
             node-arm64-cache
