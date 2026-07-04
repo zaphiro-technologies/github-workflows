@@ -118,7 +118,7 @@ jobs:
           go install github.com/segmentio/golines@latest
           golines . -w
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
+        uses: golangci/golangci-lint-action@v9.2.1
         with:
           args: --fix
           version: latest
