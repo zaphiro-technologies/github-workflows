@@ -220,7 +220,7 @@ jobs:
           yq -i '(.spec.source.helm.parameters[] | select(.name == strenv(PARAMETER_NAME)).value) = strenv(IMAGE_TAG)' \
             "$TARGET_FILE"
       - name: Commit & Push changed tag
-        uses: stefanzweifel/git-auto-commit-action@v7.1.0
+        uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
           commit_message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
           branch: main
