@@ -197,6 +197,12 @@ jobs:
               for part in $(echo "${{ inputs.app-name }}" | tr '.' '\n'); do
                   app_path="${app_path}[\"$part\"]"
               done
+
+              if [ "$(yq "$app_path != null" "$cluster/values-platforms.yaml")" != "true" ]; then
+                echo "Skipping platform $platform: application ${{ inputs.app-name }} is not configured"
+                continue
+              fi
+
               yq -i "$app_path.image.tag = \"${IMAGE_TAG}\"" \
                   "$cluster/values-platforms.yaml"
             done
