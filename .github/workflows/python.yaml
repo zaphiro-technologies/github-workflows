@@ -142,7 +142,7 @@ jobs:
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: read
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@v4.5.1
         # we log in the registry to code check also images
         with:
           registry: ghcr.io
