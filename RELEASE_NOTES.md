@@ -110,6 +110,7 @@
 
 ### Dependencies
 
+- Bump actions/setup-python from 6.3.0 to 7.0.0 (PR #322 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.72.0 to 1.73.0 (PR #324 by
   @dependabot[bot])
 - Bump aws-actions/configure-aws-credentials from 6.2.2 to 6.2.3 (PR #325 by
