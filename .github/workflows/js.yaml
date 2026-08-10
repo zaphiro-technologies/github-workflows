@@ -58,6 +58,16 @@ on:
         default: false
         type: boolean
         description: True to install and configure dvc
+      upload-artefacts:
+        required: false
+        default: true
+        type: boolean
+        description: False to skip uploading the build artefact
+      upload-artefacts-dir:
+        required: false
+        default: "./build"
+        type: string
+        description: Directory with the build artefact to upload
       repositories:
         required: false
         type: string
@@ -190,9 +200,10 @@ jobs:
         run: |
           yarn build
       - name: Upload build artifact
+        if: ${{ inputs.upload-artefacts }}
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./build
+          path: ${{ inputs.upload-artefacts-dir }}
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
         uses: SonarSource/sonarqube-scan-action@v8.2.1

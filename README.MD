@@ -56,8 +56,8 @@ The repository includes:
   vulnerabilities.
 - [`js`](.github/workflows/js.yaml): typecheck, lint, test and build JS/TS
   applications. The workflow can auto-fix lint issues on same-repository pull
-  requests, optionally pull DVC datasets, upload the build artifact, and scan
-  for code quality and vulnerabilities.
+  requests, optionally pull DVC datasets, skip or customize the build artifact
+  upload, and scan for code quality and vulnerabilities.
 - [`license`](.github/workflows/license.yaml): add licensing information in file
   headers and check dependencies licensing compatibility.
 - [`lint`](.github/workflows/markdown.yaml): lint all Markdown and Yaml files.
