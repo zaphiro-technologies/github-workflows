@@ -39,21 +39,11 @@ on:
         default: ".github/config/.licenserc.yaml"
         type: string
         description: Path to the license-eye configuration file.
-      allowed-licenses:
-        required: false
-        default: "Apache-2.0;MIT;MIT-0;MIT License;BSD;BSD License;BSD-2-Clause;BSD-3-Clause;ISC;ISC License;0BSD;MPL-2.0;Apache 2.0;Apache Software License;Custom: https://gsap.com/standard-license;Python-2.0;Unlicense;Python-2.0;PSF-2.0;Mozilla Public License 2.0 (MPL 2.0)"
-        type: string
-        description: Shared semicolon-separated allowlist used by Go, Node and Python checks.
       repositories:
         required: false
         type: string
         default: ""
         description: Comma or newline-separated list of repositories to grant access to during the golang build.
-      comment-results:
-        required: false
-        default: true
-        type: boolean
-        description: True to add a PR comment with dependency license check results.
 jobs:
   license:
     name: Check licenses
