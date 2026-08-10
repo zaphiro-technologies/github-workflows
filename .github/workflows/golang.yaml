@@ -43,12 +43,12 @@ on:
         default: true
         type: boolean
         description: False to skip code-scan exec
-      vulterability-scan:
+      vulnerability-scan:
         required: false
         default: true
         type: boolean
-        description: False to skip vulterability-scan exec
-      vulterability-scan-skip-dirs:
+        description: False to skip vulnerability-scan exec
+      vulnerability-scan-skip-dirs:
         required: false
         default: "vendor,.github"
         type: string
@@ -69,7 +69,7 @@ jobs:
     outputs:
       files_changed: ${{ steps.filter.outputs.go == 'true' || steps.filter.outputs.scripts == 'true' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 2 # To retrieve the preceding commit.
       - uses: dorny/paths-filter@v4
@@ -104,13 +104,13 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: write
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{github.event.pull_request.head.ref}} # Can't commit on detached PR merge commit, so this checkouts the branch
           token: ${{ steps.generate-token.outputs.token }}
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - name: Golines
@@ -118,7 +118,7 @@ jobs:
           go install github.com/segmentio/golines@latest
           golines . -w
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
+        uses: golangci/golangci-lint-action@v9.3.0
         with:
           args: --fix
           version: latest
@@ -142,13 +142,13 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: read
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
       - name: Configure AWS Credentials
         if: ${{ inputs.pull-dvc-datasets }}
         id: creds
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           aws-region: eu-south-1
           role-to-assume: arn:aws:iam::058264335177:role/zaphiro-github-role-demo
@@ -171,7 +171,7 @@ jobs:
         run: dvc pull -v --allow-missing
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - name: Install gcov2lcov
@@ -181,7 +181,7 @@ jobs:
       # This requires to set in the package settings read permission for the
       # repository where the golang ci is running
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -189,17 +189,9 @@ jobs:
       - name: Test
         run: |
           make ci-test
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
-        if: ${{ inputs.code-scan }}
-        # we log in the registry to code check also images
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
-        uses: SonarSource/sonarqube-scan-action@v7.1.0
+        uses: SonarSource/sonarqube-scan-action@v8.2.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -217,16 +209,16 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
       - run: git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       # We Login in GHCR to retrieve owned private images used in docker-compose
       # This requires to set in the package settings read permission for the
       # repository where the golang ci is running
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -267,17 +259,17 @@ jobs:
           retention-days: 400
   vulnerability:
     needs: changes
-    if: ${{ inputs.vulterability-scan}}
+    if: ${{ inputs.vulnerability-scan}}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
       - name: Run Trivy vulnerability scanner (for summary)
         # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
           scan-ref: .
-          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
           scanners: "vuln,secret,misconfig"
           hide-progress: true
           output: trivy.txt
@@ -298,11 +290,11 @@ jobs:
       # this comes as last or scan results won't be uploaded
       - name: Run Trivy vulnerability scanner (security treshold)
         # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
           scan-ref: .
-          skip-dirs: ${{ inputs.vulterability-scan-skip-dirs }}
+          skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
           scanners: "vuln,secret,misconfig"
           exit-code: "1"
           severity: MEDIUM,HIGH,CRITICAL

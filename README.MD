@@ -36,13 +36,28 @@ The repository includes:
 - [`clean-up-storage`](.github/workflows/clean-up-storage.yaml): when a new PR
   is closed, related cache and artifact are deleted.
 - [`deployment`](.github/workflows/deployment.yaml): commit a container image
-  tag in the k8s-deployments repository.
+  tag in the k8s-deployments repository, or patch a corporate app manifest in
+  the corporate-apps repository when called with `environment: corporate`.
+  Corporate mode updates `argocd/<app-name>.yaml` at
+  `<parameter-prefix>.image.tag`. Use optional `ghcr-repository` to override the
+  package repository used to resolve the image digest. Corporate deployments
+  must provide `ghcr-repository`.
 - [`docker`](.github/workflows/docker.yaml): build and push Docker images and
-  scans for vulnerabilities.
+  scans for vulnerabilities. Supports optional Docker Hub login for builds that
+  need authenticated base image pulls from Docker Hub; callers can pass
+  `DOCKER_USER` and `DOCKER_PASSWORD` secrets, which must be provided together.
+  For private GitHub git dependencies during `docker build`, pass the additional
+  private repositories via the `repositories` input so the generated GitHub App
+  token can access them, then consume the forwarded BuildKit secret (`GH_TOKEN`)
+  in the Dockerfile. The Docker build image must also include the `git` binary.
 - [`golang`](.github/workflows/golang.yaml): lint, test and benchmark Go
   Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. The workflow also scans for
   vulnerabilities.
+- [`js`](.github/workflows/js.yaml): typecheck, lint, test and build JS/TS
+  applications. The workflow can auto-fix lint issues on same-repository pull
+  requests, optionally pull DVC datasets, upload the build artifact, and scan
+  for code quality and vulnerabilities.
 - [`license`](.github/workflows/license.yaml): add licensing information in file
   headers and check dependencies licensing compatibility.
 - [`lint`](.github/workflows/markdown.yaml): lint all Markdown and Yaml files.
@@ -155,3 +170,7 @@ documentation.
 [.github]: https://github.com/zaphiro-technologies/.github
 [starter-workflows]:
   https://docs.github.com/en/actions/using-workflows/creating-starter-workflows-for-your-organization
+
+## Issues
+
+Linkspector 1.5.x is broken, so force manual install of Chrome for Puppeteer.

@@ -58,7 +58,7 @@ jobs:
       markdown_files: ${{ steps.filter.outputs.markdown_files }}
       github_actions_files_changed: ${{ steps.filter.outputs.github-actions == 'true' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 2 # To retrieve the preceding commit.
       - uses: dorny/paths-filter@v4
@@ -90,7 +90,7 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           permission-contents: write
           permission-workflows: write
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           token: ${{ steps.generate-token.outputs.token }}
           ref: ${{github.event.pull_request.head.ref}}
@@ -107,7 +107,7 @@ jobs:
           git config --global user.email 'bot@zaphiro.ch'
           git commit -am "Automated yaml-lint fixes [dependabot skip]" || echo "No changes to commit"
           git push
-      - uses: reviewdog/action-actionlint@v1
+      - uses: reviewdog/action-actionlint@v1.73.0
         env:
           # https://www.shellcheck.net/wiki/
           SHELLCHECK_OPTS: "-e SC2086 -e SC2129"
@@ -126,7 +126,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           permission-contents: write
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           token: ${{ steps.generate-token.outputs.token }}
           ref: ${{github.event.pull_request.head.ref}}
@@ -138,7 +138,7 @@ jobs:
           dry: true
           no_commit: true
       - name: Lint
-        uses: DavidAnson/markdownlint-cli2-action@v23
+        uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           fix: true
           config: ${{ inputs.config-lint-path || '.github/config/.markdownlint.json' }}
@@ -191,10 +191,17 @@ jobs:
       - name: Prepare reviewdog cache path
         run: |
           mkdir -p "$HOME/reviewdog-bin"
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
       - name: Check links
-        uses: umbrelladocs/action-linkspector@v1
+        uses: umbrelladocs/action-linkspector@v1.5.5
+        env:
+          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome
         with:
           filter_mode: nofilter
           reporter: github-pr-review
           config_file: ${{ inputs.config-links-path || '.github/config/.linkspector.yml' }}
           fail_level: any
+          show_stats: true

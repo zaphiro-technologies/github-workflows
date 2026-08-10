@@ -1,9 +1,16 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-04-08
+## 0.0.3-dev - 2026-08-01
 
 ### Features
 
+- js & docker workflow: allow to use private repos during lint & build (PR #304
+  by @chicco785)
+- Support Corporate deployments (PR #300 by @cosimomeli)
+- js workflow: shared workflow for javascript builds based on yarn2 (PR #287 by
+  @chicco785)
+- docker wf: support login to docker hub to retrieve dhi.io images (PR #286 by
+  @chicco785)
 - python workflow: ensure python version consistency (PR #246 by @chicco785)
 - add-to-project wf: add stale issues bot (PR #231 by @chicco785)
 - support ALL for deployment (PR #222 by @chicco785)
@@ -47,13 +54,19 @@
   contains `docker` (PR #99 by @chicco785)
 - golang workflow: skip code coverage if the actor is dependabot (PR #100 by
   @cosimomeli)
-- markdown workflow: run spellcheck only on actually changed \*.md files (PR #96
+- markdown workflow: run spellcheck only on actually changed *.md files (PR #96
   by @chicco785)
 - Support different grammar check modalities (local and online) in the script
   (PR #89 by @chicco785)
 
 ### Bug Fixes
 
+- deployment: update tag only where the app entry already exists (PR #321 by
+  @cosimomeli)
+- markdown wf: fix chrome for puppeteer (PR #299 by @chicco785)
+- Use Linkspector 1.4.1 (PR #296 by @cosimomeli)
+- approve and merge wf: pr were failing checks are not required should be merged
+  (PR #292 by @chicco785)
 - python workflow: fix missing registry login to fetch private images (PR #281
   by @chicco785)
 - Fix DVC version 3.66.1 (PR #278 by @cosimomeli)
@@ -78,6 +91,7 @@
 
 ### Continuous Integration
 
+- Add 3-day Dependabot cooldown (PR #294 by @chicco785)
 - Separate issue management from project management (PR #236 by @chicco785)
 - new-release workflow: delegate to makefile the update of project files (PR
   #192 by @kwitekrac)
@@ -96,6 +110,65 @@
 
 ### Dependencies
 
+- Bump actions/setup-python from 6.3.0 to 7.0.0 (PR #322 by @dependabot[bot])
+- Bump reviewdog/action-actionlint from 1.72.0 to 1.73.0 (PR #324 by
+  @dependabot[bot])
+- Bump aws-actions/configure-aws-credentials from 6.2.2 to 6.2.3 (PR #325 by
+  @dependabot[bot])
+- Bump actions/checkout from 7.0.0 to 7.0.1 (PR #326 by @dependabot[bot])
+- Bump docker/login-action from 4 to 4.5.1 (PR #323 by @dependabot[bot])
+- Bump actions/setup-python from 6 to 6.3.0 (PR #316 by @dependabot[bot])
+- Bump reviewdog/action-actionlint from 1 to 1.72.0 (PR #317 by
+  @dependabot[bot])
+- Bump actions/setup-go from 6 to 7 (PR #318 by @dependabot[bot])
+- Bump actions/setup-node from 6.4.0 to 7.0.0 (PR #319 by @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 8.2.0 to 8.2.1 (PR #320 by
+  @dependabot[bot])
+- Bump aws-actions/configure-aws-credentials from 6.2.1 to 6.2.2 (PR #314 by
+  @dependabot[bot])
+- Bump actions/setup-node from 6 to 6.4.0 (PR #315 by @dependabot[bot])
+- Bump stefanzweifel/git-auto-commit-action from 7.1.0 to 7.2.0 (PR #310 by
+  @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 23 to 24 (PR #311 by
+  @dependabot[bot])
+- Bump aws-actions/configure-aws-credentials from 6 to 6.2.1 (PR #312 by
+  @dependabot[bot])
+- Bump golangci/golangci-lint-action from 9.2.1 to 9.3.0 (PR #313 by
+  @dependabot[bot])
+- Bump golangci/golangci-lint-action from 9 to 9.2.1 (PR #307 by
+  @dependabot[bot])
+- Bump stefanzweifel/git-auto-commit-action from 7 to 7.1.0 (PR #308 by
+  @dependabot[bot])
+- Bump actions/cache from 5.0.5 to 6.1.0 (PR #309 by @dependabot[bot])
+- Bump actions/cache from 5 to 5.0.5 (PR #305 by @dependabot[bot])
+- Bump actions/checkout from 6.0.3 to 7.0.0 (PR #306 by @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 8.1.0 to 8.2.0 (PR #302 by
+  @dependabot[bot])
+- Bump umbrelladocs/action-linkspector from 1.5.2 to 1.5.4 (PR #303 by
+  @dependabot[bot])
+- Bump actions/checkout from 6.0.2 to 6.0.3 (PR #301 by @dependabot[bot])
+- Bump actions/checkout from 6 to 6.0.2 (PR #298 by @dependabot[bot])
+- Bump umbrelladocs/action-linkspector from 1.4.1 to 1.5.2 (PR #297 by
+  @dependabot[bot])
+- Bump umbrelladocs/action-linkspector from 1 to 1.5.1 (PR #295 by
+  @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 8.0.0 to 8.1.0 (PR #293 by
+  @dependabot[bot])
+- Bump aquasecurity/trivy-action from 0.35.0 to 0.36.0 (PR #291 by
+  @dependabot[bot])
+- Bump reproducible-containers/buildkit-cache-dance from 3.3.2 to 3.4.0 (PR #290
+  by @dependabot[bot])
+- Bump actions/add-to-project from 1.0.2 to 2.0.0 (PR #288 by @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 7.1.0 to 8.0.0 (PR #289 by
+  @dependabot[bot])
+- Bump aquasecurity/trivy-action from 0.35.0 to 0.36.0 (PR #285 by
+  @dependabot[bot])
+- Bump actions/github-script from 8 to 9 (PR #283 by @dependabot[bot])
+- Bump oras-project/setup-oras from 1 to 2 (PR #280 by @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 7.0.0 to 7.1.0 (PR #279 by
+  @dependabot[bot])
+- Bump stefanzweifel/git-auto-commit-action from 5 to 7 (PR #273 by
+  @dependabot[bot])
 - Bump DavidAnson/markdownlint-cli2-action from 22 to 23 (PR #275 by
   @dependabot[bot])
 - Bump actions/download-artifact from 4 to 8 (PR #274 by @dependabot[bot])
