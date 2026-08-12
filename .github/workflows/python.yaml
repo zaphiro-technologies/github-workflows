@@ -82,6 +82,8 @@ jobs:
               - '.docker/*.yaml'
               - 'poetry.lock'
               - 'pyproject.toml'
+              - '*.sql'
+              - '.env.example'
   lint:
     # Check if the PR is not from a fork
     runs-on: ubuntu-latest
