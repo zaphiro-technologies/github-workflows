@@ -1,3 +1,17 @@
+# Copyright 2026 Zaphiro Technologies
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Copyright 2024 Zaphiro Technologies
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +58,16 @@ on:
         default: false
         type: boolean
         description: True to install and configure dvc
+      upload-artefacts:
+        required: false
+        default: true
+        type: boolean
+        description: False to skip uploading the build artefact
+      upload-artefacts-dir:
+        required: false
+        default: "./build"
+        type: string
+        description: Directory with the build artefact to upload
       repositories:
         required: false
         type: string
@@ -176,9 +200,10 @@ jobs:
         run: |
           yarn build
       - name: Upload build artifact
+        if: ${{ inputs.upload-artefacts }}
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./build
+          path: ${{ inputs.upload-artefacts-dir }}
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
         uses: SonarSource/sonarqube-scan-action@v8.2.1
