@@ -58,8 +58,7 @@ jobs:
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
 
-      # A Graphify commit triggers a new synchronize event because we use
-      # a GitHub App token. Skip that run to avoid updating the graph twice.
+      # A Graphify commit triggers another synchronize event.
       - name: Check for Graphify-generated commit
         id: guard
         shell: bash
@@ -98,6 +97,13 @@ jobs:
             exit 1
           }
 
+      - name: Save Graphify outputs
+        if: steps.guard.outputs.skip != 'true'
+        shell: bash
+        run: |
+          cp "${GRAPHIFY_OUT}/graph.json" /tmp/graphify-graph-before.json
+          cp "${GRAPHIFY_OUT}/manifest.json" /tmp/graphify-manifest-before.json
+
       - name: Update Graphify graph
         if: steps.guard.outputs.skip != 'true'
         run: graphify update .
@@ -107,19 +113,36 @@ jobs:
         id: changes
         shell: bash
         run: |
-          if git diff --quiet -- \
-            "${GRAPHIFY_OUT}/graph.json" \
-            "${GRAPHIFY_OUT}/manifest.json"; then
-            echo "Graph is already up to date."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Graph changes detected."
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+          jq 'with_entries(.value |= del(.mtime, .seen))' \
+            /tmp/graphify-manifest-before.json > /tmp/graphify-manifest-before-normalized.json
+          jq 'with_entries(.value |= del(.mtime, .seen))' \
+            "${GRAPHIFY_OUT}/manifest.json" > /tmp/graphify-manifest-after-normalized.json
+
+          graph_changed=false
+          if ! git diff --quiet -- "${GRAPHIFY_OUT}/graph.json"; then
+            graph_changed=true
           fi
 
-      # Other workflows in the repository may also modify the PR branch
-      # (for example automated lint fixes). Never commit a graph generated
-      # from an outdated PR head.
+          manifest_changed=false
+          if ! cmp -s /tmp/graphify-manifest-before-normalized.json \
+            /tmp/graphify-manifest-after-normalized.json; then
+            manifest_changed=true
+          fi
+
+          if [ "$graph_changed" = "true" ] || [ "$manifest_changed" = "true" ]; then
+            echo "Meaningful Graphify changes detected."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Only volatile manifest metadata changed; restoring outputs."
+            cp /tmp/graphify-graph-before.json "${GRAPHIFY_OUT}/graph.json"
+            cp /tmp/graphify-manifest-before.json "${GRAPHIFY_OUT}/manifest.json"
+            git diff --quiet -- \
+              "${GRAPHIFY_OUT}/graph.json" \
+              "${GRAPHIFY_OUT}/manifest.json"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Never commit a graph generated from an outdated PR head.
       - name: Check PR branch is still current
         if: steps.changes.outputs.changed == 'true'
         id: freshness
