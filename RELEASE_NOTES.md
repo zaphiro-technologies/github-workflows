@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-08-01
+## 0.0.3-dev - 2026-08-26
 
 ### Features
 
@@ -61,6 +61,7 @@
 
 ### Bug Fixes
 
+- fix(release): preserve generated changelog (PR #335 by @tejo)
 - deployment: update tag only where the app entry already exists (PR #321 by
   @cosimomeli)
 - markdown wf: fix chrome for puppeteer (PR #299 by @chicco785)
@@ -110,13 +111,20 @@
 
 ### Dependencies
 
+- Bump reviewdog/action-actionlint from 1.73.1 to 1.73.2 (PR #332 by
+  @dependabot[bot])
+- Bump reviewdog/action-actionlint from 1.73.0 to 1.73.1 (PR #329 by
+  @dependabot[bot])
+- Bump umbrelladocs/action-linkspector from 1.5.4 to 1.5.5 (PR #327 by
+  @dependabot[bot])
+- Bump docker/login-action from 4.5.1 to 4.6.0 (PR #328 by @dependabot[bot])
+- Bump docker/login-action from 4 to 4.5.1 (PR #323 by @dependabot[bot])
 - Bump actions/setup-python from 6.3.0 to 7.0.0 (PR #322 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.72.0 to 1.73.0 (PR #324 by
   @dependabot[bot])
 - Bump aws-actions/configure-aws-credentials from 6.2.2 to 6.2.3 (PR #325 by
   @dependabot[bot])
 - Bump actions/checkout from 7.0.0 to 7.0.1 (PR #326 by @dependabot[bot])
-- Bump docker/login-action from 4 to 4.5.1 (PR #323 by @dependabot[bot])
 - Bump actions/setup-python from 6 to 6.3.0 (PR #316 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1 to 1.72.0 (PR #317 by
   @dependabot[bot])
