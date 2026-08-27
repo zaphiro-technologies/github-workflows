@@ -38,8 +38,7 @@ permissions:
   contents: read
 
 concurrency:
-  group:
-    ${{ github.repository }}-${{ github.event.pull_request.number }}-graphify
+  group: ${{ github.repository }}-${{ github.event.pull_request.number }}-graphify
   cancel-in-progress: true
 
 jobs:
@@ -48,8 +47,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # We need write access to the PR branch, so fork PRs are intentionally skipped.
-    if:
-      ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
 
     env:
       GRAPHIFY_OUT: .graphify
