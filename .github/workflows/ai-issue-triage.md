@@ -5,7 +5,8 @@ on: issue labeled ai-triage
 
 engine:
   id: copilot
-  model: gpt-5-codex
+
+model: gpt-5-codex
 
 permissions:
   contents: read
@@ -78,11 +79,14 @@ Use the Graphify MCP tools to:
 
 Do not treat the Graphify graph as the source of truth.
 
-After Graphify identifies relevant areas, inspect the actual repository source code before making conclusions.
+After Graphify identifies relevant areas, inspect the actual repository source
+code before making conclusions.
 
-Use the repository filesystem to inspect the relevant files and verify how the implementation actually works.
+Use the repository filesystem to inspect the relevant files and verify how the
+implementation actually works.
 
-Also inspect relevant Markdown documentation because documentation files are not represented in the Graphify code graph.
+Also inspect relevant Markdown documentation because documentation files are not
+represented in the Graphify code graph.
 
 Look for useful documentation such as:
 
@@ -94,25 +98,32 @@ Look for useful documentation such as:
 
 Do not read all documentation blindly.
 
-Use the issue and the code areas identified through Graphify to decide which documentation is relevant.
+Use the issue and the code areas identified through Graphify to decide which
+documentation is relevant.
 
-If documentation and implementation disagree, treat the current source code as the source of truth and mention the discrepancy when relevant.
+If documentation and implementation disagree, treat the current source code as
+the source of truth and mention the discrepancy when relevant.
 
-Continue using Graphify iteratively when additional relationships or affected components need to be understood.
+Continue using Graphify iteratively when additional relationships or affected
+components need to be understood.
 
 Prefer the smallest relevant code surface needed to understand the issue.
 
-Do not propose unrelated refactors or architectural changes unless they are clearly required by the issue.
+Do not propose unrelated refactors or architectural changes unless they are
+clearly required by the issue.
 
-Prefer simple changes that are consistent with the existing codebase and its current patterns.
+Prefer simple changes that are consistent with the existing codebase and its
+current patterns.
 
 Do not modify repository files.
 
 Do not create branches, commits or pull requests.
 
-Do not invent files, symbols, APIs, behavior or implementation details that cannot be verified from the repository.
+Do not invent files, symbols, APIs, behavior or implementation details that
+cannot be verified from the repository.
 
-If something cannot be determined confidently, explicitly mention it as an open question.
+If something cannot be determined confidently, explicitly mention it as an open
+question.
 
 ## Output
 
@@ -124,7 +135,8 @@ Post exactly one comment on the triggering issue using the following structure:
 
 Briefly explain what the issue appears to require.
 
-Describe the expected result of the change without going into implementation details yet.
+Describe the expected result of the change without going into implementation
+details yet.
 
 #### Relevant Code
 
@@ -140,7 +152,8 @@ Do not list files that are only loosely related to the issue.
 
 #### Relevant Documentation
 
-List documentation that provides useful requirements, architecture, configuration or implementation context.
+List documentation that provides useful requirements, architecture,
+configuration or implementation context.
 
 Briefly explain what useful information each document provides.
 
@@ -172,9 +185,11 @@ Do not include unrelated cleanup or refactoring.
 
 #### Impact
 
-Describe other components, callers, consumers, data flows or behaviors that could be affected by the change.
+Describe other components, callers, consumers, data flows or behaviors that
+could be affected by the change.
 
-Use Graphify relationships and the actual source code to identify the likely impact.
+Use Graphify relationships and the actual source code to identify the likely
+impact.
 
 Distinguish between:
 
@@ -196,13 +211,15 @@ Include:
 
 Reference existing test files or test patterns when they are relevant.
 
-Prefer realistic tests over mocks when the existing repository makes that practical.
+Prefer realistic tests over mocks when the existing repository makes that
+practical.
 
 #### Action Plan
 
 Provide a concrete and ordered implementation plan for solving the issue.
 
-The plan should be detailed enough that a software engineer could follow it step by step.
+The plan should be detailed enough that a software engineer could follow it step
+by step.
 
 For each step:
 
@@ -223,11 +240,13 @@ Keep the plan focused on the issue.
 
 Avoid overengineering, speculative abstractions and unrelated refactors.
 
-If multiple implementation approaches are possible, recommend the simplest approach that is consistent with the current codebase and briefly explain why.
+If multiple implementation approaches are possible, recommend the simplest
+approach that is consistent with the current codebase and briefly explain why.
 
 #### Suggested LLM Prompt
 
-Provide a ready-to-copy prompt that a software engineer can give to a coding LLM to implement the issue.
+Provide a ready-to-copy prompt that a software engineer can give to a coding LLM
+to implement the issue.
 
 The prompt must be based only on information verified during this analysis.
 
@@ -253,10 +272,12 @@ The prompt must explicitly instruct the coding LLM to:
 - avoid unrelated refactors;
 - avoid inventing APIs, files, symbols or behavior;
 - add or update realistic tests;
-- explain any necessary deviation from the proposed plan if the actual code requires it;
+- explain any necessary deviation from the proposed plan if the actual code
+  requires it;
 - run the relevant tests and validation commands when possible.
 
-Do not tell the coding LLM that the proposed implementation is guaranteed to be correct.
+Do not tell the coding LLM that the proposed implementation is guaranteed to be
+correct.
 
 The generated prompt should be directly copy-pasteable.
 
@@ -264,7 +285,8 @@ Format it inside a fenced text block.
 
 #### Open Questions
 
-List anything that cannot be determined confidently from the issue, source code, Graphify graph or documentation.
+List anything that cannot be determined confidently from the issue, source code,
+Graphify graph or documentation.
 
 For each open question, briefly explain why it matters to the implementation.
 
