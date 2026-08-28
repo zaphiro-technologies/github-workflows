@@ -141,7 +141,19 @@ question.
 
 ## Output
 
-Post exactly one comment on the triggering issue using the following structure:
+After completing a successful triage analysis, you MUST call the `add-comment`
+safe-output tool exactly once. Pass the complete `### AI Technical Analysis`
+as the body of that `add-comment` call.
+
+Do not merely return the analysis in the final agent response. Do not assume
+normal agent output will automatically become a GitHub comment. Do not call
+`noop` after a successful analysis. A successful triage MUST end with exactly
+one `add-comment` safe-output request. Use `noop` only when there is genuinely
+no actionable analysis to provide. If required information is missing and
+prevents a reliable analysis, use the appropriate missing-data behavior. Do
+not emit both `add-comment` and `noop` for a successful triage.
+
+The comment must use the following structure:
 
 ### AI Technical Analysis
 
@@ -183,19 +195,22 @@ Reference concrete files and symbols whenever possible.
 
 Focus only on the parts necessary to understand the issue.
 
-#### Likely Changes
+#### Implementation Plan
 
-Describe the changes that would probably be required to implement the issue.
+Provide one concrete, ordered plan for solving the issue. Combine the changes,
+locations, reasons, dependencies, compatibility considerations, relevant
+implementation patterns, tests and validation in this section. Name concrete
+files, packages and symbols whenever known. Prefer exact existing symbols over
+generic wording and reuse verified patterns from the repository where possible.
 
-Reference concrete files, symbols or components whenever possible.
+Clearly distinguish facts directly confirmed from source, Graphify,
+configuration or documentation from the smallest proposed implementation
+change. Mark unresolved requirements or decisions as open questions. Do not
+present proposals or uncertainties as verified behavior.
 
-For each likely change, explain:
-
-- what would change;
-- why it would change;
-- how it relates to the issue.
-
-Do not include unrelated cleanup or refactoring.
+Avoid speculative architecture, invented configuration contracts, new
+abstractions that the code does not clearly require, unrelated refactors and
+unverified files, symbols or APIs.
 
 #### Impact
 
@@ -228,41 +243,13 @@ Reference existing test files or test patterns when they are relevant.
 Prefer realistic tests over mocks when the existing repository makes that
 practical.
 
-#### Action Plan
-
-Provide a concrete and ordered implementation plan for solving the issue.
-
-The plan should be detailed enough that a software engineer could follow it step
-by step.
-
-For each step:
-
-1. reference the relevant file, package or symbol when known;
-2. explain what should be inspected or changed;
-3. explain why the step is necessary;
-4. mention dependencies on previous steps when relevant.
-
-The plan should include:
-
-- implementation steps;
-- schema or configuration changes if required;
-- compatibility considerations if relevant;
-- tests to add or update;
-- validation commands or checks when they can be inferred from the repository.
-
-Keep the plan focused on the issue.
-
-Avoid overengineering, speculative abstractions and unrelated refactors.
-
-If multiple implementation approaches are possible, recommend the simplest
-approach that is consistent with the current codebase and briefly explain why.
-
 #### Suggested LLM Prompt
 
 Provide a ready-to-copy prompt that a software engineer can give to a coding LLM
 to implement the issue.
 
-The prompt must be based only on information verified during this analysis.
+The prompt must be based only on information verified during this analysis and
+the proposed steps in the Implementation Plan.
 
 Include:
 
@@ -270,7 +257,7 @@ Include:
 - the relevant files, packages and symbols;
 - the current behavior;
 - the expected behavior;
-- the proposed action plan;
+- the proposed Implementation Plan;
 - important implementation constraints;
 - tests that should be added or updated;
 - relevant edge cases;
@@ -291,7 +278,7 @@ The prompt must explicitly instruct the coding LLM to:
 - run the relevant tests and validation commands when possible.
 
 Do not tell the coding LLM that the proposed implementation is guaranteed to be
-correct.
+correct. Keep verified facts, proposed changes and open questions distinct.
 
 The generated prompt should be directly copy-pasteable.
 
