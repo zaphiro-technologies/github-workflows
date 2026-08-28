@@ -38,9 +38,10 @@ mcp-servers:
       - --from
       - "graphifyy[mcp]==0.9.48"
       - graphify-mcp
-      - \${GITHUB_WORKSPACE}/.graphify/graph.json
+      - --graph
+      - /workspace/.graphify/graph.json
     mounts:
-      - \${GITHUB_WORKSPACE}:\${GITHUB_WORKSPACE}:ro
+      - \${GITHUB_WORKSPACE}:/workspace:ro
     allowed:
       - query_graph
       - get_node
