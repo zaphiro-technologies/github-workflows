@@ -10,6 +10,7 @@ model: gpt-5-codex
 
 permissions:
   contents: read
+  issues: read
   copilot-requests: write
 
 network: defaults
@@ -31,12 +32,15 @@ pre-agent-steps:
 
 mcp-servers:
   graphify:
-    command: uvx
-    args:
+    container: "ghcr.io/astral-sh/uv:0.12.7-python3.12-alpine"
+    entrypoint: "uvx"
+    entrypointArgs:
       - --from
       - "graphifyy[mcp]==0.9.48"
       - graphify-mcp
-      - .graphify/graph.json
+      - \${GITHUB_WORKSPACE}/.graphify/graph.json
+    mounts:
+      - \${GITHUB_WORKSPACE}:\${GITHUB_WORKSPACE}:ro
     allowed:
       - query_graph
       - get_node
