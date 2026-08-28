@@ -115,11 +115,103 @@ Do not read all documentation blindly.
 Use the issue and the code areas identified through Graphify to decide which
 documentation is relevant.
 
+When transport, configuration or runtime infrastructure changes, inspect the
+concrete operational surfaces identified by the affected code. Look for
+relevant `.env` files, Docker or compose files, broker initialization scripts,
+Kubernetes or Helm manifests, CI fixtures, test infrastructure, configuration
+examples, README tables and architecture documentation. Use discovered
+identifiers such as environment variables, queue or stream names, config fields
+and service names to find their consumers. Do not scan the whole repository
+blindly.
+
 If documentation and implementation disagree, treat the current source code as
 the source of truth and mention the discrepancy when relevant.
 
 Continue using Graphify iteratively when additional relationships or affected
 components need to be understood.
+
+### System Boundaries and Contracts
+
+Recognize when the issue crosses a system boundary, such as a producer and
+consumer, queue or stream, message broker, API, RPC, serialization format,
+event-driven interface, persistence boundary, external service contract or
+protocol/data-format migration.
+
+When a boundary is involved, investigate the contract and logical semantics,
+not only the local implementation. Do not assume that changing a transport or
+library preserves the existing behavior.
+
+When relevant and supported by evidence, determine:
+
+- the logical unit of work or data;
+- whether one logical operation uses one or multiple physical messages,
+  requests or records;
+- framing, metadata and discriminators;
+- correlation identifiers and ordering requirements;
+- completion or boundary markers;
+- deduplication and idempotency expectations;
+- acknowledgement, commit, offset or checkpoint semantics;
+- retry, replay and partial-processing behavior;
+- malformed-input and failure behavior;
+- compatibility and versioning requirements.
+
+Use only the dimensions that matter to the issue. Do not produce a protocol
+checklist mechanically when the issue does not provide evidence of stateful or
+cross-boundary behavior.
+
+When analyzing a consumer change, look for the corresponding producer or
+upstream contract when it is available. When analyzing a producer change, look
+for downstream consumers. Use Graphify relationships, source code, tests,
+shared schemas or models, configuration, documentation and local Docker or
+test infrastructure to trace that contract.
+
+If the relevant producer or consumer is in another repository that is not
+available, do not invent its behavior. State the required external contract as
+an Open Question and name the upstream or downstream component that must be
+checked.
+
+When reusing an existing implementation pattern, distinguish explicitly
+between:
+
+1. structural behavior verified as reusable, such as construction, lifecycle,
+   callbacks or reconnect handling;
+2. behavior that is only analogous;
+3. protocol and business semantics that still require independent verification.
+
+Reuse verified structural patterns, but independently verify protocol and
+business semantics. Shared transports, libraries or APIs do not by themselves
+establish equivalent message granularity, offset strategy, commit behavior or
+replay semantics.
+
+### Progress and Failure Semantics
+
+For stateful or replayable code involving ACKs, offsets, checkpoints,
+transactions, commits, cursors or persistent progress markers, determine the
+logical success boundary:
+
+- what must complete before progress is acknowledged;
+- whether progress applies to one physical input or a larger logical
+  operation;
+- what is replayed after a restart;
+- whether early commits can lose data;
+- whether late commits can duplicate side effects;
+- whether processing is idempotent.
+
+Do not copy acknowledgement or offset behavior from another consumer without
+verifying that its logical unit and failure semantics are the same.
+
+When malformed input or processing errors are relevant, determine the actual
+behavior: log and skip, retry, acknowledge or reject, dead-letter, stop,
+continue, restart, replay, or clean up partial state. Label this behavior as
+verified or proposed. If the repository and issue do not establish the required
+policy, put the decision in Open Questions instead of inventing one.
+
+If multiple inputs may contribute to one logical result, determine how they are
+correlated, where incomplete state is stored, how completion is detected, what
+happens to old or incomplete state, whether all expected components are
+required, when side effects occur, when progress is committed, and what
+happens on restart. Apply this only when repository evidence suggests such
+state.
 
 Prefer the smallest relevant code surface needed to understand the issue.
 
@@ -203,6 +295,12 @@ implementation patterns, tests and validation in this section. Name concrete
 files, packages and symbols whenever known. Prefer exact existing symbols over
 generic wording and reuse verified patterns from the repository where possible.
 
+For each relevant step, include the verified current behavior, the smallest
+proposed change, the structural pattern to reuse, and any semantic behavior
+that must not be inferred from that pattern. Include ordering or dependency,
+compatibility, failure/progress semantics and validation when they affect the
+step. Keep steps concise when those dimensions are not relevant.
+
 Clearly distinguish facts directly confirmed from source, Graphify,
 configuration or documentation from the smallest proposed implementation
 change. Mark unresolved requirements or decisions as open questions. Do not
@@ -238,6 +336,15 @@ Include:
 - relevant edge cases;
 - integration or end-to-end tests when appropriate.
 
+Derive tests from the new state transition or failure mode introduced by the
+issue, rather than listing generic categories. When supported by the
+implementation semantics, consider logical completion boundaries, partial
+operations, restart/replay, progress initialization and resume, malformed
+input before progress, malformed input after partial state,
+ordering/correlation, duplicate input, missing components, shutdown/reconnect
+and unchanged downstream behavior. Recommend only the cases relevant to the
+issue and avoid inflating the test list.
+
 Reference existing test files or test patterns when they are relevant.
 
 Prefer realistic tests over mocks when the existing repository makes that
@@ -262,6 +369,15 @@ Include:
 - tests that should be added or updated;
 - relevant edge cases;
 - any known compatibility requirements.
+
+When a system boundary is relevant, carry verified facts about framing,
+correlation, logical completion, progress/acknowledgement and replay or failure
+behavior into this prompt. If those facts are unresolved, instruct the coding
+LLM to verify the producer/consumer contract before implementing. Preserve the
+distinction between a structural pattern that can be reused and protocol
+semantics that must not be copied without verification. For example, it may be
+appropriate to reuse consumer construction while independently verifying its
+offset behavior.
 
 The prompt must explicitly instruct the coding LLM to:
 
@@ -289,6 +405,10 @@ Format it inside a fenced text block.
 List anything that cannot be determined confidently from the issue, source code,
 Graphify graph or documentation.
 
-For each open question, briefly explain why it matters to the implementation.
+An Open Question must materially affect correctness or compatibility, cannot be
+answered from the inspected evidence, and require product, protocol, upstream
+or operational clarification. For each one, state the unknown decision, why it
+matters, and which component or source should be checked to resolve it. Do not
+include low-value speculative questions.
 
 Omit this section if there are no meaningful open questions.
