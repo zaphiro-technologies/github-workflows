@@ -82,6 +82,15 @@ Use the Graphify MCP tools to:
 - inspect callers, callees and neighboring symbols;
 - follow relationships between relevant components when useful.
 
+IMPORTANT: The Graphify MCP server is already configured with the correct
+repository graph at startup. When calling any Graphify MCP tool, do not pass
+`project_path`; omit it entirely from every Graphify call. Do not pass
+`${{ github.workspace }}`, `${GITHUB_WORKSPACE}`, `/workspace`, `.graphify`, or
+any repository path as `project_path`. Let the Graphify MCP server use its
+configured default graph, which is the authoritative navigation graph for this
+workflow. This applies to `query_graph`, `get_node`, `get_neighbors`, and
+`shortest_path`.
+
 Do not treat the Graphify graph as the source of truth.
 
 After Graphify identifies relevant areas, inspect the actual repository source
