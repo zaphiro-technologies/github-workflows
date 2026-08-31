@@ -24,7 +24,20 @@ tools:
   github:
     toolsets:
       - repos
-    github-token: ${{ secrets.CROSS_REPO_READ_TOKEN }}
+    github-app:
+      client-id: ${{ secrets.APP_ID }}
+      private-key: ${{ secrets.APP_SECRET }}
+      owner: zaphiro-technologies
+      repositories:
+        - event-handler
+        - state-estimator
+        - storer
+        - cim-go
+        - topology-processor
+        - integration-test
+        - c37-118-server
+        - k8s-deployments
+        - fault-locator
     min-integrity: approved
     allowed-repos:
       - "zaphiro-technologies/event-handler"
