@@ -33,6 +33,9 @@ tools:
       - "zaphiro-technologies/cim-go"
       - "zaphiro-technologies/topology-processor"
       - "zaphiro-technologies/integration-test"
+      - "zaphiro-technologies/c37-118-server"
+      - "zaphiro-technologies/k8s-deployments"
+      - "zaphiro-technologies/fault-locator"
 
 pre-agent-steps:
   - name: Verify Graphify graph
