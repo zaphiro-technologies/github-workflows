@@ -1,0 +1,192 @@
+# Copyright 2026 Zaphiro Technologies
+
+#
+
+# Licensed under the Apache License, Version 2.0 (the "License")
+
+# you may not use this file except in compliance with the License
+
+# You may obtain a copy of the License at
+
+#
+
+# <http://www.apache.org/licenses/LICENSE-2.0>
+
+#
+
+# Unless required by applicable law or agreed to in writing, software
+
+# distributed under the License is distributed on an "AS IS" BASIS
+
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied
+
+# See the License for the specific language governing permissions and
+
+# limitations under the License
+
+name: Update Graphify Code Graph
+
+on:
+  workflow_call:
+    secrets:
+      APP_ID:
+        required: true
+      APP_SECRET:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.event.pull_request.number }}-graphify
+  cancel-in-progress: true
+
+jobs:
+  update-graph:
+    name: Update Graphify code graph
+    runs-on: ubuntu-latest
+
+    # We need write access to the PR branch, so fork PRs are intentionally skipped.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+
+    env:
+      GRAPHIFY_OUT: .graphify
+      GRAPHIFY_VERSION: "0.9.48"
+
+    steps:
+      - name: Generate GitHub App token
+        uses: actions/create-github-app-token@v3
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ steps.generate-token.outputs.token }}
+          fetch-depth: 0
+
+      # A Graphify commit triggers another synchronize event.
+      - name: Check for Graphify-generated commit
+        id: guard
+        shell: bash
+        run: |
+          if git log -1 --pretty=%B | grep -Fq '[graphify skip]'; then
+            echo "Graphify-generated commit detected. Skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Python
+        if: steps.guard.outputs.skip != 'true'
+        id: setup-python
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Graphify
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          PIPX_DEFAULT_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        run: pipx install "graphifyy==${GRAPHIFY_VERSION}"
+
+      - name: Verify Graphify graph
+        if: steps.guard.outputs.skip != 'true'
+        shell: bash
+        run: |
+          test -f "${GRAPHIFY_OUT}/graph.json" || {
+            echo "::error::${GRAPHIFY_OUT}/graph.json does not exist"
+            exit 1
+          }
+
+          test -f "${GRAPHIFY_OUT}/manifest.json" || {
+            echo "::error::${GRAPHIFY_OUT}/manifest.json does not exist"
+            exit 1
+          }
+
+      - name: Save Graphify outputs
+        if: steps.guard.outputs.skip != 'true'
+        shell: bash
+        run: |
+          cp "${GRAPHIFY_OUT}/graph.json" /tmp/graphify-graph-before.json
+          cp "${GRAPHIFY_OUT}/manifest.json" /tmp/graphify-manifest-before.json
+
+      - name: Update Graphify graph
+        if: steps.guard.outputs.skip != 'true'
+        run: graphify update .
+
+      - name: Check Graphify changes
+        if: steps.guard.outputs.skip != 'true'
+        id: changes
+        shell: bash
+        run: |
+          jq 'with_entries(.value |= del(.mtime, .seen))' \
+            /tmp/graphify-manifest-before.json > /tmp/graphify-manifest-before-normalized.json
+          jq 'with_entries(.value |= del(.mtime, .seen))' \
+            "${GRAPHIFY_OUT}/manifest.json" > /tmp/graphify-manifest-after-normalized.json
+
+          graph_changed=false
+          if ! git diff --quiet -- "${GRAPHIFY_OUT}/graph.json"; then
+            graph_changed=true
+          fi
+
+          manifest_changed=false
+          if ! cmp -s /tmp/graphify-manifest-before-normalized.json \
+            /tmp/graphify-manifest-after-normalized.json; then
+            manifest_changed=true
+          fi
+
+          if [ "$graph_changed" = "true" ] || [ "$manifest_changed" = "true" ]; then
+            echo "Meaningful Graphify changes detected."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Only volatile manifest metadata changed; restoring outputs."
+            cp /tmp/graphify-graph-before.json "${GRAPHIFY_OUT}/graph.json"
+            cp /tmp/graphify-manifest-before.json "${GRAPHIFY_OUT}/manifest.json"
+            git diff --quiet -- \
+              "${GRAPHIFY_OUT}/graph.json" \
+              "${GRAPHIFY_OUT}/manifest.json"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Never commit a graph generated from an outdated PR head.
+      - name: Check PR branch is still current
+        if: steps.changes.outputs.changed == 'true'
+        id: freshness
+        shell: bash
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git fetch origin "$BRANCH"
+
+          LOCAL_SHA="$(git rev-parse HEAD)"
+          REMOTE_SHA="$(git rev-parse "origin/$BRANCH")"
+
+          if [ "$LOCAL_SHA" != "$REMOTE_SHA" ]; then
+            echo "PR branch changed while Graphify was running."
+            echo "A new synchronize event will update the graph."
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit Graphify graph
+        if: |
+          steps.changes.outputs.changed == 'true' &&
+          steps.freshness.outputs.current == 'true'
+        shell: bash
+        run: |
+          git config --global user.name 'Bot'
+          git config --global user.email 'bot@zaphiro.ch'
+
+          git add \
+            "${GRAPHIFY_OUT}/graph.json" \
+            "${GRAPHIFY_OUT}/manifest.json"
+
+          git commit -m "chore: update Graphify code graph [graphify skip]"
+          git push
