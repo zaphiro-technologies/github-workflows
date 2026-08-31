@@ -21,6 +21,18 @@ runtimes:
 
 tools:
   bash: true
+  github:
+    toolsets:
+      - repos
+    github-token: ${{ secrets.CROSS_REPO_READ_TOKEN }}
+    min-integrity: approved
+    allowed-repos:
+      - "zaphiro-technologies/event-handler"
+      - "zaphiro-technologies/state-estimator"
+      - "zaphiro-technologies/storer"
+      - "zaphiro-technologies/cim-go"
+      - "zaphiro-technologies/topology-processor"
+      - "zaphiro-technologies/integration-test"
 
 pre-agent-steps:
   - name: Verify Graphify graph
@@ -129,6 +141,51 @@ the source of truth and mention the discrepancy when relevant.
 
 Continue using Graphify iteratively when additional relationships or affected
 components need to be understood.
+
+### Cross-repository ecosystem investigation
+
+The triggering repository is always the primary investigation target. First use
+Graphify to understand its structure, verify Graphify findings against actual
+local source, inspect relevant local tests, configuration and documentation, and
+reconstruct the current local flow.
+
+Then determine whether the issue affects or depends on a contract outside the
+current repository. Concrete evidence of an external boundary includes:
+
+- producer/consumer relationships;
+- queue, stream, topic or exchange names;
+- event names;
+- protobuf, schema or model identifiers;
+- shared libraries or modules;
+- HTTP or gRPC contracts and API paths;
+- environment variable names or configuration keys;
+- persistence or database contracts;
+- explicit service references; and
+- deployment or runtime dependencies.
+
+Only when concrete evidence exists, use the GitHub `repos` tools for read-only
+cross-repository code search and for reading the minimum relevant external
+source, configuration, tests or shared contract needed to verify the
+relationship. Search only the explicitly allowed repositories and use
+identifiers discovered locally. Do not search every allowed repository blindly,
+search a repository merely because its name sounds related, clone or check out
+another repository, or perform any cross-repository write.
+
+Classify every cross-repository finding as follows and never convert an
+inference into a verified fact:
+
+- **VERIFIED**: confirmed by concrete external source, configuration or test
+  evidence. Include the repository, file/configuration or symbol, contract and
+  why the issue affects it when available.
+- **POTENTIAL**: local evidence strongly suggests the dependency, but external
+  evidence is unavailable or insufficient. Explain both the local evidence and
+  why it is not verified.
+- **OPEN QUESTION**: correctness materially depends on the external contract,
+  but the available evidence does not establish the answer. State exactly what
+  must be checked and name the likely source-of-truth component or repository.
+
+Cross-repository access is secondary to Graphify and local source analysis. Do
+not use it to broaden the investigation beyond concrete local evidence.
 
 ### System Boundaries and Contracts
 
@@ -287,6 +344,10 @@ Reference concrete files and symbols whenever possible.
 
 Focus only on the parts necessary to understand the issue.
 
+When an external boundary is verified, include the verified producer/consumer
+flow and distinguish verified facts, inferred relationships and unresolved
+contracts.
+
 #### Implementation Plan
 
 Provide one concrete, ordered plan for solving the issue. Combine the changes,
@@ -306,6 +367,13 @@ configuration or documentation from the smallest proposed implementation
 change. Mark unresolved requirements or decisions as open questions. Do not
 present proposals or uncertainties as verified behavior.
 
+Keep one unified plan. When ecosystem impact exists, distinguish changes
+required locally, verified coordinated external changes, potential external
+changes and contracts that must be verified before implementation. Do not tell a
+coding agent to edit another repository unless that need was actually verified;
+when evidence is incomplete, instruct it to verify the relevant producer or
+consumer contract first.
+
 Avoid speculative architecture, invented configuration contracts, new
 abstractions that the code does not clearly require, unrelated refactors and
 unverified files, symbols or APIs.
@@ -322,6 +390,15 @@ Distinguish between:
 
 - directly affected code;
 - possible secondary impact.
+
+When justified by evidence, expose direct triggering-repository changes,
+verified cross-repository effects, potential ecosystem effects,
+producer/consumer compatibility, shared contract changes,
+deployment/configuration impact, backward compatibility, rollout ordering,
+mixed-version concerns, integration-test implications, upstream producers and
+downstream consumers. Label cross-repository effects as **VERIFIED** or
+**POTENTIAL** and include relevant **OPEN QUESTION** items. Do not add these
+subsections when there is no external impact.
 
 Do not claim impact that cannot be supported by the repository.
 
@@ -349,6 +426,12 @@ Reference existing test files or test patterns when they are relevant.
 
 Prefer realistic tests over mocks when the existing repository makes that
 practical.
+
+When a cross-repository contract changes, derive only the relevant compatibility
+tests from the discovered semantics, such as producer/consumer compatibility,
+protocol or schema validation, cross-service configuration, end-to-end behavior,
+mixed-version compatibility, or rollout scenarios. Do not recommend every
+category mechanically.
 
 #### Suggested LLM Prompt
 
@@ -378,6 +461,13 @@ distinction between a structural pattern that can be reused and protocol
 semantics that must not be copied without verification. For example, it may be
 appropriate to reuse consumer construction while independently verifying its
 offset behavior.
+
+When ecosystem impact exists, state the primary repository to modify, verified
+external contracts, verified external repository impact, potential external
+impact and unresolved contracts. State what must be checked before modifying
+another repository. Preserve the distinction between **VERIFIED**, **PROPOSED**,
+**POTENTIAL** and **OPEN QUESTION**; never turn an uncertain cross-repository
+dependency into an implementation requirement.
 
 The prompt must explicitly instruct the coding LLM to:
 
