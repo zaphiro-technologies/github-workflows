@@ -50,6 +50,29 @@ tools:
       - "zaphiro-technologies/k8s-deployments"
       - "zaphiro-technologies/fault-locator"
 
+pre-steps:
+  - name: Generate GitHub App token
+    id: generate-token
+    uses: actions/create-github-app-token@v3
+    with:
+      app-id: ${{ secrets.APP_ID }}
+      private-key: ${{ secrets.APP_SECRET }}
+      owner: zaphiro-technologies
+      repositories: |
+        event-handler
+        state-estimator
+        storer
+        cim-go
+        topology-processor
+        integration-test
+        c37-118-server
+        k8s-deployments
+        fault-locator
+      permission-contents: read
+
+checkout:
+  github-token: ${{ steps.generate-token.outputs.token }}
+
 pre-agent-steps:
   - name: Verify Graphify graph
     run: |
