@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-08-26
+## 0.0.3-dev - 2026-08-31
 
 ### Features
 
+- Add Graphify code graph update workflow (PR #334 by @AntonioCeppellini)
 - js & docker workflow: allow to use private repos during lint & build (PR #304
   by @chicco785)
 - Support Corporate deployments (PR #300 by @cosimomeli)
