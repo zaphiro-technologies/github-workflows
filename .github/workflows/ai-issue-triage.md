@@ -251,6 +251,36 @@ QUESTION** merely because it is outside the triggering repository. "I cannot
 verify this" is valid only after the available targeted read-only investigation
 has been attempted.
 
+If an external boundary is established but the repository identity is not yet
+known, do not stop at **POTENTIAL** or **OPEN QUESTION** when concrete,
+distinctive technical identifiers are available. Use those identifiers for
+targeted, read-only repository and code discovery across the explicitly
+allowed repository set. Repository identity does not need to be known before
+discovery starts; identifying the candidate repository is the purpose of this
+search. Suitable identifiers, when actually discovered, include protobuf,
+schema, model, package, module, queue, stream, topic, exchange,
+environment/configuration key, event, API path, service ID, producer ID,
+distinctive field, symbol or type names. Searching the allowlist with exact or
+distinctive identifiers is targeted discovery, not blind scanning. Do not use
+generic terms such as "stream", "estimation", "handler" or "service" alone,
+search repositories merely because their names sound related, or inspect every
+allowed repository without an identifier-based candidate.
+
+Use this investigation sequence: establish the external boundary from local
+evidence; extract concrete identifiers; search the allowed repositories with
+those identifiers using read-only GitHub tools; identify candidate
+repositories; inspect only the minimum relevant candidate repositories; verify
+the external contract from source, configuration or tests; then classify the
+finding as **VERIFIED**, **POTENTIAL** or **OPEN QUESTION**.
+
+Before emitting **POTENTIAL** or **OPEN QUESTION** for an external contract,
+self-check: (1) is there evidence of an external boundary, (2) are there
+concrete identifiers that could locate its implementation, and (3) has
+targeted discovery using those identifiers been attempted? If (1) and (2) are
+yes but (3) is no, the investigation is incomplete and you MUST continue
+investigating. Only after targeted discovery and relevant read attempts fail to
+establish the contract may the fact remain **POTENTIAL** or **OPEN QUESTION**.
+
 Only when concrete evidence exists, use the GitHub `repos` tools for read-only
 cross-repository code search and for reading the minimum relevant external
 source, configuration, tests or shared contract needed to verify the
