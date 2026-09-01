@@ -24,6 +24,7 @@ tools:
   github:
     toolsets:
       - repos
+      - issues
     github-app:
       client-id: ${{ secrets.APP_ID }}
       private-key: ${{ secrets.APP_SECRET }}
@@ -107,6 +108,23 @@ safe-outputs:
 
 # AI Issue Triage
 
+## Triggering issue
+
+Issue #${{ github.event.issue.number }}
+
+<issue-context>
+${{ steps.sanitized.outputs.text }}
+</issue-context>
+
+Treat the sanitized triggering issue context above as the primary problem
+statement. Use the issue read tools for additional issue metadata or discussion
+when necessary, and do not invent missing requirements.
+
+If the sanitized triggering issue context is empty or unavailable, use the
+read-only GitHub issue tools to retrieve the triggering issue before performing
+substantive code analysis. Do not continue from only an issue number or title
+when the issue body can be retrieved.
+
 Analyze the triggering issue:
 
 ${{ steps.sanitized.outputs.text }}
@@ -121,6 +139,17 @@ Your goal is to produce a technical analysis that helps a software engineer:
 - obtain a ready-to-use prompt for a coding LLM.
 
 ## Investigation
+
+Follow this investigation order:
+
+1. Obtain the complete triggering issue context.
+2. Identify explicit system and repository boundaries.
+3. Use Graphify for local code navigation.
+4. Verify Graphify findings against the actual local source.
+5. Follow justified external boundaries with targeted GitHub reads.
+6. Verify contracts before proposing coordinated changes.
+7. Classify findings as **VERIFIED**, **POTENTIAL** or **OPEN QUESTION**.
+8. Produce one Implementation Plan and the Suggested LLM Prompt.
 
 Start by understanding the issue and identifying the main concepts involved.
 
@@ -202,6 +231,14 @@ current repository. Concrete evidence of an external boundary includes:
 - explicit service references; and
 - deployment or runtime dependencies.
 
+An explicit repository, service, producer, consumer or component reference in
+the triggering issue is concrete evidence for a targeted cross-repository
+investigation when that repository is in the allowed repository set. An
+explicit reference is a reason to investigate, not proof that the external
+repository requires changes. Verify the actual external contract using relevant
+source, configuration, tests or schema/protocol definitions before classifying
+external impact.
+
 Only when concrete evidence exists, use the GitHub `repos` tools for read-only
 cross-repository code search and for reading the minimum relevant external
 source, configuration, tests or shared contract needed to verify the
@@ -209,6 +246,10 @@ relationship. Search only the explicitly allowed repositories and use
 identifiers discovered locally. Do not search every allowed repository blindly,
 search a repository merely because its name sounds related, clone or check out
 another repository, or perform any cross-repository write.
+
+Repo-name-only inference means inferring implementation changes from a
+repository name alone. It does not prohibit investigating a repository that the
+triggering issue explicitly identifies as part of the system boundary.
 
 Classify every cross-repository finding as follows and never convert an
 inference into a verified fact:
