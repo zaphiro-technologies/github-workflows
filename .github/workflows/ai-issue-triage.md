@@ -6,7 +6,7 @@ on: issue labeled ai-triage
 engine:
   id: copilot
 
-model: gpt-5-codex
+model: gpt-5.6-luna?effort=high
 
 permissions:
   contents: read
@@ -239,6 +239,18 @@ repository requires changes. Verify the actual external contract using relevant
 source, configuration, tests or schema/protocol definitions before classifying
 external impact.
 
+Before classifying an external producer/consumer contract as **POTENTIAL** or
+**OPEN QUESTION**, first check whether the issue or local source establishes a
+concrete external or system boundary, concrete identifiers for that contract
+have been discovered, and a relevant repository is explicitly allowed. When
+all three conditions hold, you MUST attempt targeted, read-only GitHub
+investigation using those identifiers and inspect the relevant external
+source, configuration, tests or schema before leaving the contract unresolved.
+Do not leave an externally verifiable contract as **POTENTIAL** or **OPEN
+QUESTION** merely because it is outside the triggering repository. "I cannot
+verify this" is valid only after the available targeted read-only investigation
+has been attempted.
+
 Only when concrete evidence exists, use the GitHub `repos` tools for read-only
 cross-repository code search and for reading the minimum relevant external
 source, configuration, tests or shared contract needed to verify the
@@ -307,6 +319,18 @@ available, do not invent its behavior. State the required external contract as
 an Open Question and name the upstream or downstream component that must be
 checked.
 
+When source evidence indicates that a queue, stream or other replayable
+producer-consumer contract matters and the producer is discoverable, verify the
+relevant semantics before finalizing the Implementation Plan. Investigate the
+actual producer, what it publishes, physical message/record granularity, the
+logical unit of work, data/message type discriminators, correlation/grouping,
+ordering, completion/finalization boundaries, business-processing timing,
+ACK/offset/checkpoint commit boundaries, restart/replay behavior, incomplete
+logical operations, and duplicate/replayed input when applicable. Do not
+mechanically apply this list to unrelated issues, and do not copy offset or
+commit behavior from another consumer merely because it uses the same transport
+or ReliableConsumer abstraction.
+
 When reusing an existing implementation pattern, distinguish explicitly
 between:
 
@@ -351,6 +375,12 @@ happens on restart. Apply this only when repository evidence suggests such
 state.
 
 Prefer the smallest relevant code surface needed to understand the issue.
+
+Do not invent a new environment variable, stream name, envelope/wrapper
+abstraction, ACK abstraction, dual-mode migration strategy or configuration
+contract simply because it appears plausible. First inspect existing
+producer/configuration/contracts. If something new still appears necessary
+after investigation, label it **PROPOSED** rather than **VERIFIED**.
 
 Do not propose unrelated refactors or architectural changes unless they are
 clearly required by the issue.
