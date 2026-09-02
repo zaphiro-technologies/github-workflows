@@ -185,6 +185,8 @@ jobs:
         if: ${{ inputs.pull-dvc-datasets }}
         run: |
           pipx install 'dvc[s3]==3.67.0'
+          # sqltrie 0.11.2 uses a private API removed in pygtrie 2.6.
+          pipx runpip dvc install 'pygtrie<2.6'
       - name: Set-up credentials
         if: ${{ inputs.pull-dvc-datasets }}
         env:
