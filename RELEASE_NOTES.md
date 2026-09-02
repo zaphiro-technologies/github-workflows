@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-08-31
+## 0.0.3-dev - 2026-09-02
 
 ### Features
 
@@ -93,6 +93,7 @@
 
 ### Continuous Integration
 
+- fix(ci): constrain pygtrie for DVC (PR #337 by @tejo)
 - Add 3-day Dependabot cooldown (PR #294 by @chicco785)
 - Separate issue management from project management (PR #236 by @chicco785)
 - new-release workflow: delegate to makefile the update of project files (PR
