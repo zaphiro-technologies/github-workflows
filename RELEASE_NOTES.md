@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-08-31
+## 0.0.3-dev - 2026-09-05
 
 ### Features
 
@@ -112,6 +112,7 @@
 
 ### Dependencies
 
+- Bump apache/skywalking-eyes from 0.8.0 to 0.9.0 (PR #338 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.73.1 to 1.73.2 (PR #332 by
   @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.73.0 to 1.73.1 (PR #329 by
