@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-09-02
+## 0.0.3-dev - 2026-09-12
 
 ### Features
 
@@ -113,6 +113,10 @@
 
 ### Dependencies
 
+- Bump aws-actions/configure-aws-credentials from 6.2.3 to 6.2.4 (PR #340 by
+  @dependabot[bot])
+- Bump reviewdog/action-actionlint from 1.73.2 to 1.73.4 (PR #339 by
+  @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.73.1 to 1.73.2 (PR #332 by
   @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.73.0 to 1.73.1 (PR #329 by
