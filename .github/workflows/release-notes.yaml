@@ -18,6 +18,10 @@ on:
   push:
     tags:
       - "*"
+  release:
+    types:
+      - created
+      - published
   pull_request_review:
   pull_request:
     types:
@@ -27,9 +31,6 @@ on:
       - synchronize
     branches:
       - main
-  release:
-    types:
-      - published
   workflow_call:
     inputs:
       config-release-path:
@@ -40,7 +41,7 @@ on:
         required: false
         default: false
         type: boolean
-        description: True to skip sbom exec
+        description: Deprecated compatibility input; SBOM publication belongs to the release owner
 
 concurrency:
   group: ${{ github.ref_name }}-release
@@ -77,7 +78,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: read
-    if: ${{ ((github.event_name == 'pull_request' && needs.check_reviews.outputs.reviews == 'APPROVED') || github.event.review.state == 'approved' || startsWith(github.ref, 'refs/tags/')) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'pull_request_review' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ ((github.event_name == 'pull_request' && needs.check_reviews.outputs.reviews == 'APPROVED') || github.event.review.state == 'approved' || github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'pull_request_review' || github.event.pull_request.head.repo.full_name == github.repository) }}
     steps:
       - uses: actions/create-github-app-token@v3
         id: generate-token
@@ -86,16 +87,16 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           permission-contents: write
       - uses: actions/checkout@v7.0.1
-        if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
+        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
       - uses: actions/checkout@v7.0.1
-        if: ${{ startsWith(github.ref, 'refs/tags/') == true }}
+        if: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') == true }}
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event_name == 'release' && format('refs/tags/{0}', github.event.release.tag_name) || github.ref }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
       - name: "Get Previous tag"
@@ -166,7 +167,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Clean log
-        if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
+        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
         run: |
           if [ -f "RELEASE_NOTES.md" ]; then
             # more RELEASE_NOTES.md
@@ -186,7 +187,7 @@ jobs:
             echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
           fi
       - name: Clean log
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') }}
         run: |
           if [ -f "RELEASE_NOTES.md" ]; then
             more RELEASE_NOTES.md
@@ -222,14 +223,14 @@ jobs:
           dry: true
           no_commit: true
       - name: Commit updated CHANGELOG
-        if: startsWith(github.ref, 'refs/tags/') == false
+        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
         uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
           branch: ${{github.event.pull_request.head.ref}}
           commit_message: "docs(release_notes): update RELEASE_NOTES.md [dependabot skip]"
           file_pattern: RELEASE_NOTES.md
       - name: Commit updated CHANGELOG
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') }}
         uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
           branch: main
@@ -237,87 +238,3 @@ jobs:
           file_pattern: RELEASE_NOTES.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
-        name: Generate SBOM
-        # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
-        with:
-          scan-type: fs
-          scan-ref: "."
-          format: "cyclonedx"
-          output: "cyclonedx-sbom.json"
-      - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
-        name: Upload SBOM as a Github artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: trivy-sbom-report
-          path: "${{ github.workspace }}/cyclonedx-sbom.json"
-          retention-days: 20 # 90 is the default
-
-  release:
-    name: Release
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-      - name: Select configuration
-        if: ${{ github.event_name == 'workflow_call' }}
-        run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
-      - name: Select configuration
-        if: ${{ github.event_name != 'workflow_call' }}
-        run: echo "CONFIGURATION=.github/config/release-config.json" >> $GITHUB_ENV
-      - name: "Build Changelog"
-        id: github_release
-        uses: mikepenz/release-changelog-builder-action@v6
-        with:
-          configuration: ${{env.CONFIGURATION}}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_NOTES: ${{ steps.github_release.outputs.changelog }}
-          RELEASE_REF: ${{ github.ref }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          release_args=(--title "$RELEASE_TAG" --notes "$RELEASE_NOTES")
-          if [[ "$RELEASE_REF" =~ -rc|-b|-a ]]; then
-            release_args+=(--prerelease)
-          fi
-
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release edit "$RELEASE_TAG" "${release_args[@]}"
-          else
-            gh release create "$RELEASE_TAG" "${release_args[@]}"
-          fi
-
-  release-sbom:
-    name: Release SBOM
-    if: ${{ github.event_name == 'release' && (! inputs.skip-sbom || inputs.skip-sbom == '') }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-      - name: Generate SBOM
-        # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
-        with:
-          scan-type: fs
-          scan-ref: "."
-          format: "cyclonedx"
-          output: "cyclonedx-sbom.json"
-      - name: Attach SBOM to Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ github.event.release.tag_name }}" cyclonedx-sbom.json --repo "$GITHUB_REPOSITORY" --clobber

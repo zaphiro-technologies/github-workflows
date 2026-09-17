@@ -44,6 +44,21 @@ on:
         default: false
         type: boolean
         description: True to install and configure dvc
+      upload-artefacts:
+        required: false
+        default: true
+        type: boolean
+        description: False to skip uploading the build artefact
+      upload-artefacts-dir:
+        required: false
+        default: "./build"
+        type: string
+        description: Directory with the build artefact to upload
+      dependency-sbom:
+        required: false
+        default: true
+        type: boolean
+        description: Generate and upload an SBOM for dependencies used by the JavaScript build
       repositories:
         required: false
         type: string
@@ -177,10 +192,30 @@ jobs:
       - name: Build
         run: |
           yarn build
+      - name: Generate JavaScript dependency SBOM
+        if: ${{ inputs.dependency-sbom }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
+          format: cyclonedx
+          output: javascript-dependency-sbom.cdx.json
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Upload build artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: ./build
+          path: ${{ inputs.upload-artefacts-dir }}
+      - name: Upload JavaScript dependency SBOM
+        if: ${{ inputs.dependency-sbom }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: javascript-dependency-sbom
+          path: javascript-dependency-sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 20
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
         uses: SonarSource/sonarqube-scan-action@v8.2.1
@@ -193,6 +228,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: Run Trivy dependency vulnerability scan
+        # trivy-action v0.36.0 (safe version)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
+          scanners: vuln
+          format: json
+          output: javascript-dependency-vulnerability.json
+          exit-code: "0"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+      - name: Upload JavaScript dependency vulnerability evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: javascript-dependency-vulnerability
+          path: javascript-dependency-vulnerability.json
+          if-no-files-found: error
+          retention-days: 20
       - name: Run Trivy vulnerability scanner (for summary)
         # trivy-action v0.36.0 (safe version)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25

@@ -41,36 +41,51 @@ The repository includes:
   Corporate mode updates `argocd/<app-name>.yaml` at
   `<parameter-prefix>.image.tag`. Use optional `ghcr-repository` to override the
   package repository used to resolve the image digest. Corporate deployments
-  must provide `ghcr-repository`.
-- [`docker`](.github/workflows/docker.yaml): build and push Docker images and
-  scans for vulnerabilities. Supports optional Docker Hub login for builds that
-  need authenticated base image pulls from Docker Hub; callers can pass
-  `DOCKER_USER` and `DOCKER_PASSWORD` secrets, which must be provided together.
-  For private GitHub git dependencies during `docker build`, pass the additional
-  private repositories via the `repositories` input so the generated GitHub App
-  token can access them, then consume the forwarded BuildKit secret (`GH_TOKEN`)
-  in the Dockerfile. The Docker build image must also include the `git` binary.
+  must provide `ghcr-repository`. The workflow resolves the selected image tag
+  directly from GHCR and commits the resulting OCI digest.
+- [`docker`](.github/workflows/docker.yaml): build and push Docker images,
+  publish BuildKit SBOM/provenance attestations, and scan the pushed image by
+  its immutable digest. The workflow exposes the image, digest, image reference,
+  target platforms, and machine-readable vulnerability evidence as outputs or
+  artifacts. For multi-stage images, Dockerfiles must explicitly declare
+  `BUILDKIT_SBOM_SCAN_STAGE` when build-stage dependencies are part of the
+  application evidence. Supports optional Docker Hub login for builds that need
+  authenticated base image pulls; callers can pass `DOCKER_USER` and
+  `DOCKER_PASSWORD` secrets, which must be provided together. For private GitHub
+  git dependencies during `docker build`, pass the additional private
+  repositories via the `repositories` input so the generated GitHub App token
+  can access them, then consume the forwarded BuildKit secret (`GH_TOKEN`) in
+  the Dockerfile. The Docker build image must also include the `git` binary.
 - [`golang`](.github/workflows/golang.yaml): lint, test and benchmark Go
   Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. The workflow also scans for
   vulnerabilities.
 - [`js`](.github/workflows/js.yaml): typecheck, lint, test and build JS/TS
   applications. The workflow can auto-fix lint issues on same-repository pull
-  requests, optionally pull DVC datasets, upload the build artifact, and scan
-  for code quality and vulnerabilities.
+  requests, optionally pull DVC datasets, upload the build artifact and a
+  machine-readable dependency SBOM, and scan for code quality and
+  vulnerabilities. The dependency SBOM describes the packages used to create
+  a bundled frontend; it is distinct from the runtime image SBOM.
 - [`license`](.github/workflows/license.yaml): add licensing information in file
   headers and check dependencies licensing compatibility.
 - [`lint`](.github/workflows/markdown.yaml): lint all Markdown and Yaml files.
   In case of markdown documents, checks that the links referenced in the
   documents are valid. If `skip-spell-check: false`, also, a spell checker is
   executed.
-- [`new-release`](.github/workflows/new-release.yaml): create a new release
-  (leveraging makefile to update packaging file version).
+- [`new-release`](.github/workflows/new-release.yaml): opt-in release owner
+  that updates the version, creates the release tag, generates application
+  dependency evidence, assembles a draft release, and publishes it after
+  the tag-triggered Docker workflow succeeds. The tag triggers each repository's
+  Docker workflow, which builds the image using the tag. It deliberately exposes
+  no Docker configuration; Docker defaults and repository-specific settings
+  belong to `docker`.
 - [`python`](.github/workflows/python.yaml): lint, test python applications. The
   workflow includes authentication to GitHub Container Registry in case tests
   rely on private images. The workflow also scans for vulnerabilities.
 - [`release-notes`](.github/workflows/release-notes.yaml): automatically updates
-  release notes using PR titles and labels.
+  release notes using PR titles and labels, including when a release or draft
+  release is created. It does not create GitHub Releases or publish SBOM
+  evidence; those responsibilities belong to `new-release`.
 - [`trivy-cache-update`](.github/workflows/trivy-cache-update.yaml): update
   trivy cache image.
 
@@ -106,12 +121,34 @@ from the actions page.
    ```yaml
    jobs:
      add-to-project:
-       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
+       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@<immutable-version>
        secrets: inherit
    ```
 
-   Of course, you can also test it from a branch, in which case you can replace
-   `main` with the branch name.
+   Production callers should use an immutable release tag or commit SHA. You can
+   also test it from a branch, in which case you can replace the version with the
+   branch name.
+
+## Managed immutable releases
+
+Repositories adopting [`new-release`](.github/workflows/new-release.yaml)
+should add a small `workflow_dispatch` wrapper that calls the reusable workflow.
+Repositories that do not adopt the workflow can continue using `release-notes`
+for notes, but need to migrate to `new-release` to publish a managed release.
+The selected workflow branch is the release source; only `main` and
+`release/**` are accepted, so patch releases can be created from an older
+release branch without allowing feature-branch releases.
+
+```yaml
+name: Release
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    uses: zaphiro-technologies/github-workflows/.github/workflows/new-release.yaml@<immutable-version>
+    secrets: inherit
+```
 
 ## How to add a starter workflow to `.github` repository
 
@@ -136,7 +173,7 @@ developers in the `new action` page:
 
    jobs:
      add-to-project:
-       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
+       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@<immutable-version>
        secrets: inherit
    ```
 
