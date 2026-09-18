@@ -64,7 +64,7 @@ on:
         required: true
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 jobs:
@@ -207,11 +207,18 @@ jobs:
       - wait-for-docker-build
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
+      - uses: actions/create-github-app-token@v3
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          permission-contents: write
       - uses: actions/checkout@v7.0.1
         with:
           ref: refs/tags/v${{ needs.prepare-release.outputs.tag }}
+          token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
       - name: Generate application dependency SBOM
         if: ${{ inputs.dependency-scan }}
@@ -297,7 +304,7 @@ jobs:
           retention-days: 20
       - name: Create draft release and attach evidence
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           RELEASE_TAG: v${{ needs.prepare-release.outputs.tag }}
         run: |
           set -euo pipefail
@@ -327,10 +334,16 @@ jobs:
       - assemble-evidence
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
+      - uses: actions/create-github-app-token@v3
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          permission-contents: write
       - name: Publish draft release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           RELEASE_TAG: v${{ needs.prepare-release.outputs.tag }}
         run: gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false
