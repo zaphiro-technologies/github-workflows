@@ -1,0 +1,356 @@
+# Copyright 2026 Zaphiro Technologies
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Generate VEX from Dependabot dismissals
+
+on:
+  workflow_dispatch:
+    inputs:
+      product-purls:
+        description: Newline-separated PURLs for the products covered by the VEX statements
+        required: true
+        type: string
+      vex-path:
+        description: Path of the repository-owned OpenVEX document
+        required: false
+        default: .vex/dependabot.openvex.json
+        type: string
+      dismissal-ledger-path:
+        description: Path of the repository-owned historical Dependabot dismissal ledger
+        required: false
+        default: .vex/dependabot-dismissals.json
+        type: string
+      base-branch:
+        description: Branch from which to create or update the candidate PR
+        required: false
+        default: main
+        type: string
+      auto-not-affected-reason:
+        description: Optional Dependabot dismissal reason to map to not_affected
+        required: false
+        default: ""
+        type: string
+      auto-not-affected-justification:
+        description: OpenVEX justification used only with auto-not-affected-reason
+        required: false
+        default: vulnerable_code_not_in_execute_path
+        type: string
+  workflow_call:
+    inputs:
+      product-purls:
+        description: Newline-separated PURLs for the products covered by the VEX statements
+        required: true
+        type: string
+      vex-path:
+        description: Path of the repository-owned OpenVEX document
+        required: false
+        default: .vex/dependabot.openvex.json
+        type: string
+      dismissal-ledger-path:
+        description: Path of the repository-owned historical Dependabot dismissal ledger
+        required: false
+        default: .vex/dependabot-dismissals.json
+        type: string
+      base-branch:
+        description: Branch from which to create or update the candidate PR
+        required: false
+        default: main
+        type: string
+      auto-not-affected-reason:
+        description: Optional Dependabot dismissal reason to map to not_affected
+        required: false
+        default: ""
+        type: string
+      auto-not-affected-justification:
+        description: OpenVEX justification used only with auto-not-affected-reason
+        required: false
+        default: vulnerable_code_not_in_execute_path
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  vulnerability-alerts: read
+
+concurrency:
+  group: ${{ github.repository }}-dependabot-vex
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    name: Generate reviewed VEX candidates
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PRODUCT_PURLS: ${{ inputs.product-purls }}
+      VEX_PATH: ${{ inputs.vex-path }}
+      DISMISSAL_LEDGER_PATH: ${{ inputs.dismissal-ledger-path }}
+      BASE_BRANCH: ${{ inputs.base-branch }}
+      AUTO_NOT_AFFECTED_REASON: ${{ inputs.auto-not-affected-reason }}
+      AUTO_NOT_AFFECTED_JUSTIFICATION: ${{ inputs.auto-not-affected-justification }}
+    steps:
+      - name: Checkout existing VEX branch or base branch
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.base-branch }}
+
+      - name: Select candidate branch
+        id: branch
+        run: |
+          set -euo pipefail
+          branch='automation/dependabot-vex'
+          git fetch origin "$BASE_BRANCH"
+          git fetch origin "$branch" 2>/dev/null || true
+          if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+            git checkout -B "$branch" "origin/$branch"
+          else
+            git checkout -B "$branch" "origin/$BASE_BRANCH"
+          fi
+          echo "name=$branch" >> "$GITHUB_OUTPUT"
+
+      - name: Generate OpenVEX candidates
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${PRODUCT_PURLS//[[:space:]]/}" ]]; then
+            echo "product-purls must contain at least one PURL" >&2
+            exit 1
+          fi
+
+          product_purls_json=$(printf '%s\n' "$PRODUCT_PURLS" | jq -Rsc '
+            split("\n")
+            | map(gsub("^[[:space:]]+|[[:space:]]+$"; ""))
+            | map(select(length > 0))
+          ')
+          if [[ "$(jq 'length' <<< "$product_purls_json")" == 0 ]]; then
+            echo "product-purls must contain at least one non-empty PURL" >&2
+            exit 1
+          fi
+
+          alerts_json=$(gh api \
+            --paginate \
+            --slurp \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/$GITHUB_REPOSITORY/dependabot/alerts?state=dismissed&per_page=100" \
+            | jq 'add // []')
+
+          mkdir -p "$(dirname "$VEX_PATH")"
+          mkdir -p "$(dirname "$DISMISSAL_LEDGER_PATH")"
+
+          if [[ -f "$DISMISSAL_LEDGER_PATH" ]]; then
+            jq empty "$DISMISSAL_LEDGER_PATH"
+            existing_ledger=$(jq '.' "$DISMISSAL_LEDGER_PATH")
+          else
+            existing_ledger='{"version":1,"alerts":[]}'
+          fi
+
+          # Keep a repository-owned copy of dismissal metadata. GitHub can later
+          # change an alert to fixed, at which point the dismissal reason/comment
+          # is no longer available from the Dependabot alerts endpoint.
+          jq \
+            --argjson existing "$existing_ledger" \
+            --argjson alerts "$alerts_json" \
+            '
+            def alert_url:
+              (.html_url // ("https://github.com/" + env.GITHUB_REPOSITORY + "/security/dependabot/" + (.number | tostring)));
+            def alert_key:
+              (.url // ("alert:" + ((.alert // "") | tostring)));
+            def normalized:
+              . as $alert
+              | {
+                  alert: $alert.number,
+                  url: alert_url,
+                  package: {
+                    ecosystem: ($alert.dependency.package.ecosystem // null),
+                    name: ($alert.dependency.package.name // null),
+                    version: ($alert.dependency.version // null)
+                  },
+                  vulnerability: {
+                    name: ($alert.security_advisory.cve_id
+                           // $alert.security_advisory.ghsa_id
+                           // (($alert.security_advisory.identifiers // [] | map(.value) | .[0]))
+                           // ("DEPENDABOT-" + ($alert.number | tostring))),
+                    aliases: [
+                      ($alert.security_advisory.cve_id // empty),
+                      ($alert.security_advisory.ghsa_id // empty),
+                      (($alert.security_advisory.identifiers // [] | .[].value) // empty)
+                    ] | unique | map(select(. != null and . != ""))
+                  },
+                  vulnerable_version_range: ($alert.security_vulnerability.vulnerable_version_range // null),
+                  first_patched_version: ($alert.security_vulnerability.first_patched_version.identifier // null),
+                  dismissed_reason: ($alert.dismissed_reason // null),
+                  dismissed_comment: ($alert.dismissed_comment // null),
+                  dismissed_by: ($alert.dismissed_by.login // $alert.dismissed_by // null),
+                  dismissed_at: ($alert.dismissed_at // null),
+                  last_observed_state: "dismissed"
+                }
+            | .package |= with_entries(select(.value != null))
+              | with_entries(select(.value != null));
+            ($existing.alerts // []) as $old
+            | ($alerts | map(normalized)) as $new
+            | (reduce $new[] as $item ($old;
+                ($item | alert_key) as $key
+                | if any(.[]; (alert_key) == $key) then
+                    map(if (alert_key) == $key then . * $item else . end)
+                  else
+                    . + [$item]
+                  end)) as $merged
+            | {version: ($existing.version // 1), alerts: $merged}
+          ' <<< "$existing_ledger" > "$DISMISSAL_LEDGER_PATH.tmp"
+          mv "$DISMISSAL_LEDGER_PATH.tmp" "$DISMISSAL_LEDGER_PATH"
+
+          ledger_json=$(jq '.' "$DISMISSAL_LEDGER_PATH")
+          ledger_count=$(jq '.alerts | length' <<< "$ledger_json")
+          if [[ ! -f "$VEX_PATH" && "$ledger_count" == 0 ]]; then
+            echo "No current or historical dismissed Dependabot alerts found and no VEX file exists"
+            exit 0
+          fi
+
+          if [[ -f "$VEX_PATH" ]]; then
+            jq empty "$VEX_PATH"
+            existing_vex=$(jq '.' "$VEX_PATH")
+          else
+            existing_vex='{"@context":"https://openvex.dev/ns/v0.2.0","version":1,"statements":[]}'
+          fi
+
+          generated_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          document_id="https://github.com/$GITHUB_REPOSITORY/blob/$BASE_BRANCH/$VEX_PATH"
+
+          jq \
+            --argjson ledger "$ledger_json" \
+            --argjson products "$product_purls_json" \
+            --arg auto_reason "$AUTO_NOT_AFFECTED_REASON" \
+            --arg auto_justification "$AUTO_NOT_AFFECTED_JUSTIFICATION" \
+            --arg generated_at "$generated_at" \
+            --arg document_id "$document_id" \
+            '
+            def alert_url:
+              (.url // ("https://github.com/" + env.GITHUB_REPOSITORY + "/security/dependabot/" + (.alert | tostring)));
+            def vulnerability_name:
+              .vulnerability.name // ("DEPENDABOT-" + ((.alert // "") | tostring));
+            def vulnerability_aliases:
+              (.vulnerability.aliases // []) | unique | map(select(. != null and . != ""));
+            def dependency_purl:
+              (.package.ecosystem) as $ecosystem
+              | (.package.name | sub("^@"; "%40")) as $name
+              | {
+                  npm: "npm",
+                  gomod: "golang",
+                  pip: "pypi",
+                  python: "pypi",
+                  maven: "maven",
+                  gradle: "maven",
+                  cargo: "cargo",
+                  bundler: "gem",
+                  composer: "composer",
+                  nuget: "nuget",
+                  pub: "pub",
+                  hex: "hex",
+                  mix: "hex",
+                  docker: "docker"
+                }[$ecosystem] as $type
+              | "pkg:" + ($type // $ecosystem) + "/" + $name;
+            def marker:
+              "dependabot-alert:" + alert_url;
+            def candidate:
+              . as $record
+              | {
+                  vulnerability: ({name: vulnerability_name} +
+                    (vulnerability_aliases as $aliases
+                     | if ($aliases | length) > 0 then {aliases: $aliases} else {} end)),
+                  products: ($products | map({
+                    "@id": .,
+                    subcomponents: [{"@id": $record | dependency_purl}]
+                  })),
+                  status_notes: (
+                    (marker)
+                    + "\npackage=" + ($record.package.name // "")
+                    + "\necosystem=" + ($record.package.ecosystem // "")
+                    + "\nreason=" + ($record.dismissed_reason // "unknown")
+                    + "\ncomment=" + ($record.dismissed_comment // "")
+                    + "\ndismissed_by=" + ($record.dismissed_by // "")
+                    + "\ndismissed_at=" + ($record.dismissed_at // "")
+                    + "\nThis statement was generated from a dismissed Dependabot alert and requires review."
+                  )
+                }
+                + if ($auto_reason != "" and $record.dismissed_reason == $auto_reason) then
+                    {status: "not_affected", justification: $auto_justification}
+                  else
+                    {status: "under_investigation"}
+                  end;
+            . as $existing_vex
+            | ($existing_vex.statements // []) as $existing
+            | ($existing | map((.status_notes // "") | split("\n")[0])) as $existing_markers
+            | ($ledger.alerts // []) as $records
+            | ($records | map(marker)) as $active_markers
+            | ($existing
+               | map(. as $statement
+                   | select(
+                       ((($statement.status_notes // "") | startswith("dependabot-alert:")) | not)
+                       or any($active_markers[]; . as $active | (($statement.status_notes // "") | startswith($active)))
+                     ))) as $retained
+            | ($records
+               | map(. as $record
+                   | select(($existing_markers | index($record | marker)) | not)
+                   | $record
+                   | candidate)) as $new_candidates
+            | ($retained + $new_candidates) as $statements
+            | ($existing_vex
+               + {
+                   "@context": ($existing_vex["@context"] // "https://openvex.dev/ns/v0.2.0"),
+                   "@id": ($existing_vex["@id"] // $document_id),
+                   author: ($existing_vex.author // "Dependabot VEX generator"),
+                   role: ($existing_vex.role // "Automated candidate generator"),
+                   timestamp: (if ($statements == ($existing_vex.statements // [])) then ($existing_vex.timestamp // $generated_at) else $generated_at end),
+                   version: (if ($statements == ($existing_vex.statements // [])) then ($existing_vex.version // 1) else (($existing_vex.version // 0) + 1) end),
+                   statements: $statements
+                 }
+             )
+          ' <<< "$existing_vex" > "$VEX_PATH.tmp"
+          mv "$VEX_PATH.tmp" "$VEX_PATH"
+
+          jq empty "$VEX_PATH"
+          echo "Currently dismissed Dependabot alerts: $(jq 'length' <<< "$alerts_json")"
+          echo "Historical dismissal records: $ledger_count"
+          echo "Generated or retained VEX statements: $(jq '.statements | length' "$VEX_PATH")"
+
+      - name: Create candidate pull request
+        run: |
+          set -euo pipefail
+          if [[ -z "$(git status --short -- "$VEX_PATH" "$DISMISSAL_LEDGER_PATH")" ]]; then
+            echo "No VEX or dismissal-ledger changes required"
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$VEX_PATH" "$DISMISSAL_LEDGER_PATH"
+          git commit -m 'security: generate Dependabot VEX candidates'
+          git push origin HEAD:automation/dependabot-vex
+
+          if gh pr list --repo "$GITHUB_REPOSITORY" --head automation/dependabot-vex --state open --json number --jq 'length' | grep -q '^0$'; then
+            gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --base "$BASE_BRANCH" \
+              --head automation/dependabot-vex \
+              --title 'security: review Dependabot VEX candidates' \
+              --body-file - <<'EOF'
+          This pull request contains OpenVEX statements generated from currently dismissed Dependabot alerts.
+
+          Review each statement's product scope, vulnerability reachability, status, and justification before merging.
+
+          By default, generated statements use `under_investigation`. Any `not_affected` statement requires explicit workflow opt-in and still requires review.
+          EOF
+          fi

@@ -43,6 +43,11 @@ The repository includes:
   package repository used to resolve the image digest. Corporate deployments
   must provide `ghcr-repository`. The workflow resolves the selected image tag
   directly from GHCR and commits the resulting OCI digest.
+- [`dependabot-vex`](.github/workflows/dependabot-vex.yaml): generate reviewed
+  OpenVEX candidates from dismissed Dependabot alerts and create or update a
+  pull request. Candidates default to `under_investigation`; callers must
+  explicitly opt in before a dismissal reason can produce a `not_affected`
+  statement.
 - [`docker`](.github/workflows/docker.yaml): build and push Docker images,
   publish BuildKit SBOM/provenance attestations, and scan the pushed image by
   its immutable digest. The workflow exposes the image, digest, image reference,
@@ -149,6 +154,73 @@ jobs:
     uses: zaphiro-technologies/github-workflows/.github/workflows/new-release.yaml@<immutable-version>
     secrets: inherit
 ```
+
+## Dependabot VEX candidates
+
+Repositories can schedule [`dependabot-vex`](.github/workflows/dependabot-vex.yaml)
+to create or update a pull request containing OpenVEX candidates for currently
+dismissed Dependabot alerts. The caller must provide the product PURLs covered
+by the statements and grant the called workflow `contents`, `pull-requests`,
+and `vulnerability-alerts` permissions:
+
+```yaml
+name: Dependabot VEX
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  vex:
+    permissions:
+      contents: write
+      pull-requests: write
+      vulnerability-alerts: read
+    uses: zaphiro-technologies/github-workflows/.github/workflows/dependabot-vex.yaml@<immutable-version>
+    with:
+      product-purls: |
+        pkg:oci/example?repository_url=ghcr.io/zaphiro-technologies/example
+```
+
+Generated statements use `under_investigation` by default. Reviewers must
+confirm the product scope, vulnerable component, and reachability before
+changing a statement to `not_affected`. The workflow also maintains
+`.vex/dependabot-dismissals.json`; this repository-owned ledger preserves the
+original dismissal reason and comment after GitHub later changes an alert to
+`fixed`.
+
+If a historical dismissal predates the workflow, add it to the ledger once and
+let the workflow generate the corresponding candidate. For example, the
+documentation repository can preserve alert 28 with:
+
+```json
+{
+  "version": 1,
+  "alerts": [
+    {
+      "alert": 28,
+      "url": "https://github.com/zaphiro-technologies/documentation/security/dependabot/28",
+      "package": {
+        "ecosystem": "npm",
+        "name": "serialize-javascript"
+      },
+      "vulnerability": {
+        "name": "GHSA-5c6j-r48x-rmvq"
+      },
+      "dismissed_reason": "not_used",
+      "dismissed_comment": "No dynamic regex evaluation is used by the up, so we will wait docusaurus to update the dependency",
+      "dismissed_by": "chicco785",
+      "last_observed_state": "dismissed"
+    }
+  ]
+}
+```
+
+To map this reason to OpenVEX `not_affected`, the caller may set
+`auto-not-affected-reason: not_used`. This is an explicit opt-in: reviewers
+still need to verify that the product PURLs and vulnerable component scope are
+correct. The ledger entry should not be reused for products or image digests
+that do not contain the vulnerable component.
 
 ## How to add a starter workflow to `.github` repository
 
