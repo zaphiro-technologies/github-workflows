@@ -19,7 +19,13 @@ on:
     inputs:
       product-purls:
         description: Newline-separated PURLs for the products covered by the VEX statements
-        required: true
+        required: false
+        default: ""
+        type: string
+      image-name:
+        description: GHCR image name used when product-purls is omitted; defaults to the repository name
+        required: false
+        default: ""
         type: string
       vex-path:
         description: Path of the repository-owned OpenVEX document
@@ -50,7 +56,13 @@ on:
     inputs:
       product-purls:
         description: Newline-separated PURLs for the products covered by the VEX statements
-        required: true
+        required: false
+        default: ""
+        type: string
+      image-name:
+        description: GHCR image name used when product-purls is omitted; defaults to the repository name
+        required: false
+        default: ""
         type: string
       vex-path:
         description: Path of the repository-owned OpenVEX document
@@ -94,6 +106,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       PRODUCT_PURLS: ${{ inputs.product-purls }}
+      IMAGE_NAME: ${{ inputs.image-name }}
       VEX_PATH: ${{ inputs.vex-path }}
       DISMISSAL_LEDGER_PATH: ${{ inputs.dismissal-ledger-path }}
       BASE_BRANCH: ${{ inputs.base-branch }}
@@ -124,16 +137,28 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ -z "${PRODUCT_PURLS//[[:space:]]/}" ]]; then
-            echo "product-purls must contain at least one PURL" >&2
-            exit 1
+          if [[ -n "${PRODUCT_PURLS//[[:space:]]/}" ]]; then
+            product_purls_json=$(printf '%s\n' "$PRODUCT_PURLS" | jq -Rsc '
+              split("\n")
+              | map(gsub("^[[:space:]]+|[[:space:]]+$"; ""))
+              | map(select(length > 0))
+            ')
+            echo "Using explicitly configured product PURLs"
+          else
+            image_name="${IMAGE_NAME:-${GITHUB_REPOSITORY##*/}}"
+            image_name="${image_name,,}"
+            if [[ -z "${image_name//[[:space:]]/}" || "$image_name" == *:* ]]; then
+              echo "image-name must be non-empty and must not contain whitespace or ':'" >&2
+              exit 1
+            fi
+
+            image_repository="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${image_name}"
+            encoded_repository="${image_repository//\//%2F}"
+            automatic_product_purl="pkg:oci/${image_name}?repository_url=${encoded_repository}"
+            product_purls_json=$(printf '%s\n' "$automatic_product_purl" | jq -Rsc '[. | select(length > 0)]')
+            echo "Using automatically derived product PURL: $automatic_product_purl"
           fi
 
-          product_purls_json=$(printf '%s\n' "$PRODUCT_PURLS" | jq -Rsc '
-            split("\n")
-            | map(gsub("^[[:space:]]+|[[:space:]]+$"; ""))
-            | map(select(length > 0))
-          ')
           if [[ "$(jq 'length' <<< "$product_purls_json")" == 0 ]]; then
             echo "product-purls must contain at least one non-empty PURL" >&2
             exit 1

@@ -76,6 +76,16 @@ on:
         default: true
         type: boolean
         description: Attach a BuildKit SBOM attestation to the pushed image
+      vex-attestation:
+        required: false
+        default: true
+        type: boolean
+        description: Attach the unsigned repository-owned OpenVEX document when it exists
+      vex-path:
+        required: false
+        default: .vex/dependabot.openvex.json
+        type: string
+        description: Repository-owned OpenVEX document to attach to the image
       provenance:
         required: false
         default: true
@@ -107,12 +117,16 @@ jobs:
   build:
     needs: check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     outputs:
       tags: ${{ steps.meta.outputs.tags }}
       image: ${{ steps.image-name.outputs.name }}
       digest: ${{ steps.build.outputs.digest }}
       image-ref: ${{ steps.image-ref.outputs.ref }}
       platforms: ${{ inputs.platforms }}
+      vex-attached: ${{ steps.attach-vex.outcome == 'success' }}
     env:
       DOCKER_USER: ${{ secrets.DOCKER_USER }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -246,6 +260,39 @@ jobs:
           docker buildx imagetools inspect "${IMAGE_NAME}@${IMAGE_DIGEST}" --format '{{json .}}' > image-index.json
           test -s image-index.json
           echo "Published image: ${IMAGE_NAME}@${IMAGE_DIGEST}"
+      - name: Install ORAS
+        if: ${{ inputs.vex-attestation && hashFiles(inputs.vex-path) != '' }}
+        uses: oras-project/setup-oras@c90396b2ddabd5a364e6551a79984c86cc036996 # v1.0.0
+      - name: Attach unsigned OpenVEX referrer
+        id: attach-vex
+        if: ${{ inputs.vex-attestation && hashFiles(inputs.vex-path) != '' }}
+        env:
+          IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
+          VEX_PATH: ${{ inputs.vex-path }}
+        run: |
+          set -euo pipefail
+          jq empty "$VEX_PATH"
+          image_name="${IMAGE_REF%@*}"
+          image_digest="${IMAGE_REF##*@}"
+          test -n "$image_name"
+          test "$image_digest" != "$IMAGE_REF"
+
+          jq -n \
+            --arg subject_name "$image_name" \
+            --arg digest "${image_digest#sha256:}" \
+            --slurpfile predicate "$VEX_PATH" \
+            '{
+              _type: "https://in-toto.io/Statement/v1",
+              subject: [{name: $subject_name, digest: {sha256: $digest}}],
+              predicateType: "https://openvex.dev/ns/v0.2.0",
+              predicate: $predicate[0]
+            }' > "$VEX_PATH.in-toto.json"
+
+          oras attach \
+            --artifact-type application/vnd.in-toto+json \
+            --annotation 'in-toto.io/predicate-type=https://openvex.dev/ns/v0.2.0' \
+            "$IMAGE_REF" \
+            "$VEX_PATH.in-toto.json:application/vnd.in-toto+json"
       - name: Upload image manifest evidence
         uses: actions/upload-artifact@v7
         with:
@@ -261,6 +308,7 @@ jobs:
         # trivy-action v0.35.0 (safe version) - pinned to full commit SHA
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
+          version: v0.73.0
           scan-type: image
           image-ref: ${{ needs.build.outputs.image-ref }}
           scanners: vuln
@@ -271,6 +319,7 @@ jobs:
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          TRIVY_VEX: ${{ needs.build.outputs.vex-attached == 'true' && 'oci' || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Upload image vulnerability evidence
@@ -292,5 +341,6 @@ jobs:
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          TRIVY_VEX: ${{ needs.build.outputs.vex-attached == 'true' && 'oci' || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true

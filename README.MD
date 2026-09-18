@@ -61,6 +61,10 @@ The repository includes:
   repositories via the `repositories` input so the generated GitHub App token
   can access them, then consume the forwarded BuildKit secret (`GH_TOKEN`) in
   the Dockerfile. The Docker build image must also include the `git` binary.
+  When `.vex/dependabot.openvex.json` exists, the workflow attaches it as an
+  unsigned OCI referrer and scans the same immutable image reference with OCI
+  VEX discovery. Image signing is intentionally deferred to a separate change.
+  Callers need `packages: write`.
 - [`golang`](.github/workflows/golang.yaml): lint, test and benchmark Go
   Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. The workflow also scans for
@@ -159,9 +163,10 @@ jobs:
 
 Repositories can schedule [`dependabot-vex`](.github/workflows/dependabot-vex.yaml)
 to create or update a pull request containing OpenVEX candidates for currently
-dismissed Dependabot alerts. The caller must provide the product PURLs covered
-by the statements and grant the called workflow `contents`, `pull-requests`,
-and `vulnerability-alerts` permissions:
+dismissed Dependabot alerts. The caller may provide explicit product PURLs or
+let the workflow derive the default GHCR product PURL. The caller must grant
+the called workflow `contents`, `pull-requests`, and `vulnerability-alerts`
+permissions:
 
 ```yaml
 name: Dependabot VEX
@@ -178,9 +183,15 @@ jobs:
       vulnerability-alerts: read
     uses: zaphiro-technologies/github-workflows/.github/workflows/dependabot-vex.yaml@<immutable-version>
     with:
-      product-purls: |
-        pkg:oci/example?repository_url=ghcr.io/zaphiro-technologies/example
+      # Optional: defaults to the repository's GHCR image.
+      image-name: example
 ```
+
+When `product-purls` is omitted, the workflow derives the default GHCR product
+PURL from `github.repository_owner` and `image-name` (or the repository name):
+`pkg:oci/<image-name>?repository_url=ghcr.io/<owner>/<image-name>`. Supply
+explicit `product-purls` when the repository publishes multiple images, uses a
+different registry, or needs digest-specific scope.
 
 Generated statements use `under_investigation` by default. Reviewers must
 confirm the product scope, vulnerable component, and reachability before
