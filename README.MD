@@ -41,36 +41,60 @@ The repository includes:
   Corporate mode updates `argocd/<app-name>.yaml` at
   `<parameter-prefix>.image.tag`. Use optional `ghcr-repository` to override the
   package repository used to resolve the image digest. Corporate deployments
-  must provide `ghcr-repository`.
-- [`docker`](.github/workflows/docker.yaml): build and push Docker images and
-  scans for vulnerabilities. Supports optional Docker Hub login for builds that
-  need authenticated base image pulls from Docker Hub; callers can pass
-  `DOCKER_USER` and `DOCKER_PASSWORD` secrets, which must be provided together.
-  For private GitHub git dependencies during `docker build`, pass the additional
-  private repositories via the `repositories` input so the generated GitHub App
-  token can access them, then consume the forwarded BuildKit secret (`GH_TOKEN`)
-  in the Dockerfile. The Docker build image must also include the `git` binary.
+  must provide `ghcr-repository`. The workflow resolves the selected image tag
+  directly from GHCR and commits the resulting OCI digest.
+- [`dependabot-vex`](.github/workflows/dependabot-vex.yaml): generate reviewed
+  OpenVEX candidates from dismissed Dependabot alerts and create or update a
+  pull request. Candidates default to `under_investigation`; callers must
+  explicitly opt in before a dismissal reason can produce a `not_affected`
+  statement.
+- [`docker`](.github/workflows/docker.yaml): build and push Docker images,
+  publish BuildKit SBOM/provenance attestations, and scan the pushed image by
+  its immutable digest. The workflow exposes the image, digest, image reference,
+  target platforms, and machine-readable vulnerability evidence as outputs or
+  artifacts. For multi-stage images, Dockerfiles must explicitly declare
+  `BUILDKIT_SBOM_SCAN_STAGE` when build-stage dependencies are part of the
+  application evidence. Supports optional Docker Hub login for builds that need
+  authenticated base image pulls; callers can pass `DOCKER_USER` and
+  `DOCKER_PASSWORD` secrets, which must be provided together. For private GitHub
+  git dependencies during `docker build`, pass the additional private
+  repositories via the `repositories` input so the generated GitHub App token
+  can access them, then consume the forwarded BuildKit secret (`GH_TOKEN`) in
+  the Dockerfile. The Docker build image must also include the `git` binary.
+  When `.vex/dependabot.openvex.json` exists, the workflow attaches it as an
+  unsigned OCI referrer and scans the same immutable image reference with OCI
+  VEX discovery. Image signing is intentionally deferred to a separate change.
+  Callers need `packages: write`.
 - [`golang`](.github/workflows/golang.yaml): lint, test and benchmark Go
   Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. The workflow also scans for
   vulnerabilities.
 - [`js`](.github/workflows/js.yaml): typecheck, lint, test and build JS/TS
   applications. The workflow can auto-fix lint issues on same-repository pull
-  requests, optionally pull DVC datasets, upload the build artifact, and scan
-  for code quality and vulnerabilities.
+  requests, optionally pull DVC datasets, upload the build artifact and a
+  machine-readable dependency SBOM, and scan for code quality and
+  vulnerabilities. The dependency SBOM describes the packages used to create
+  a bundled frontend; it is distinct from the runtime image SBOM.
 - [`license`](.github/workflows/license.yaml): add licensing information in file
   headers and check dependencies licensing compatibility.
 - [`lint`](.github/workflows/markdown.yaml): lint all Markdown and Yaml files.
   In case of markdown documents, checks that the links referenced in the
   documents are valid. If `skip-spell-check: false`, also, a spell checker is
   executed.
-- [`new-release`](.github/workflows/new-release.yaml): create a new release
-  (leveraging makefile to update packaging file version).
+- [`new-release`](.github/workflows/new-release.yaml): opt-in release owner
+  that updates the version, creates the release tag, generates application
+  dependency evidence, assembles a draft release, and publishes it after
+  the tag-triggered Docker workflow succeeds. The tag triggers each repository's
+  Docker workflow, which builds the image using the tag. It deliberately exposes
+  no Docker configuration; Docker defaults and repository-specific settings
+  belong to `docker`.
 - [`python`](.github/workflows/python.yaml): lint, test python applications. The
   workflow includes authentication to GitHub Container Registry in case tests
   rely on private images. The workflow also scans for vulnerabilities.
 - [`release-notes`](.github/workflows/release-notes.yaml): automatically updates
-  release notes using PR titles and labels.
+  release notes using PR titles and labels, including when a release or draft
+  release is created. It does not create GitHub Releases or publish SBOM
+  evidence; those responsibilities belong to `new-release`.
 - [`trivy-cache-update`](.github/workflows/trivy-cache-update.yaml): update
   trivy cache image.
 
@@ -106,12 +130,108 @@ from the actions page.
    ```yaml
    jobs:
      add-to-project:
-       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
+       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@<immutable-version>
        secrets: inherit
    ```
 
-   Of course, you can also test it from a branch, in which case you can replace
-   `main` with the branch name.
+   Production callers should use an immutable release tag or commit SHA. You can
+   also test it from a branch, in which case you can replace the version with the
+   branch name.
+
+## Managed immutable releases
+
+Repositories adopting [`new-release`](.github/workflows/new-release.yaml)
+should add a small `workflow_dispatch` wrapper that calls the reusable workflow.
+Repositories that do not adopt the workflow can continue using `release-notes`
+for notes, but need to migrate to `new-release` to publish a managed release.
+The selected workflow branch is the release source; only `main` and
+`release/**` are accepted, so patch releases can be created from an older
+release branch without allowing feature-branch releases.
+
+```yaml
+name: Release
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    uses: zaphiro-technologies/github-workflows/.github/workflows/new-release.yaml@<immutable-version>
+    secrets: inherit
+```
+
+## Dependabot VEX candidates
+
+Repositories can schedule [`dependabot-vex`](.github/workflows/dependabot-vex.yaml)
+to create or update a pull request containing OpenVEX candidates for currently
+dismissed Dependabot alerts. The caller may provide explicit product PURLs or
+let the workflow derive the default GHCR product PURL. The caller must grant
+the called workflow `contents`, `pull-requests`, and `vulnerability-alerts`
+permissions:
+
+```yaml
+name: Dependabot VEX
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  vex:
+    permissions:
+      contents: write
+      pull-requests: write
+      vulnerability-alerts: read
+    uses: zaphiro-technologies/github-workflows/.github/workflows/dependabot-vex.yaml@<immutable-version>
+    with:
+      # Optional: defaults to the repository's GHCR image.
+      image-name: example
+```
+
+When `product-purls` is omitted, the workflow derives the default GHCR product
+PURL from `github.repository_owner` and `image-name` (or the repository name):
+`pkg:oci/<image-name>?repository_url=ghcr.io/<owner>/<image-name>`. Supply
+explicit `product-purls` when the repository publishes multiple images, uses a
+different registry, or needs digest-specific scope.
+
+Generated statements use `under_investigation` by default. Reviewers must
+confirm the product scope, vulnerable component, and reachability before
+changing a statement to `not_affected`. The workflow also maintains
+`.vex/dependabot-dismissals.json`; this repository-owned ledger preserves the
+original dismissal reason and comment after GitHub later changes an alert to
+`fixed`.
+
+If a historical dismissal predates the workflow, add it to the ledger once and
+let the workflow generate the corresponding candidate. For example, the
+documentation repository can preserve alert 28 with:
+
+```json
+{
+  "version": 1,
+  "alerts": [
+    {
+      "alert": 28,
+      "url": "https://github.com/zaphiro-technologies/documentation/security/dependabot/28",
+      "package": {
+        "ecosystem": "npm",
+        "name": "serialize-javascript"
+      },
+      "vulnerability": {
+        "name": "GHSA-5c6j-r48x-rmvq"
+      },
+      "dismissed_reason": "not_used",
+      "dismissed_comment": "No dynamic regex evaluation is used by the up, so we will wait docusaurus to update the dependency",
+      "dismissed_by": "chicco785",
+      "last_observed_state": "dismissed"
+    }
+  ]
+}
+```
+
+To map this reason to OpenVEX `not_affected`, the caller may set
+`auto-not-affected-reason: not_used`. This is an explicit opt-in: reviewers
+still need to verify that the product PURLs and vulnerable component scope are
+correct. The ledger entry should not be reused for products or image digests
+that do not contain the vulnerable component.
 
 ## How to add a starter workflow to `.github` repository
 
@@ -136,7 +256,7 @@ developers in the `new action` page:
 
    jobs:
      add-to-project:
-       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@main
+       uses: zaphiro-technologies/github-workflows/.github/workflows/add-to-project.yaml@<immutable-version>
        secrets: inherit
    ```
 
