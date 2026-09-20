@@ -155,7 +155,7 @@ jobs:
             image_repository="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${image_name}"
             encoded_repository="${image_repository//\//%2F}"
             automatic_product_purl="pkg:oci/${image_name}?repository_url=${encoded_repository}"
-            product_purls_json=$(printf '%s\n' "$automatic_product_purl" | jq -Rsc '[. | select(length > 0)]')
+            product_purls_json=$(jq -n --arg purl "$automatic_product_purl" '[$purl]')
             echo "Using automatically derived product PURL: $automatic_product_purl"
           fi
 
