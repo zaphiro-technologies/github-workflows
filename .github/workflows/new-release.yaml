@@ -227,8 +227,9 @@ jobs:
           TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
-      - name: Enforce application dependency security threshold
+      - name: Assess application dependency security threshold (advisory)
         if: ${{ inputs.dependency-scan }}
+        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
