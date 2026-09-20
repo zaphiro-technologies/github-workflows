@@ -245,8 +245,12 @@ jobs:
                   alert: $alert.number,
                   url: alert_url,
                   package: {
-                    ecosystem: ($alert.dependency.package.ecosystem // null),
-                    name: ($alert.dependency.package.name // null),
+                    ecosystem: ($alert.dependency.package.ecosystem
+                                // $alert.security_vulnerability.package.ecosystem
+                                // null),
+                    name: ($alert.dependency.package.name
+                           // $alert.security_vulnerability.package.name
+                           // null),
                     version: ($alert.dependency.version // null)
                   },
                   vulnerability: {
@@ -285,6 +289,16 @@ jobs:
 
           ledger_json=$(jq '.' "$DISMISSAL_LEDGER_PATH")
           ledger_count=$(jq '.alerts | length' <<< "$ledger_json")
+          invalid_records=$(jq -r '
+            .alerts[]
+            | select((.package.ecosystem // "") == "" or (.package.name // "") == "")
+            | "alert=\(.alert // "unknown") ecosystem=\(.package.ecosystem // "<missing>") package=\(.package.name // "<missing>")"
+          ' <<< "$ledger_json")
+          if [[ -n "$invalid_records" ]]; then
+            echo "Dependabot dismissal records are missing package identity; refusing to generate an unscoped VEX statement:" >&2
+            echo "$invalid_records" >&2
+            exit 1
+          fi
           if [[ ! -f "$VEX_PATH" && "$ledger_count" == 0 ]]; then
             echo "No current or historical dismissed Dependabot alerts found and no VEX file exists"
             exit 0
@@ -315,8 +329,9 @@ jobs:
             def vulnerability_aliases:
               (.vulnerability.aliases // []) | unique | map(select(. != null and . != ""));
             def dependency_purl:
-              (.package.ecosystem) as $ecosystem
-              | (.package.name | sub("^@"; "%40")) as $name
+              (.package.ecosystem // "") as $ecosystem
+              | (.package.name // "") as $raw_name
+              | ($raw_name | sub("^@"; "%40")) as $name
               | {
                   npm: "npm",
                   go: "golang",
