@@ -167,6 +167,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           permission-actions: read
+          permission-checks: read
           permission-contents: read
       - name: Wait for Docker build
         uses: lewagon/wait-on-check-action@v1.9.1
