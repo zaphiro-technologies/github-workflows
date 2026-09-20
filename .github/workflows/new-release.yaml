@@ -168,47 +168,15 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           permission-actions: read
           permission-contents: read
-      - name: Wait for Docker workflow
-        env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-          RELEASE_TAG: v${{ needs.prepare-release.outputs.tag }}
-          RELEASE_REVISION: ${{ needs.prepare-release.outputs.revision }}
-        run: |
-          set -euo pipefail
-          run_id=""
-
-          for attempt in {1..120}; do
-            runs=$(gh api \
-              "/repos/$GITHUB_REPOSITORY/actions/workflows/docker.yaml/runs?event=push&per_page=100")
-            run_id=$(jq -r \
-              --arg tag "$RELEASE_TAG" \
-              --arg revision "$RELEASE_REVISION" \
-              '[.workflow_runs[] | select(.head_branch == $tag and .head_sha == $revision)] | sort_by(.created_at) | last | .id // empty' \
-              <<< "$runs")
-
-            if [[ -n "$run_id" ]]; then
-              run=$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id")
-              status=$(jq -r '.status' <<< "$run")
-              conclusion=$(jq -r '.conclusion // empty' <<< "$run")
-              run_url=$(jq -r '.html_url' <<< "$run")
-              echo "Docker workflow: $run_url ($status${conclusion:+, $conclusion})"
-
-              if [[ "$status" == "completed" ]]; then
-                if [[ "$conclusion" != "success" ]]; then
-                  echo "Tagged Docker workflow did not succeed; inspect the build and vulnerability jobs" >&2
-                  exit 1
-                fi
-                exit 0
-              fi
-            else
-              echo "Waiting for the Docker workflow for $RELEASE_TAG"
-            fi
-
-            sleep 15
-          done
-
-          echo "Timed out waiting for the Docker workflow for $RELEASE_TAG" >&2
-          exit 1
+      - name: Wait for Docker build
+        uses: lewagon/wait-on-check-action@v1.9.1
+        with:
+          ref: ${{ needs.prepare-release.outputs.revision }}
+          check-name: "docker-build / build"
+          allowed-conclusions: success
+          checks-discovery-timeout: 300
+          wait-interval: 20
+          repo-token: ${{ steps.generate-token.outputs.token }}
 
   assemble-evidence:
     name: Assemble source evidence and draft release
