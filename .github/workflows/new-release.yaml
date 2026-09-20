@@ -195,7 +195,7 @@ jobs:
 
               if [[ "$status" == "completed" ]]; then
                 if [[ "$conclusion" != "success" ]]; then
-                  echo "Tagged Docker build did not succeed" >&2
+                  echo "Tagged Docker workflow did not succeed; inspect the build and vulnerability jobs" >&2
                   exit 1
                 fi
                 exit 0
