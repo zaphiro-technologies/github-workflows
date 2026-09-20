@@ -312,7 +312,7 @@ jobs:
           else
             gh release create "$RELEASE_TAG" \
               --repo "$GITHUB_REPOSITORY" \
-              --title "Release $RELEASE_TAG" \
+              --title "$RELEASE_TAG" \
               --generate-notes \
               --draft
           fi
