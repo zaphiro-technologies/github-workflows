@@ -284,6 +284,12 @@ jobs:
                   docker: "docker"
                 }[$ecosystem] as $type
               | "pkg:" + ($type // $ecosystem) + "/" + $name;
+            def canonicalize_generated_purl:
+              if ((."@id" // "") | startswith("pkg:go/")) then
+                .["@id"] |= sub("^pkg:go/"; "pkg:golang/")
+              else
+                .
+              end;
             def marker:
               "dependabot-alert:" + alert_url;
             def candidate:
@@ -322,7 +328,17 @@ jobs:
                    | select(
                        ((($statement.status_notes // "") | startswith("dependabot-alert:")) | not)
                        or any($active_markers[]; . as $active | (($statement.status_notes // "") | startswith($active)))
-                     ))) as $retained
+                     )
+                   | if (($statement.status_notes // "") | startswith("dependabot-alert:")) then
+                       .products |= map(
+                         if (.subcomponents // null) == null then .
+                         else .subcomponents |= map(canonicalize_generated_purl)
+                         end
+                       )
+                     else
+                       .
+                     end
+                 )) as $retained
             | ($records
                | map(. as $record
                    | select(($existing_markers | index($record | marker)) | not)
