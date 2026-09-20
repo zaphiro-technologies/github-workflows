@@ -262,7 +262,7 @@ jobs:
           echo "Published image: ${IMAGE_NAME}@${IMAGE_DIGEST}"
       - name: Install ORAS
         if: ${{ inputs.vex-attestation && hashFiles(inputs.vex-path) != '' }}
-        uses: oras-project/setup-oras@c90396b2ddabd5a364e6551a79984c86cc036996 # v1.0.0
+        uses: oras-project/setup-oras@1d808f7d7f6995cc68b7bf507bfe5c5446e1dc9d # v2.0.1
       - name: Attach unsigned OpenVEX referrer
         id: attach-vex
         if: ${{ inputs.vex-attestation && hashFiles(inputs.vex-path) != '' }}
