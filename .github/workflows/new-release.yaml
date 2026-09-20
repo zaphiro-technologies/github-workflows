@@ -199,6 +199,20 @@ jobs:
           ref: refs/tags/v${{ needs.prepare-release.outputs.tag }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
+      - name: Prepare Trivy VEX configuration
+        if: ${{ inputs.dependency-scan }}
+        env:
+          VEX_PATH: ${{ inputs.vex-path }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$VEX_PATH" && -f "$VEX_PATH" ]]; then
+            jq -n --arg vex "$VEX_PATH" \
+              '{vulnerability: {vex: [$vex]}}' > trivy-vex-config.yaml
+            echo "Prepared Trivy configuration with VEX: $VEX_PATH"
+          else
+            jq -n '{vulnerability: {vex: []}}' > trivy-vex-config.yaml
+            echo "No repository-owned VEX file found; prepared an empty VEX configuration"
+          fi
       - name: Generate application dependency SBOM
         if: ${{ inputs.dependency-scan }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
@@ -223,8 +237,8 @@ jobs:
           format: json
           output: application-dependency-vulnerability.json
           exit-code: "0"
+          trivy-config: trivy-vex-config.yaml
         env:
-          TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Assess application dependency security threshold (advisory)
@@ -239,8 +253,8 @@ jobs:
           exit-code: "1"
           severity: MEDIUM,HIGH,CRITICAL
           skip-setup-trivy: true
+          trivy-config: trivy-vex-config.yaml
         env:
-          TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Create release manifest and checksums

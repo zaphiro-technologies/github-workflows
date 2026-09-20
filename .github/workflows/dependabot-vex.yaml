@@ -444,11 +444,34 @@ jobs:
             | map(. as $record
                  | select(($existing_markers | index($record | marker)) | not))
             ')
-          echo "new_alerts=$new_alerts_json" >> "$GITHUB_OUTPUT"
+          if [[ "$(jq 'length' <<< "$new_alerts_json")" == 0 ]]; then
+            vulnerability_codes='scope update'
+            vulnerability_list='- Existing VEX product scope updated'
+          else
+            vulnerability_codes=$(jq -r \
+              '[.[] | .vulnerability.name // "unknown"] | unique | join(", ")' \
+              <<< "$new_alerts_json")
+            vulnerability_list=$(jq -r '
+              .[]
+              | .vulnerability as $v
+              | "- " + ($v.name // "unknown")
+                + (if (($v.aliases // []) | length) > 0
+                   then " (aliases: " + (($v.aliases // []) | join(", ")) + ")"
+                   else ""
+                   end)
+            ' <<< "$new_alerts_json")
+          fi
+          {
+            echo "vulnerability_codes=$vulnerability_codes"
+            echo 'vulnerability_list<<VEX_EOF'
+            printf '%s\n' "$vulnerability_list"
+            echo 'VEX_EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create candidate pull request
         env:
-          NEW_ALERTS_JSON: ${{ steps.generate.outputs.new_alerts }}
+          VULNERABILITY_CODES: ${{ steps.generate.outputs.vulnerability_codes }}
+          VULNERABILITY_LIST: ${{ steps.generate.outputs.vulnerability_list }}
         run: |
           set -euo pipefail
           pr_number=$(gh pr list \
@@ -458,28 +481,12 @@ jobs:
             --json number \
             --jq '.[0].number // empty')
 
-          vulnerability_codes=$(jq -r \
-            '[.[] | .vulnerability.name // "unknown"] | unique | join(", ")' \
-            <<< "$NEW_ALERTS_JSON")
-          vulnerability_list=$(jq -r '
-            .[]
-            | .vulnerability as $v
-            | "- " + ($v.name // "unknown")
-              + (if (($v.aliases // []) | length) > 0
-                 then " (aliases: " + (($v.aliases // []) | join(", ")) + ")"
-                 else ""
-                 end)
-          ' <<< "$NEW_ALERTS_JSON")
-          if [[ "$(jq 'length' <<< "$NEW_ALERTS_JSON")" == 0 ]]; then
-            vulnerability_codes='scope update'
-            vulnerability_list='- Existing VEX product scope updated'
-          fi
-          pr_title="security: review Dependabot VEX candidates (${vulnerability_codes})"
+          pr_title="security: review Dependabot VEX candidates (${VULNERABILITY_CODES})"
           pr_body=$(cat <<EOF
           This pull request contains OpenVEX statements generated from currently dismissed Dependabot alerts.
 
           Relevant vulnerability codes:
-          ${vulnerability_list}
+          ${VULNERABILITY_LIST}
 
           Review each statement's product scope, vulnerability reachability, status, and justification before merging.
 
