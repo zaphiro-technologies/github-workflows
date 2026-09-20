@@ -130,6 +130,7 @@ jobs:
           echo "name=$branch" >> "$GITHUB_OUTPUT"
 
       - name: Generate OpenVEX candidates
+        id: generate
         run: |
           set -euo pipefail
 
@@ -151,8 +152,58 @@ jobs:
             image_repository="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${image_name}"
             encoded_repository="${image_repository//\//%2F}"
             automatic_product_purl="pkg:oci/${image_name}?repository_url=${encoded_repository}"
-            product_purls_json=$(jq -n --arg purl "$automatic_product_purl" '[$purl]')
-            echo "Using automatically derived product PURL: $automatic_product_purl"
+            source_product_purls_json=$(python3 - <<'PY'
+          import json
+          import re
+          import sys
+          from pathlib import Path
+
+          purls = []
+
+          go_mod = Path("go.mod")
+          if go_mod.is_file():
+              for line in go_mod.read_text().splitlines():
+                  fields = line.split()
+                  if len(fields) >= 2 and fields[0] == "module":
+                      purls.append(f"pkg:golang/{fields[1]}")
+                      break
+
+          pyproject = Path("pyproject.toml")
+          if pyproject.is_file():
+              try:
+                  import tomllib
+                  document = tomllib.loads(pyproject.read_text())
+              except Exception as error:
+                  print(f"Warning: unable to parse pyproject.toml: {error}", file=sys.stderr)
+              else:
+                  project = document.get("project", {})
+                  poetry = document.get("tool", {}).get("poetry", {})
+                  name = project.get("name") or poetry.get("name")
+                  if name:
+                      normalized = re.sub(r"[-_.]+", "-", name).lower()
+                      purls.append(f"pkg:pypi/{normalized}")
+
+          package_json = Path("package.json")
+          if package_json.is_file():
+              try:
+                  name = json.loads(package_json.read_text()).get("name")
+              except Exception as error:
+                  print(f"Warning: unable to parse package.json: {error}", file=sys.stderr)
+              else:
+                  if name:
+                      if name.startswith("@"):
+                          name = "%40" + name[1:]
+                      purls.append(f"pkg:npm/{name}")
+
+          print(json.dumps(purls))
+          PY
+            )
+            product_purls_json=$(jq -n \
+              --arg image_purl "$automatic_product_purl" \
+              --argjson source_purls "$source_product_purls_json" \
+              '[$image_purl] + $source_purls | unique')
+            echo "Using automatically derived product PURLs:"
+            jq -r '.[] | "  " + .' <<< "$product_purls_json"
           fi
 
           if [[ "$(jq 'length' <<< "$product_purls_json")" == 0 ]]; then
@@ -284,14 +335,14 @@ jobs:
                   docker: "docker"
                 }[$ecosystem] as $type
               | "pkg:" + ($type // $ecosystem) + "/" + $name;
-            def canonicalize_generated_purl:
-              if ((."@id" // "") | startswith("pkg:go/")) then
-                .["@id"] |= sub("^pkg:go/"; "pkg:golang/")
-              else
-                .
-              end;
             def marker:
               "dependabot-alert:" + alert_url;
+            def products_for:
+              . as $record
+              | $products | map({
+                  "@id": .,
+                  subcomponents: [{"@id": $record | dependency_purl}]
+                });
             def candidate:
               . as $record
               | {
@@ -330,11 +381,10 @@ jobs:
                        or any($active_markers[]; . as $active | (($statement.status_notes // "") | startswith($active)))
                      )
                    | if (($statement.status_notes // "") | startswith("dependabot-alert:")) then
-                       .products |= map(
-                         if (.subcomponents // null) == null then .
-                         else .subcomponents |= map(canonicalize_generated_purl)
-                         end
-                       )
+                       (first($records[] as $record
+                              | select(($statement.status_notes // "")
+                                      | startswith($record | marker))) // null) as $record
+                       | if $record == null then . else .products = ($record | products_for) end
                      else
                        .
                      end
@@ -364,7 +414,25 @@ jobs:
           echo "Historical dismissal records: $ledger_count"
           echo "Generated or retained VEX statements: $(jq '.statements | length' "$VEX_PATH")"
 
+          new_alerts_json=$(jq -c \
+            --argjson existing "$existing_vex" \
+            --argjson ledger "$ledger_json" \
+            '
+            def alert_url:
+              (.url // ("https://github.com/" + env.GITHUB_REPOSITORY + "/security/dependabot/" + (.alert | tostring)));
+            def marker:
+              "dependabot-alert:" + alert_url;
+            ($existing.statements // []
+             | map((.status_notes // "") | split("\n")[0])) as $existing_markers
+            | ($ledger.alerts // [])
+            | map(. as $record
+                 | select(($existing_markers | index($record | marker)) | not))
+            ')
+          echo "new-alerts=$new_alerts_json" >> "$GITHUB_OUTPUT"
+
       - name: Create candidate pull request
+        env:
+          NEW_ALERTS_JSON: ${{ steps.generate.outputs.new-alerts }}
         run: |
           set -euo pipefail
           pr_number=$(gh pr list \
@@ -375,20 +443,20 @@ jobs:
             --jq '.[0].number // empty')
 
           vulnerability_codes=$(jq -r \
-            '[.statements[].vulnerability.name // "unknown"] | unique | join(", ")' \
-            "$VEX_PATH")
+            '[.[] | .vulnerability.name // "unknown"] | unique | join(", ")' \
+            <<< "$NEW_ALERTS_JSON")
           vulnerability_list=$(jq -r '
-            .statements[]
+            .[]
             | .vulnerability as $v
             | "- " + ($v.name // "unknown")
               + (if (($v.aliases // []) | length) > 0
                  then " (aliases: " + (($v.aliases // []) | join(", ")) + ")"
                  else ""
                  end)
-          ' "$VEX_PATH")
-          if [[ -z "$vulnerability_codes" ]]; then
-            vulnerability_codes='none'
-            vulnerability_list='- none'
+          ' <<< "$NEW_ALERTS_JSON")
+          if [[ "$(jq 'length' <<< "$NEW_ALERTS_JSON")" == 0 ]]; then
+            vulnerability_codes='scope update'
+            vulnerability_list='- Existing VEX product scope updated'
           fi
           pr_title="security: review Dependabot VEX candidates (${vulnerability_codes})"
           pr_body=$(cat <<EOF

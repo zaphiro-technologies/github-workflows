@@ -31,6 +31,11 @@ on:
         required: false
         type: boolean
         default: true
+      vex-path:
+        description: Optional repository-owned VEX document used by source vulnerability scans
+        required: false
+        type: string
+        default: .vex/dependabot.openvex.json
       dependency-scan-skip-dirs:
         description: Comma-separated directories excluded from source dependency scanning
         required: false
@@ -48,6 +53,11 @@ on:
         required: false
         type: boolean
         default: true
+      vex-path:
+        description: Optional repository-owned VEX document used by source vulnerability scans
+        required: false
+        type: string
+        default: .vex/dependabot.openvex.json
       dependency-scan-skip-dirs:
         description: Comma-separated directories excluded from source dependency scanning
         required: false
@@ -245,6 +255,7 @@ jobs:
           output: application-dependency-vulnerability.json
           exit-code: "0"
         env:
+          TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Enforce application dependency security threshold
@@ -259,6 +270,7 @@ jobs:
           severity: MEDIUM,HIGH,CRITICAL
           skip-setup-trivy: true
         env:
+          TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Create release manifest and checksums

@@ -38,6 +38,11 @@ on:
         default: true
         type: boolean
         description: False to skip vulnerability-scan exec
+      vex-path:
+        required: false
+        default: .vex/dependabot.openvex.json
+        type: string
+        description: Optional repository-owned VEX document used by filesystem scans
       vulnerability-scan-skip-dirs:
         required: false
         default: "vendor,.github"
@@ -229,6 +234,7 @@ jobs:
           hide-progress: true
           output: trivy.txt
         env:
+          TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Publish Trivy Output to Summary
@@ -256,5 +262,6 @@ jobs:
           # On a subsequent call to the action we know trivy is already installed so can skip this
           skip-setup-trivy: true
         env:
+          TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
