@@ -110,6 +110,7 @@ jobs:
       VEX_PATH: ${{ inputs.vex-path }}
       DISMISSAL_LEDGER_PATH: ${{ inputs.dismissal-ledger-path }}
       BASE_BRANCH: ${{ inputs.base-branch }}
+      CANDIDATE_BRANCH: automation/dependabot-vex-${{ github.run_id }}
       AUTO_NOT_AFFECTED_REASON: ${{ inputs.auto-not-affected-reason }}
       AUTO_NOT_AFFECTED_JUSTIFICATION: ${{ inputs.auto-not-affected-justification }}
     steps:
@@ -123,14 +124,9 @@ jobs:
         id: branch
         run: |
           set -euo pipefail
-          branch='automation/dependabot-vex'
+          branch="$CANDIDATE_BRANCH"
           git fetch origin "$BASE_BRANCH"
-          git fetch origin "$branch" 2>/dev/null || true
-          if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
-            git checkout -B "$branch" "origin/$branch"
-          else
-            git checkout -B "$branch" "origin/$BASE_BRANCH"
-          fi
+          git checkout -B "$branch" "origin/$BASE_BRANCH"
           echo "name=$branch" >> "$GITHUB_OUTPUT"
 
       - name: Generate OpenVEX candidates
@@ -354,7 +350,50 @@ jobs:
       - name: Create candidate pull request
         run: |
           set -euo pipefail
+          pr_number=$(gh pr list \
+            --repo "$GITHUB_REPOSITORY" \
+            --head "$CANDIDATE_BRANCH" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')
+
+          vulnerability_codes=$(jq -r \
+            '[.statements[].vulnerability.name // "unknown"] | unique | join(", ")' \
+            "$VEX_PATH")
+          vulnerability_list=$(jq -r '
+            .statements[]
+            | .vulnerability as $v
+            | "- " + ($v.name // "unknown")
+              + (if (($v.aliases // []) | length) > 0
+                 then " (aliases: " + (($v.aliases // []) | join(", ")) + ")"
+                 else ""
+                 end)
+          ' "$VEX_PATH")
+          if [[ -z "$vulnerability_codes" ]]; then
+            vulnerability_codes='none'
+            vulnerability_list='- none'
+          fi
+          pr_title="security: review Dependabot VEX candidates (${vulnerability_codes})"
+          pr_body=$(cat <<EOF
+          This pull request contains OpenVEX statements generated from currently dismissed Dependabot alerts.
+
+          Relevant vulnerability codes:
+          ${vulnerability_list}
+
+          Review each statement's product scope, vulnerability reachability, status, and justification before merging.
+
+          By default, generated statements use \`under_investigation\`. Any \`not_affected\` statement requires explicit workflow opt-in and still requires review.
+          EOF
+          )
+
           if [[ -z "$(git status --short -- "$VEX_PATH" "$DISMISSAL_LEDGER_PATH")" ]]; then
+            if [[ -n "$pr_number" ]]; then
+              gh pr edit "$pr_number" \
+                --repo "$GITHUB_REPOSITORY" \
+                --title "$pr_title" \
+                --body "$pr_body" \
+                --add-label security
+            fi
             echo "No VEX or dismissal-ledger changes required"
             exit 0
           fi
@@ -363,19 +402,20 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$VEX_PATH" "$DISMISSAL_LEDGER_PATH"
           git commit -m 'security: generate Dependabot VEX candidates'
-          git push origin HEAD:automation/dependabot-vex
+          git push origin "HEAD:$CANDIDATE_BRANCH"
 
-          if gh pr list --repo "$GITHUB_REPOSITORY" --head automation/dependabot-vex --state open --json number --jq 'length' | grep -q '^0$'; then
+          if [[ -z "$pr_number" ]]; then
             gh pr create \
               --repo "$GITHUB_REPOSITORY" \
               --base "$BASE_BRANCH" \
-              --head automation/dependabot-vex \
-              --title 'security: review Dependabot VEX candidates' \
-              --body-file - <<'EOF'
-          This pull request contains OpenVEX statements generated from currently dismissed Dependabot alerts.
-
-          Review each statement's product scope, vulnerability reachability, status, and justification before merging.
-
-          By default, generated statements use `under_investigation`. Any `not_affected` statement requires explicit workflow opt-in and still requires review.
-          EOF
+              --head "$CANDIDATE_BRANCH" \
+              --title "$pr_title" \
+              --label security \
+              --body "$pr_body"
+          else
+            gh pr edit "$pr_number" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$pr_title" \
+              --body "$pr_body" \
+              --add-label security
           fi
