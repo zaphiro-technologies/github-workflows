@@ -128,7 +128,7 @@ jobs:
 
       - name: Generate Dependabot VEX candidates
         id: vex
-        uses: zaphiro-technologies/dependabot-vex-action@main
+        uses: zaphiro-technologies/dependabot-vex-action@initial-version
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           product-purls: ${{ inputs.product-purls }}
