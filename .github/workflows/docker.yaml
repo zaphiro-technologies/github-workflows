@@ -232,6 +232,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           sbom: ${{ inputs.image-sbom }}
           provenance: ${{ inputs.provenance && 'mode=max' || 'false' }}
           cache-from: type=gha

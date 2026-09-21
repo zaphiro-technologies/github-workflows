@@ -155,6 +155,45 @@ jobs:
           toTag: ${{ github.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Build Changelog (initial history)"
+        id: build_changelog_2
+        uses: mikepenz/release-changelog-builder-action@v6
+        if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
+        with:
+          configuration: ".github/config/release-config-temp.json"
+          failOnError: true
+          includeOpen: true
+          toTag: ${{ github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update Changelog (existing history)
+        uses: stefanzweifel/changelog-updater-action@v1
+        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false && steps.previoustag.outputs.tag != '0.0.0' }}
+        with:
+          latest-version: ${{ steps.semvers.outputs.patch }}-dev
+          release-notes: ${{ steps.build_changelog_1.outputs.changelog }}
+          path-to-changelog: RELEASE_NOTES.md
+      - name: Update Changelog (initial history)
+        uses: stefanzweifel/changelog-updater-action@v1
+        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false && steps.previoustag.outputs.tag == '0.0.0' }}
+        with:
+          latest-version: ${{ steps.semvers.outputs.patch }}-dev
+          release-notes: ${{ steps.build_changelog_2.outputs.changelog }}
+          path-to-changelog: RELEASE_NOTES.md
+      - name: Prettify RELEASE_NOTES.md
+        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
+        uses: creyD/prettier_action@v4.6
+        with:
+          prettier_options: --prose-wrap always --write RELEASE_NOTES.md
+          dry: true
+          no_commit: true
+      - name: Commit updated CHANGELOG
+        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
+        uses: stefanzweifel/git-auto-commit-action@v7.2.0
+        with:
+          branch: ${{ github.event.pull_request.head.ref }}
+          commit_message: "docs(release_notes): update RELEASE_NOTES.md [dependabot skip]"
+          file_pattern: RELEASE_NOTES.md
 
   release:
     name: Release
@@ -243,13 +282,6 @@ jobs:
           prettier_options: --prose-wrap always --write RELEASE_NOTES.md
           dry: true
           no_commit: true
-      - name: Commit updated CHANGELOG
-        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
-        uses: stefanzweifel/git-auto-commit-action@v7.2.0
-        with:
-          branch: ${{github.event.pull_request.head.ref}}
-          commit_message: "docs(release_notes): update RELEASE_NOTES.md [dependabot skip]"
-          file_pattern: RELEASE_NOTES.md
       - name: Commit updated CHANGELOG
         if: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') }}
         uses: stefanzweifel/git-auto-commit-action@v7.2.0
