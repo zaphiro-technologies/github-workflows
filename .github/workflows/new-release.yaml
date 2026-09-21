@@ -195,6 +195,7 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           permission-contents: write
           permission-actions: read
+          permission-checks: read
       - uses: actions/checkout@v7.0.1
         with:
           ref: refs/tags/v${{ needs.prepare-release.outputs.tag }}
