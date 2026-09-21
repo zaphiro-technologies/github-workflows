@@ -255,7 +255,8 @@ jobs:
           fi
 
           image_name=$(jq -r '.Name // .name // empty' image-index.json)
-          image_digest=$(jq -r '.Digest // .digest // empty' image-index.json)
+          image_name="${image_name%@*}"
+          image_digest=$(jq -r '.Digest // .digest // .manifest.digest // empty' image-index.json)
           if [[ -z "$image_name" || ! "$image_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
             echo "image-index.json does not contain a valid OCI image name and index digest" >&2
             exit 1
