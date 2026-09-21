@@ -247,23 +247,27 @@ jobs:
           set -euo pipefail
 
           baseline_run_id=""
-          while IFS= read -r run_id; do
-            [[ -z "$run_id" ]] && continue
+          while IFS= read -r candidate_run_id; do
+            [[ -z "$candidate_run_id" ]] && continue
 
-            artifact_count=$(gh api \
-              "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts?name=benchmark-result" \
-              --jq '.total_count')
-            if [[ "$artifact_count" != "0" ]]; then
-              baseline_run_id="$run_id"
+            conclusion=$(gh api \
+              "repos/$GITHUB_REPOSITORY/actions/runs/$candidate_run_id" \
+              --jq '.conclusion')
+            if [[ "$conclusion" == "success" ]]; then
+              baseline_run_id="$candidate_run_id"
               break
             fi
           done < <(
-            gh run list \
-              --repo "$GITHUB_REPOSITORY" \
-              --branch "$BASE_BRANCH" \
-              --limit 100 \
-              --json databaseId,conclusion \
-              | jq -r '.[] | select(.conclusion == "success") | .databaseId'
+            gh api --paginate \
+              "repos/$GITHUB_REPOSITORY/actions/artifacts?name=benchmark-result&per_page=100" \
+              | jq -rs --arg branch "$BASE_BRANCH" '
+                [ .[] | .artifacts[]
+                  | select(.expired == false and .workflow_run.head_branch == $branch)
+                ]
+                | sort_by(.created_at)
+                | reverse[]
+                | .workflow_run.id
+              '
           )
 
           if [[ -n "$baseline_run_id" ]]; then
