@@ -313,7 +313,7 @@ jobs:
             gh release create "$RELEASE_TAG" \
               --repo "$GITHUB_REPOSITORY" \
               --title "$RELEASE_TAG" \
-              --generate-notes \
+              --notes "" \
               --draft
           fi
 
@@ -322,24 +322,3 @@ jobs:
             assets+=(application-dependency-sbom.cdx.json application-dependency-vulnerability.json)
           fi
           gh release upload "$RELEASE_TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY"
-
-  publish-release:
-    name: Publish immutable release
-    needs:
-      - prepare-release
-      - assemble-evidence
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/create-github-app-token@v3
-        id: generate-token
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_SECRET }}
-          permission-contents: write
-      - name: Publish draft release
-        env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-          RELEASE_TAG: v${{ needs.prepare-release.outputs.tag }}
-        run: gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false
