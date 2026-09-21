@@ -252,7 +252,7 @@ jobs:
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release edit "$RELEASE_TAG" "${release_args[@]}"
           else
-            gh release create "$RELEASE_TAG" "${release_args[@]}"
+            gh release create "$RELEASE_TAG" "${release_args[@]}" --draft
           fi
       - name: Clean log
         if: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') }}
