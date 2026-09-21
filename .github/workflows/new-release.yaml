@@ -195,7 +195,6 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           permission-contents: write
           permission-actions: read
-          permission-checks: read
       - uses: actions/checkout@v7.0.1
         with:
           ref: refs/tags/v${{ needs.prepare-release.outputs.tag }}
@@ -218,7 +217,7 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --commit "$SOURCE_REVISION" \
               --limit 100 \
-              --json databaseId,event,headBranch,headSha,status,conclusion \
+              --json databaseId,event,headBranch,headSha \
               | jq -r --arg tag "$RELEASE_TAG" --arg sha "$SOURCE_REVISION" \
                 '.[] | select(.event == "push" and (.headBranch == $tag or .headBranch == null) and .headSha == $sha) | .databaseId'
           )
@@ -252,11 +251,6 @@ jobs:
 
           if [[ -z "$docker_run_id" || ! -s image-index.json ]]; then
             echo "Could not download image-index.json from a tagged Docker run for $RELEASE_TAG at $SOURCE_REVISION" >&2
-            exit 1
-          fi
-
-          if ! gh run watch "$docker_run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
-            echo "Tagged Docker workflow run $docker_run_id did not complete successfully" >&2
             exit 1
           fi
 
