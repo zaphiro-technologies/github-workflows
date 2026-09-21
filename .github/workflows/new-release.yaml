@@ -215,12 +215,11 @@ jobs:
           done < <(
             gh run list \
               --repo "$GITHUB_REPOSITORY" \
-              --branch "$RELEASE_TAG" \
               --commit "$SOURCE_REVISION" \
               --limit 100 \
-              --json databaseId,headBranch,headSha,status,conclusion \
+              --json databaseId,event,headBranch,headSha,status,conclusion \
               | jq -r --arg tag "$RELEASE_TAG" --arg sha "$SOURCE_REVISION" \
-                '.[] | select(.headBranch == $tag and .headSha == $sha and .status == "completed" and .conclusion == "success") | .databaseId'
+                '.[] | select(.event == "push" and (.headBranch == $tag or .headBranch == null) and .headSha == $sha and .status == "completed" and .conclusion == "success") | .databaseId'
           )
 
           if [[ "${#candidate_runs[@]}" -eq 0 ]]; then

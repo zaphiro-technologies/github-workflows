@@ -45,9 +45,9 @@ The repository includes:
   directly from GHCR and commits the resulting OCI digest.
 - [`dependabot-vex`](.github/workflows/dependabot-vex.yaml): generate reviewed
   OpenVEX candidates from dismissed Dependabot alerts and create or update a
-  pull request. Candidates always default to `under_investigation`; reviewers
-  must verify the product and component scope before changing a statement to
-  `not_affected`.
+  pull request. New candidate statements use `under_investigation` by default;
+  reviewers must verify the product and component scope before changing a
+  statement to `not_affected`.
 - [`docker`](.github/workflows/docker.yaml): build and push Docker images,
   publish BuildKit SBOM/provenance attestations, and scan the pushed image by
   its immutable digest. The workflow exposes the image, digest, image reference,
@@ -84,8 +84,8 @@ The repository includes:
 - [`new-release`](.github/workflows/new-release.yaml): opt-in release owner
   that updates the version, creates the release tag, generates application
   dependency evidence, binds it to the exact successful tagged Docker build and
-  immutable OCI index digest, assembles a draft release, and publishes it after
-  the tag-triggered Docker workflow succeeds. The tag triggers each repository's
+  immutable OCI index digest, and assembles a draft release after the
+  tag-triggered Docker workflow succeeds. The tag triggers each repository's
   Docker workflow, which builds the image using the tag. It deliberately exposes
   no Docker configuration; Docker defaults and repository-specific settings
   belong to `docker`.
@@ -93,8 +93,8 @@ The repository includes:
   workflow includes authentication to GitHub Container Registry in case tests
   rely on private images. The workflow also scans for vulnerabilities.
 - [`release-notes`](.github/workflows/release-notes.yaml): automatically updates
-  release notes using PR titles and labels, including when a release or draft
-  release is created, editing an existing release or creating one when needed.
+  release notes using PR titles and labels on release creation or publication,
+  editing an existing release or creating one when needed.
   It does not publish SBOM evidence; that responsibility belongs to
   `new-release`.
 - [`trivy-cache-update`](.github/workflows/trivy-cache-update.yaml): update
@@ -145,7 +145,8 @@ from the actions page.
 Repositories adopting [`new-release`](.github/workflows/new-release.yaml)
 should add a small `workflow_dispatch` wrapper that calls the reusable workflow.
 Repositories that do not adopt the workflow can continue using `release-notes`
-for notes, but need to migrate to `new-release` to publish a managed release.
+for notes, but need to migrate to `new-release` to assemble managed release
+evidence.
 The selected workflow branch is the release source; only `main` and
 `release/**` are accepted, so patch releases can be created from an older
 release branch without allowing feature-branch releases.
@@ -177,7 +178,8 @@ to create or update a pull request containing OpenVEX candidates for currently
 dismissed Dependabot alerts. The caller may provide explicit product PURLs or
 let the workflow derive the default GHCR product PURL. The caller must grant
 the called workflow `contents`, `pull-requests`, and `vulnerability-alerts`
-permissions:
+permissions. The caller only needs read access for its `GITHUB_TOKEN`; the
+workflow creates a separate GitHub App token for repository changes:
 
 ```yaml
 name: Dependabot VEX
@@ -189,8 +191,8 @@ on:
 jobs:
   vex:
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+      pull-requests: read
       vulnerability-alerts: read
     uses: zaphiro-technologies/github-workflows/.github/workflows/dependabot-vex.yaml@<immutable-version>
     with:
@@ -200,9 +202,10 @@ jobs:
 
 When `product-purls` is omitted, the workflow derives the default GHCR product
 PURL from `github.repository_owner` and `image-name` (or the repository name):
-`pkg:oci/<image-name>?repository_url=ghcr.io/<owner>/<image-name>`. Supply
-explicit `product-purls` when the repository publishes multiple images, uses a
-different registry, or needs digest-specific scope.
+`pkg:oci/<image-name>?repository_url=ghcr.io/<owner>/<image-name>`, together
+with source package PURLs for detected Go, Python, or JavaScript projects.
+Supply explicit `product-purls` when the repository publishes multiple images,
+uses a different registry, or needs digest-specific scope.
 
 Generated statements use `under_investigation` by default. Reviewers must
 confirm the product scope, vulnerable component, and reachability before
@@ -237,12 +240,6 @@ documentation repository can preserve alert 28 with:
   ]
 }
 ```
-
-The updated action always generates `under_investigation`. Reviewers must
-change a candidate to `not_affected` only after verifying that the product
-PURLs and vulnerable component scope are correct. The ledger entry should not
-be reused for products or image digests that do not contain the vulnerable
-component.
 
 ## How to add a starter workflow to `.github` repository
 

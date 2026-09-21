@@ -203,7 +203,7 @@ jobs:
         uses: mikepenz/release-changelog-builder-action@v6
         if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
         with:
-          configuration: ".github/config/release-config-temp.json"
+          configuration: ${{ env.CONFIGURATION }}
           failOnError: true
           includeOpen: true
           toTag: ${{ github.sha }}
@@ -225,7 +225,6 @@ jobs:
             if [[ -z "${line_start}" ]]; then echo "Empty"; else sed -i -e $PATTERN RELEASE_NOTES.md; fi
             echo "cleaned release note:"
             more RELEASE_NOTES.md
-            rm .github/config/release-config-temp.json
           else
             echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
           fi
@@ -241,7 +240,6 @@ jobs:
             rm -f RELEASE_NOTES.md.bak
             echo "cleaned release note:"
             more RELEASE_NOTES.md
-            rm .github/config/release-config-temp.json
           else
             echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
           fi
