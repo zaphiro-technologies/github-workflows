@@ -237,7 +237,7 @@ jobs:
         run: |
           set -o pipefail
           make ci-bench | tee output.txt
-      # Find the newest successful base-branch run that published benchmark data.
+      # Find the newest base-branch run that published benchmark data.
       - name: Find benchmark baseline
         id: benchmark-baseline
         env:
@@ -246,35 +246,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          baseline_run_id=""
-          while IFS= read -r candidate_run_id; do
-            [[ -z "$candidate_run_id" ]] && continue
-
-            conclusion=$(gh api \
-              "repos/$GITHUB_REPOSITORY/actions/runs/$candidate_run_id" \
-              --jq '.conclusion')
-            if [[ "$conclusion" == "success" ]]; then
-              baseline_run_id="$candidate_run_id"
-              break
-            fi
-          done < <(
-            gh api --paginate \
-              "repos/$GITHUB_REPOSITORY/actions/artifacts?name=benchmark-result&per_page=100" \
-              | jq -rs --arg branch "$BASE_BRANCH" '
-                [ .[] | .artifacts[]
-                  | select(.expired == false and .workflow_run.head_branch == $branch)
-                ]
-                | sort_by(.created_at)
-                | reverse[]
-                | .workflow_run.id
-              '
-          )
+          baseline_run_id=$(gh api --paginate \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts?name=benchmark-result&per_page=100" \
+            | jq -rs --arg branch "$BASE_BRANCH" '
+              [ .[] | .artifacts[]
+                | select(.expired == false and .workflow_run.head_branch == $branch)
+              ]
+              | sort_by(.created_at)
+              | last
+              | .workflow_run.id // empty
+            ')
 
           if [[ -n "$baseline_run_id" ]]; then
             echo "run-id=$baseline_run_id" >> "$GITHUB_OUTPUT"
-            echo "Using benchmark baseline from successful $BASE_BRANCH run $baseline_run_id"
+            echo "Using benchmark baseline from $BASE_BRANCH run $baseline_run_id"
           else
-            echo "No successful benchmark baseline found on $BASE_BRANCH; storing an initial result"
+            echo "No benchmark baseline found on $BASE_BRANCH; storing an initial result"
           fi
       - name: Download benchmark report from base branch
         if: ${{ steps.benchmark-baseline.outputs.run-id != '' }}
