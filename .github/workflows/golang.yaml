@@ -216,6 +216,8 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          permission-actions: read
+          permission-contents: read
       - uses: actions/checkout@v7.0.1
       - run: git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
       - uses: actions/setup-go@v7
@@ -232,13 +234,51 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Run benchmark
         shell: bash
-        run: make ci-bench | tee output.txt
-      # Download previous benchmark result from cache (if exists)
+        run: |
+          set -o pipefail
+          make ci-bench | tee output.txt
+      # Find the newest successful base-branch run that published benchmark data.
+      - name: Find benchmark baseline
+        id: benchmark-baseline
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          BASE_BRANCH: ${{ github.base_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          baseline_run_id=""
+          while IFS= read -r run_id; do
+            [[ -z "$run_id" ]] && continue
+
+            artifact_count=$(gh api \
+              "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts?name=benchmark-result" \
+              --jq '.total_count')
+            if [[ "$artifact_count" != "0" ]]; then
+              baseline_run_id="$run_id"
+              break
+            fi
+          done < <(
+            gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --branch "$BASE_BRANCH" \
+              --limit 100 \
+              --json databaseId,conclusion \
+              | jq -r '.[] | select(.conclusion == "success") | .databaseId'
+          )
+
+          if [[ -n "$baseline_run_id" ]]; then
+            echo "run-id=$baseline_run_id" >> "$GITHUB_OUTPUT"
+            echo "Using benchmark baseline from successful $BASE_BRANCH run $baseline_run_id"
+          else
+            echo "No successful benchmark baseline found on $BASE_BRANCH; storing an initial result"
+          fi
       - name: Download benchmark report from base branch
+        if: ${{ steps.benchmark-baseline.outputs.run-id != '' }}
         uses: actions/download-artifact@v8
-        continue-on-error: true
         with:
           name: benchmark-result
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.benchmark-baseline.outputs.run-id }}
           github-token: ${{ steps.generate-token.outputs.token }}
       # Run `github-action-benchmark` action
       - name: Store benchmark result
