@@ -26,16 +26,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.repository }}-${{ github.event.pull_request.number }}-graphify
+  group: ${{ github.repository }}-main-graphify
   cancel-in-progress: true
 
 jobs:
   update-graph:
     name: Update Graphify code graph
     runs-on: ubuntu-latest
-
-    # We need write access to the PR branch, so fork PRs are intentionally skipped.
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
 
     env:
       GRAPHIFY_OUT: .graphify
@@ -51,10 +48,10 @@ jobs:
           repositories: ${{ github.event.repository.name }}
           permission-contents: write
 
-      - name: Checkout PR branch
+      - name: Checkout main
         uses: actions/checkout@v7.0.1
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: main
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
 
@@ -143,21 +140,19 @@ jobs:
           fi
 
       # Never commit a graph generated from an outdated PR head.
-      - name: Check PR branch is still current
+      - name: Check main is still current
         if: steps.changes.outputs.changed == 'true'
         id: freshness
         shell: bash
-        env:
-          BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          git fetch origin "$BRANCH"
+          git fetch origin main
 
           LOCAL_SHA="$(git rev-parse HEAD)"
-          REMOTE_SHA="$(git rev-parse "origin/$BRANCH")"
+          REMOTE_SHA="$(git rev-parse "origin/main")"
 
           if [ "$LOCAL_SHA" != "$REMOTE_SHA" ]; then
-            echo "PR branch changed while Graphify was running."
-            echo "A new synchronize event will update the graph."
+            echo "main changed while Graphify was running."
+            echo "A newer workflow run will update the graph."
             echo "current=false" >> "$GITHUB_OUTPUT"
           else
             echo "current=true" >> "$GITHUB_OUTPUT"
