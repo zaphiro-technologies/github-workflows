@@ -174,6 +174,23 @@ jobs:
       - name: Select configuration
         if: ${{ github.event_name != 'workflow_call' }}
         run: echo "CONFIGURATION=.github/config/release-config.json" >> $GITHUB_ENV
+      - name: Compute release note versions
+        id: release_versions
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          if [[ ! "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            echo "Release tag is not a semantic version: $RELEASE_TAG" >&2
+            exit 1
+          fi
+          major="${BASH_REMATCH[1]}"
+          minor="${BASH_REMATCH[2]}"
+          patch="${BASH_REMATCH[3]}"
+          next_dev="${major}.${minor}.$((patch + 1))-dev"
+          echo "released=$version" >> "$GITHUB_OUTPUT"
+          echo "next_dev=$next_dev" >> "$GITHUB_OUTPUT"
       - name: "Build Changelog"
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v6
@@ -198,43 +215,13 @@ jobs:
           else
             gh release create "$RELEASE_TAG" "${release_args[@]}"
           fi
-      - name: "Build Changelog"
-        id: build_changelog_2
-        uses: mikepenz/release-changelog-builder-action@v6
-        if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
-        with:
-          configuration: ${{ env.CONFIGURATION }}
-          failOnError: true
-          includeOpen: true
-          toTag: ${{ github.sha }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Clean log
-        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
-        run: |
-          if [ -f "RELEASE_NOTES.md" ]; then
-            # more RELEASE_NOTES.md
-            line_start=$(grep -m1 -n "## ${{ steps.semvers.outputs.patch }}" RELEASE_NOTES.md | head -n1 |sed 's/:.*//')
-            export line_start
-            line_end=$(grep -m2 -n "^## " RELEASE_NOTES.md | head -2 | tail -1 | sed 's/:.*//')
-            if [[ $line_end -eq $line_start ]] || [[ -z "${line_end}" ]]; then    line_end=$(wc -l < RELEASE_NOTES.md); else line_end=$(echo $line_end-1 | bc); fi
-            export line_end
-            PATTERN=${line_start},${line_end}d
-            export PATTERN
-            # echo $PATTERN
-            if [[ -z "${line_start}" ]]; then echo "Empty"; else sed -i -e $PATTERN RELEASE_NOTES.md; fi
-            echo "cleaned release note:"
-            more RELEASE_NOTES.md
-          else
-            echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
-          fi
       - name: Clean log
         if: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') }}
+        env:
+          NEW_VERSION: ${{ steps.release_versions.outputs.released }}
         run: |
           if [ -f "RELEASE_NOTES.md" ]; then
             more RELEASE_NOTES.md
-            TAG=${{ steps.previoustag.outputs.tag }}
-            NEW_VERSION=${TAG#v}
             echo "NEW_VERSION=$NEW_VERSION"
             sed -i.bak -E "s/^(##[[:space:]]+)[0-9]+\.[0-9]+\.[0-9]+-dev/\1${NEW_VERSION}/" RELEASE_NOTES.md
             rm -f RELEASE_NOTES.md.bak
@@ -245,17 +232,10 @@ jobs:
           fi
       - name: Update Changelog (tag)
         uses: stefanzweifel/changelog-updater-action@v1
-        if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
-          latest-version: ${{ steps.semvers.outputs.patch }}-dev
-          release-notes: ${{ steps.build_changelog_1.outputs.changelog }}
-          path-to-changelog: RELEASE_NOTES.md
-      - name: Update Changelog (no tag)
-        uses: stefanzweifel/changelog-updater-action@v1
-        if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
-        with:
-          latest-version: ${{ steps.semvers.outputs.patch }}-dev
-          release-notes: ${{ steps.build_changelog_2.outputs.changelog }}
+          latest-version: ${{ steps.release_versions.outputs.next_dev }}
+          release-notes: ${{ steps.github_release.outputs.changelog }}
           path-to-changelog: RELEASE_NOTES.md
       - name: Prettify RELEASE_NOTES.md
         uses: creyD/prettier_action@v4.6
