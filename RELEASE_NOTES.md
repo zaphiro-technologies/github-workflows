@@ -1,9 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-09-12
+## 0.0.3-dev - 2026-09-21
 
 ### Features
 
+- update graphify workflow (PR #344 by @AntonioCeppellini)
 - Add Graphify code graph update workflow (PR #334 by @AntonioCeppellini)
 - js & docker workflow: allow to use private repos during lint & build (PR #304
   by @chicco785)
@@ -113,11 +114,11 @@
 
 ### Dependencies
 
+- Bump apache/skywalking-eyes from 0.8.0 to 0.9.0 (PR #338 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.73.2 to 1.73.4 (PR #339 by
   @dependabot[bot])
 - Bump aws-actions/configure-aws-credentials from 6.2.3 to 6.2.4 (PR #340 by
   @dependabot[bot])
-- Bump apache/skywalking-eyes from 0.8.0 to 0.9.0 (PR #338 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.73.1 to 1.73.2 (PR #332 by
   @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.73.0 to 1.73.1 (PR #329 by
