@@ -36,6 +36,11 @@ on:
         required: false
         description: Override default image name which is the repo name
         type: string
+      annotations:
+        required: false
+        description: Newline-separated OCI image annotations (for example, org.opencontainers.image.description=My image)
+        type: string
+        default: ""
       docker-context:
         required: false
         description: Docker context path
@@ -165,6 +170,9 @@ jobs:
             type=semver,pattern={{version}},priority=900
             type=semver,pattern={{major}}.{{minor}},priority=900
             type=semver,pattern={{major}},priority=900
+          annotations: ${{ inputs.annotations }}
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
       - name: Go Build Cache for Docker
         id: cache-go
         if: ${{ inputs.go-cache || inputs.language-cache == 'go' }}
