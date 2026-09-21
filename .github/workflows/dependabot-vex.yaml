@@ -42,16 +42,6 @@ on:
         required: false
         default: main
         type: string
-      auto-not-affected-reason:
-        description: Deprecated compatibility input; dismissal reasons are mapped by the action
-        required: false
-        default: ""
-        type: string
-      auto-not-affected-justification:
-        description: Deprecated compatibility input; dismissal reasons are mapped by the action
-        required: false
-        default: vulnerable_code_not_in_execute_path
-        type: string
   workflow_call:
     inputs:
       product-purls:
@@ -78,16 +68,6 @@ on:
         description: Branch from which to create or update the candidate PR
         required: false
         default: main
-        type: string
-      auto-not-affected-reason:
-        description: Deprecated compatibility input; dismissal reasons are mapped by the action
-        required: false
-        default: ""
-        type: string
-      auto-not-affected-justification:
-        description: Deprecated compatibility input; dismissal reasons are mapped by the action
-        required: false
-        default: vulnerable_code_not_in_execute_path
         type: string
     secrets:
       APP_ID:

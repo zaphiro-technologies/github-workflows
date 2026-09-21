@@ -45,9 +45,9 @@ The repository includes:
   directly from GHCR and commits the resulting OCI digest.
 - [`dependabot-vex`](.github/workflows/dependabot-vex.yaml): generate reviewed
   OpenVEX candidates from dismissed Dependabot alerts and create or update a
-  pull request. Candidates default to `under_investigation`; callers must
-  explicitly opt in before a dismissal reason can produce a `not_affected`
-  statement.
+  pull request. Candidates always default to `under_investigation`; reviewers
+  must verify the product and component scope before changing a statement to
+  `not_affected`.
 - [`docker`](.github/workflows/docker.yaml): build and push Docker images,
   publish BuildKit SBOM/provenance attestations, and scan the pushed image by
   its immutable digest. The workflow exposes the image, digest, image reference,
@@ -83,7 +83,8 @@ The repository includes:
   executed.
 - [`new-release`](.github/workflows/new-release.yaml): opt-in release owner
   that updates the version, creates the release tag, generates application
-  dependency evidence, assembles a draft release, and publishes it after
+  dependency evidence, binds it to the exact successful tagged Docker build and
+  immutable OCI index digest, assembles a draft release, and publishes it after
   the tag-triggered Docker workflow succeeds. The tag triggers each repository's
   Docker workflow, which builds the image using the tag. It deliberately exposes
   no Docker configuration; Docker defaults and repository-specific settings
@@ -93,8 +94,9 @@ The repository includes:
   rely on private images. The workflow also scans for vulnerabilities.
 - [`release-notes`](.github/workflows/release-notes.yaml): automatically updates
   release notes using PR titles and labels, including when a release or draft
-  release is created. It does not create GitHub Releases or publish SBOM
-  evidence; those responsibilities belong to `new-release`.
+  release is created, editing an existing release or creating one when needed.
+  It does not publish SBOM evidence; that responsibility belongs to
+  `new-release`.
 - [`trivy-cache-update`](.github/workflows/trivy-cache-update.yaml): update
   trivy cache image.
 
@@ -158,6 +160,15 @@ jobs:
     uses: zaphiro-technologies/github-workflows/.github/workflows/new-release.yaml@<immutable-version>
     secrets: inherit
 ```
+
+The managed release binds its evidence to the successful Docker workflow run
+for the release tag and source revision. The draft release contains the
+multi-platform `image-index.json`, a `release-manifest.json` recording the
+immutable OCI index digest and evidence hashes, and `checksums.txt`. When the
+dependency scan is enabled, it also includes the application SBOM,
+vulnerability report, Trivy VEX configuration, and repository-owned VEX
+document when present. OCI VEX referrers remain unsigned in this workflow;
+signatures are planned as a separate change.
 
 ## Dependabot VEX candidates
 
@@ -227,11 +238,11 @@ documentation repository can preserve alert 28 with:
 }
 ```
 
-To map this reason to OpenVEX `not_affected`, the caller may set
-`auto-not-affected-reason: not_used`. This is an explicit opt-in: reviewers
-still need to verify that the product PURLs and vulnerable component scope are
-correct. The ledger entry should not be reused for products or image digests
-that do not contain the vulnerable component.
+The updated action always generates `under_investigation`. Reviewers must
+change a candidate to `not_affected` only after verifying that the product
+PURLs and vulnerable component scope are correct. The ledger entry should not
+be reused for products or image digests that do not contain the vulnerable
+component.
 
 ## How to add a starter workflow to `.github` repository
 

@@ -194,11 +194,79 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           permission-contents: write
+          permission-actions: read
       - uses: actions/checkout@v7.0.1
         with:
           ref: refs/tags/v${{ needs.prepare-release.outputs.tag }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
+      - name: Download tagged Docker image evidence
+        id: docker_evidence
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          RELEASE_TAG: v${{ needs.prepare-release.outputs.tag }}
+          SOURCE_REVISION: ${{ needs.prepare-release.outputs.revision }}
+        run: |
+          set -euo pipefail
+
+          candidate_runs=()
+          while IFS= read -r run_id; do
+            [[ -n "$run_id" ]] && candidate_runs+=("$run_id")
+          done < <(
+            gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --branch "$RELEASE_TAG" \
+              --commit "$SOURCE_REVISION" \
+              --limit 100 \
+              --json databaseId,headBranch,headSha,status,conclusion \
+              | jq -r --arg tag "$RELEASE_TAG" --arg sha "$SOURCE_REVISION" \
+                '.[] | select(.headBranch == $tag and .headSha == $sha and .status == "completed" and .conclusion == "success") | .databaseId'
+          )
+
+          if [[ "${#candidate_runs[@]}" -eq 0 ]]; then
+            echo "No successful workflow run found for $RELEASE_TAG at $SOURCE_REVISION" >&2
+            exit 1
+          fi
+
+          docker_run_id=""
+          for run_id in "${candidate_runs[@]}"; do
+            evidence_dir="docker-evidence-$run_id"
+            if ! gh run download "$run_id" \
+              --repo "$GITHUB_REPOSITORY" \
+              --name "image-manifest-$run_id" \
+              --dir "$evidence_dir" >/dev/null 2>&1; then
+              continue
+            fi
+
+            image_index_path=$(find "$evidence_dir" -type f -name image-index.json -print -quit)
+            if [[ -z "$image_index_path" ]]; then
+              continue
+            fi
+            if [[ -n "$docker_run_id" ]]; then
+              echo "More than one successful tagged workflow run contains Docker image evidence" >&2
+              exit 1
+            fi
+            docker_run_id="$run_id"
+            cp "$image_index_path" image-index.json
+          done
+
+          if [[ -z "$docker_run_id" || ! -s image-index.json ]]; then
+            echo "Could not download image-index.json from a successful tagged Docker run" >&2
+            exit 1
+          fi
+
+          image_name=$(jq -r '.Name // .name // empty' image-index.json)
+          image_digest=$(jq -r '.Digest // .digest // empty' image-index.json)
+          if [[ -z "$image_name" || ! "$image_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "image-index.json does not contain a valid OCI image name and index digest" >&2
+            exit 1
+          fi
+
+          echo "docker_run_id=$docker_run_id" >> "$GITHUB_OUTPUT"
+          echo "image_name=$image_name" >> "$GITHUB_OUTPUT"
+          echo "image_digest=$image_digest" >> "$GITHUB_OUTPUT"
+          echo "image_ref=$image_name@$image_digest" >> "$GITHUB_OUTPUT"
+          echo "Bound release evidence to Docker run $docker_run_id and image $image_name@$image_digest"
       - name: Prepare Trivy VEX configuration
         if: ${{ inputs.dependency-scan }}
         env:
@@ -212,6 +280,20 @@ jobs:
           else
             jq -n '{vulnerability: {vex: []}}' > trivy-vex-config.yaml
             echo "No repository-owned VEX file found; prepared an empty VEX configuration"
+          fi
+      - name: Preserve VEX evidence
+        id: vex_evidence
+        if: ${{ inputs.dependency-scan }}
+        env:
+          VEX_PATH: ${{ inputs.vex-path }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$VEX_PATH" && -f "$VEX_PATH" ]]; then
+            jq empty "$VEX_PATH"
+            cp -- "$VEX_PATH" release-vex.openvex.json
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Generate application dependency SBOM
         if: ${{ inputs.dependency-scan }}
@@ -261,41 +343,82 @@ jobs:
         env:
           RELEASE_TAG: v${{ needs.prepare-release.outputs.tag }}
           DEPENDENCY_SCAN: ${{ inputs.dependency-scan }}
+          DOCKER_RUN_ID: ${{ steps.docker_evidence.outputs.docker_run_id }}
+          IMAGE_NAME: ${{ steps.docker_evidence.outputs.image_name }}
+          IMAGE_DIGEST: ${{ steps.docker_evidence.outputs.image_digest }}
+          IMAGE_REF: ${{ steps.docker_evidence.outputs.image_ref }}
+          VEX_PRESENT: ${{ steps.vex_evidence.outputs.present || 'false' }}
         run: |
           set -euo pipefail
           SOURCE_REVISION=$(git rev-parse HEAD)
           DEPENDENCY_SBOM_SHA=""
           DEPENDENCY_VULN_SHA=""
+          VEX_SHA=""
+          TRIVY_CONFIG_SHA=""
           if [[ "$DEPENDENCY_SCAN" == "true" ]]; then
             DEPENDENCY_SBOM_SHA=$(sha256sum application-dependency-sbom.cdx.json | cut -d' ' -f1)
             DEPENDENCY_VULN_SHA=$(sha256sum application-dependency-vulnerability.json | cut -d' ' -f1)
+            TRIVY_CONFIG_SHA=$(sha256sum trivy-vex-config.yaml | cut -d' ' -f1)
+            if [[ "$VEX_PRESENT" == "true" ]]; then
+              VEX_SHA=$(sha256sum release-vex.openvex.json | cut -d' ' -f1)
+            fi
           fi
+          IMAGE_INDEX_SHA=$(sha256sum image-index.json | cut -d' ' -f1)
 
           jq -n \
             --arg release_tag "$RELEASE_TAG" \
             --arg source_revision "$SOURCE_REVISION" \
             --arg workflow_run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --arg docker_run_id "$DOCKER_RUN_ID" \
+            --arg docker_run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$DOCKER_RUN_ID" \
+            --arg image_name "$IMAGE_NAME" \
+            --arg image_digest "$IMAGE_DIGEST" \
+            --arg image_ref "$IMAGE_REF" \
+            --arg image_index_sha "$IMAGE_INDEX_SHA" \
             --arg dependency_sbom_sha "$DEPENDENCY_SBOM_SHA" \
             --arg dependency_vulnerability_sha "$DEPENDENCY_VULN_SHA" \
+            --arg vex_sha "$VEX_SHA" \
+            --arg trivy_config_sha "$TRIVY_CONFIG_SHA" \
             --arg dependency_scan "$DEPENDENCY_SCAN" \
-            '{schema_version: 1, release_tag: $release_tag, source_revision: $source_revision, workflow_run: $workflow_run, evidence: {application_dependency_scan: ($dependency_scan == "true"), application_dependency_sbom_sha256: $dependency_sbom_sha, application_dependency_vulnerability_sha256: $dependency_vulnerability_sha}}' \
+            --arg vex_present "$VEX_PRESENT" \
+            '{schema_version: 2, release_tag: $release_tag, source_revision: $source_revision, workflow_run: $workflow_run, docker_build_run_id: $docker_run_id, docker_build_run: $docker_run, image: {name: $image_name, reference: $image_ref, index_digest: $image_digest, index_json_sha256: $image_index_sha}, evidence: {application_dependency_scan: ($dependency_scan == "true"), application_dependency_sbom_sha256: $dependency_sbom_sha, application_dependency_vulnerability_sha256: $dependency_vulnerability_sha, vex_present: ($vex_present == "true"), vex_sha256: $vex_sha, trivy_config_sha256: $trivy_config_sha}}' \
             > release-manifest.json
 
-          checksum_files=(release-manifest.json)
+          checksum_files=(release-manifest.json image-index.json)
           if [[ "$DEPENDENCY_SCAN" == "true" ]]; then
-            checksum_files+=(application-dependency-sbom.cdx.json application-dependency-vulnerability.json)
+            checksum_files+=(application-dependency-sbom.cdx.json application-dependency-vulnerability.json trivy-vex-config.yaml)
+            if [[ "$VEX_PRESENT" == "true" ]]; then
+              checksum_files+=(release-vex.openvex.json)
+            fi
           fi
           sha256sum "${checksum_files[@]}" > checksums.txt
       - name: Upload release evidence artifact
-        if: ${{ inputs.dependency-scan }}
         uses: actions/upload-artifact@v7
         with:
           name: release-evidence-${{ needs.prepare-release.outputs.tag }}
           path: |
-            application-dependency-sbom.cdx.json
-            application-dependency-vulnerability.json
+            image-index.json
             release-manifest.json
             checksums.txt
+          if-no-files-found: error
+          retention-days: 20
+      - name: Upload source dependency evidence artifact
+        if: ${{ inputs.dependency-scan }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-source-evidence-${{ needs.prepare-release.outputs.tag }}
+          path: |
+            application-dependency-sbom.cdx.json
+            application-dependency-vulnerability.json
+            trivy-vex-config.yaml
+          if-no-files-found: error
+          retention-days: 20
+      - name: Upload VEX evidence artifact
+        if: ${{ inputs.dependency-scan && steps.vex_evidence.outputs.present == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-vex-evidence-${{ needs.prepare-release.outputs.tag }}
+          path: release-vex.openvex.json
           if-no-files-found: error
           retention-days: 20
       - name: Create draft release and attach evidence
@@ -317,8 +440,11 @@ jobs:
               --draft
           fi
 
-          assets=(release-manifest.json checksums.txt)
+          assets=(release-manifest.json checksums.txt image-index.json)
           if [[ "${{ inputs.dependency-scan }}" == "true" ]]; then
-            assets+=(application-dependency-sbom.cdx.json application-dependency-vulnerability.json)
+            assets+=(application-dependency-sbom.cdx.json application-dependency-vulnerability.json trivy-vex-config.yaml)
+          fi
+          if [[ "${{ steps.vex_evidence.outputs.present }}" == "true" ]]; then
+            assets+=(release-vex.openvex.json)
           fi
           gh release upload "$RELEASE_TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY"
