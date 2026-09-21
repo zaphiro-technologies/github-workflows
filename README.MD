@@ -32,7 +32,8 @@ The repository includes:
   to a repository or any change occurs to the PR, the PR is validated to be sure
   that labels are valid.
 - [`clean-up-docker`](.github/workflows/clean-up-docker.yaml): when a PR is
-  closed, related docker images and untagged ones are deleted
+  closed, its Docker image, platform manifests, and attached OCI artifacts are
+  deleted.
 - [`clean-up-storage`](.github/workflows/clean-up-storage.yaml): when a new PR
   is closed, related cache and artifact are deleted.
 - [`deployment`](.github/workflows/deployment.yaml): commit a container image

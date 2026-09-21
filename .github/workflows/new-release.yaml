@@ -219,11 +219,11 @@ jobs:
               --limit 100 \
               --json databaseId,event,headBranch,headSha,status,conclusion \
               | jq -r --arg tag "$RELEASE_TAG" --arg sha "$SOURCE_REVISION" \
-                '.[] | select(.event == "push" and (.headBranch == $tag or .headBranch == null) and .headSha == $sha and .status == "completed" and .conclusion == "success") | .databaseId'
+                '.[] | select(.event == "push" and (.headBranch == $tag or .headBranch == null) and .headSha == $sha) | .databaseId'
           )
 
           if [[ "${#candidate_runs[@]}" -eq 0 ]]; then
-            echo "No successful workflow run found for $RELEASE_TAG at $SOURCE_REVISION" >&2
+            echo "No tag-triggered workflow run found for $RELEASE_TAG at $SOURCE_REVISION" >&2
             exit 1
           fi
 
@@ -242,7 +242,7 @@ jobs:
               continue
             fi
             if [[ -n "$docker_run_id" ]]; then
-              echo "More than one successful tagged workflow run contains Docker image evidence" >&2
+              echo "More than one tagged Docker workflow run contains image evidence" >&2
               exit 1
             fi
             docker_run_id="$run_id"
@@ -250,7 +250,12 @@ jobs:
           done
 
           if [[ -z "$docker_run_id" || ! -s image-index.json ]]; then
-            echo "Could not download image-index.json from a successful tagged Docker run" >&2
+            echo "Could not download image-index.json from a tagged Docker run for $RELEASE_TAG at $SOURCE_REVISION" >&2
+            exit 1
+          fi
+
+          if ! gh run watch "$docker_run_id" --repo "$GITHUB_REPOSITORY" --exit-status; then
+            echo "Tagged Docker workflow run $docker_run_id did not complete successfully" >&2
             exit 1
           fi
 
