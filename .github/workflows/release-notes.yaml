@@ -18,10 +18,6 @@ on:
   push:
     tags:
       - "*"
-  release:
-    types:
-      - created
-      - published
   pull_request_review:
   pull_request:
     types:
@@ -31,6 +27,10 @@ on:
       - synchronize
     branches:
       - main
+  release:
+    types:
+      - created
+      - published
   workflow_call:
     inputs:
       config-release-path:
@@ -78,7 +78,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: read
-    if: ${{ ((github.event_name == 'pull_request' && needs.check_reviews.outputs.reviews == 'APPROVED') || github.event.review.state == 'approved' || github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'pull_request_review' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ ((github.event_name == 'pull_request' && needs.check_reviews.outputs.reviews == 'APPROVED') || github.event.review.state == 'approved' || startsWith(github.ref, 'refs/tags/')) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'pull_request_review' || github.event.pull_request.head.repo.full_name == github.repository) }}
     steps:
       - uses: actions/create-github-app-token@v3
         id: generate-token
@@ -87,16 +87,16 @@ jobs:
           private-key: ${{ secrets.APP_SECRET }}
           permission-contents: write
       - uses: actions/checkout@v7.0.1
-        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
       - uses: actions/checkout@v7.0.1
-        if: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') == true }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') == true }}
         with:
-          ref: ${{ github.event_name == 'release' && format('refs/tags/{0}', github.event.release.tag_name) || github.ref }}
+          ref: ${{ github.ref }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
       - name: "Get Previous tag"
@@ -155,7 +155,7 @@ jobs:
           toTag: ${{ github.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Build Changelog (initial history)"
+      - name: "Build Changelog"
         id: build_changelog_2
         uses: mikepenz/release-changelog-builder-action@v6
         if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
@@ -166,34 +166,78 @@ jobs:
           toTag: ${{ github.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Update Changelog (existing history)
+      - name: Clean log
+        if: ${{ startsWith(github.ref, 'refs/tags/') == false }}
+        run: |
+          if [ -f "RELEASE_NOTES.md" ]; then
+            # more RELEASE_NOTES.md
+            line_start=$(grep -m1 -n "## ${{ steps.semvers.outputs.patch }}" RELEASE_NOTES.md | head -n1 |sed 's/:.*//')
+            export line_start
+            line_end=$(grep -m2 -n "^## " RELEASE_NOTES.md | head -2 | tail -1 | sed 's/:.*//')
+            if [[ $line_end -eq $line_start ]] || [[ -z "${line_end}" ]]; then    line_end=$(wc -l < RELEASE_NOTES.md); else line_end=$(echo $line_end-1 | bc); fi
+            export line_end
+            PATTERN=${line_start},${line_end}d
+            export PATTERN
+            # echo $PATTERN
+            if [[ -z "${line_start}" ]]; then echo "Empty"; else sed -i -e $PATTERN RELEASE_NOTES.md; fi
+            echo "cleaned release note:"
+            more RELEASE_NOTES.md
+            rm .github/config/release-config-temp.json
+          else
+            echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
+          fi
+      - name: Clean log
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          if [ -f "RELEASE_NOTES.md" ]; then
+            more RELEASE_NOTES.md
+            TAG=${{ steps.previoustag.outputs.tag }}
+            NEW_VERSION=${TAG#v}
+            echo "NEW_VERSION=$NEW_VERSION"
+            sed -i.bak -E "s/^(##[[:space:]]+)[0-9]+\.[0-9]+\.[0-9]+-dev/\1${NEW_VERSION}/" RELEASE_NOTES.md
+            rm -f RELEASE_NOTES.md.bak
+            echo "cleaned release note:"
+            more RELEASE_NOTES.md
+            rm .github/config/release-config-temp.json
+          else
+            echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
+          fi
+      - name: Update Changelog (tag)
         uses: stefanzweifel/changelog-updater-action@v1
-        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false && steps.previoustag.outputs.tag != '0.0.0' }}
+        if: ${{ steps.previoustag.outputs.tag != '0.0.0' }}
         with:
           latest-version: ${{ steps.semvers.outputs.patch }}-dev
           release-notes: ${{ steps.build_changelog_1.outputs.changelog }}
           path-to-changelog: RELEASE_NOTES.md
-      - name: Update Changelog (initial history)
+      - name: Update Changelog (no tag)
         uses: stefanzweifel/changelog-updater-action@v1
-        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false && steps.previoustag.outputs.tag == '0.0.0' }}
+        if: ${{ steps.previoustag.outputs.tag == '0.0.0' }}
         with:
           latest-version: ${{ steps.semvers.outputs.patch }}-dev
           release-notes: ${{ steps.build_changelog_2.outputs.changelog }}
           path-to-changelog: RELEASE_NOTES.md
       - name: Prettify RELEASE_NOTES.md
-        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
         uses: creyD/prettier_action@v4.6
         with:
           prettier_options: --prose-wrap always --write RELEASE_NOTES.md
           dry: true
           no_commit: true
       - name: Commit updated CHANGELOG
-        if: ${{ github.event_name != 'release' && startsWith(github.ref, 'refs/tags/') == false }}
+        if: startsWith(github.ref, 'refs/tags/') == false
         uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
-          branch: ${{ github.event.pull_request.head.ref }}
+          branch: ${{github.event.pull_request.head.ref}}
           commit_message: "docs(release_notes): update RELEASE_NOTES.md [dependabot skip]"
           file_pattern: RELEASE_NOTES.md
+      - name: Commit updated CHANGELOG
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: stefanzweifel/git-auto-commit-action@v7.2.0
+        with:
+          branch: main
+          commit_message: "docs(release_notes): update RELEASE_NOTES.md"
+          file_pattern: RELEASE_NOTES.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     name: Release
@@ -213,23 +257,6 @@ jobs:
       - name: Select configuration
         if: ${{ github.event_name != 'workflow_call' }}
         run: echo "CONFIGURATION=.github/config/release-config.json" >> $GITHUB_ENV
-      - name: Compute release note versions
-        id: release_versions
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          version="${RELEASE_TAG#v}"
-          if [[ ! "$version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-            echo "Release tag is not a semantic version: $RELEASE_TAG" >&2
-            exit 1
-          fi
-          major="${BASH_REMATCH[1]}"
-          minor="${BASH_REMATCH[2]}"
-          patch="${BASH_REMATCH[3]}"
-          next_dev="${major}.${minor}.$((patch + 1))-dev"
-          echo "released=$version" >> "$GITHUB_OUTPUT"
-          echo "next_dev=$next_dev" >> "$GITHUB_OUTPUT"
       - name: "Build Changelog"
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v6
@@ -254,40 +281,3 @@ jobs:
           else
             gh release create "$RELEASE_TAG" "${release_args[@]}" --draft
           fi
-      - name: Clean log
-        if: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') }}
-        env:
-          NEW_VERSION: ${{ steps.release_versions.outputs.released }}
-        run: |
-          if [ -f "RELEASE_NOTES.md" ]; then
-            more RELEASE_NOTES.md
-            echo "NEW_VERSION=$NEW_VERSION"
-            sed -i.bak -E "s/^(##[[:space:]]+)[0-9]+\.[0-9]+\.[0-9]+-dev/\1${NEW_VERSION}/" RELEASE_NOTES.md
-            rm -f RELEASE_NOTES.md.bak
-            echo "cleaned release note:"
-            more RELEASE_NOTES.md
-          else
-            echo -en "# ${GITHUB_REPOSITORY#*/} Release Notes\n" > RELEASE_NOTES.md
-          fi
-      - name: Update Changelog (tag)
-        uses: stefanzweifel/changelog-updater-action@v1
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        with:
-          latest-version: ${{ steps.release_versions.outputs.next_dev }}
-          release-notes: ${{ steps.github_release.outputs.changelog }}
-          path-to-changelog: RELEASE_NOTES.md
-      - name: Prettify RELEASE_NOTES.md
-        uses: creyD/prettier_action@v4.6
-        with:
-          prettier_options: --prose-wrap always --write RELEASE_NOTES.md
-          dry: true
-          no_commit: true
-      - name: Commit updated CHANGELOG
-        if: ${{ github.event_name == 'release' || startsWith(github.ref, 'refs/tags/') }}
-        uses: stefanzweifel/git-auto-commit-action@v7.2.0
-        with:
-          branch: main
-          commit_message: "docs(release_notes): update RELEASE_NOTES.md"
-          file_pattern: RELEASE_NOTES.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
