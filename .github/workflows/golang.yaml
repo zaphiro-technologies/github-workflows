@@ -18,6 +18,9 @@ concurrency:
   group: ${{github.repository}}-${{ github.ref_name }}-go
   cancel-in-progress: true
 
+env:
+  TRIVY_DISABLE_VEX_NOTICE: "true"
+
 # Permissions needed
 # permissions:
 #   # Give the default GITHUB_TOKEN write permission to commit and push the

@@ -18,6 +18,9 @@ concurrency:
   group: ${{ github.repository }}-new-release
   cancel-in-progress: false
 
+env:
+  TRIVY_DISABLE_VEX_NOTICE: "true"
+
 on:
   workflow_dispatch:
     inputs:

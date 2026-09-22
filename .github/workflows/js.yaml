@@ -18,6 +18,9 @@ concurrency:
   group: ${{github.repository}}-${{ github.ref_name }}-js
   cancel-in-progress: true
 
+env:
+  TRIVY_DISABLE_VEX_NOTICE: "true"
+
 # permissions:
 #  id-token: write # This is required for requesting the JWT, which is needed to authenticate with AWS and pull DVC datasets
 
