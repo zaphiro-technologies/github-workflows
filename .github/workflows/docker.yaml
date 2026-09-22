@@ -442,6 +442,16 @@ jobs:
             exit 0
           fi
 
+          echo "Build-stage Trivy vulnerability summary:"
+          for report in "${reports[@]}"; do
+            trivy convert \
+              --format table \
+              --report all \
+              --scanners vuln \
+              --severity MEDIUM,HIGH,CRITICAL \
+              "$report"
+          done
+
           jq -e '
             [ .Results[]?.Vulnerabilities[]? ] | length == 0
           ' "${reports[@]}" > /dev/null

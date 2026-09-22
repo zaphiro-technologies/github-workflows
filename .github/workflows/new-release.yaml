@@ -175,7 +175,7 @@ jobs:
       - name: Wait for Docker build
         uses: lewagon/wait-on-check-action@v1.9.1
         with:
-          ref: ${{ needs.prepare-release.outputs.revision }}
+          ref: refs/tags/v${{ needs.prepare-release.outputs.tag }}
           check-name: "docker-build / build"
           allowed-conclusions: success
           checks-discovery-timeout: 300
