@@ -244,7 +244,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          sbom: ${{ inputs.image-sbom }}
+          sbom: ${{ inputs.image-sbom || inputs.sbom-scan-stage }}
           provenance: ${{ inputs.provenance && 'mode=max' || 'false' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -325,6 +325,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout VEX document for build-stage scanning
+        if: ${{ inputs.sbom-scan-stage && needs.build.outputs.vex-attached == 'true' }}
+        uses: actions/checkout@v7.0.1
+        with:
+          sparse-checkout: ${{ inputs.vex-path }}
+          sparse-checkout-cone-mode: false
       - name: Trivy vulnerability scanner report
         # trivy-action v0.35.0 (safe version) - pinned to full commit SHA
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
@@ -343,6 +349,64 @@ jobs:
           TRIVY_VEX: ${{ needs.build.outputs.vex-attached == 'true' && 'oci' || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
+      - name: Add build-stage vulnerability findings
+        if: ${{ inputs.sbom-scan-stage }}
+        shell: bash
+        env:
+          IMAGE_REF: ${{ needs.build.outputs.image-ref }}
+          VEX_PATH: ${{ needs.build.outputs.vex-attached == 'true' && inputs.vex-path || '' }}
+        run: |
+          set -euo pipefail
+
+          docker buildx imagetools inspect "$IMAGE_REF" \
+            --format '{{json .SBOM}}' > image-sboms.json
+
+          mkdir -p build-stage-sboms build-stage-vulnerability
+          stage_count=0
+          while IFS=$'\t' read -r platform index; do
+            stage_count=$((stage_count + 1))
+            platform_path="${platform//\//-}"
+            sbom_path="build-stage-sboms/${platform_path}-${index}.spdx.json"
+            report_path="build-stage-vulnerability/${platform_path}-${index}.json"
+
+            jq --arg platform "$platform" --argjson index "$index" \
+              '.[$platform].AdditionalSPDXs[$index]' image-sboms.json > "$sbom_path"
+            vex_args=()
+            if [[ -n "$VEX_PATH" ]]; then
+              test -f "$VEX_PATH"
+              vex_args=(--vex "$VEX_PATH")
+            fi
+            trivy sbom --scanners vuln --severity MEDIUM,HIGH,CRITICAL \
+              --format json --output "$report_path" "${vex_args[@]}" "$sbom_path"
+            jq --arg platform "$platform" \
+              '.Results = ((.Results // []) | map(.Target = "build-stage-sbom:" + $platform + ":" + .Target))' \
+              "$report_path" > "${report_path}.tmp"
+            mv "${report_path}.tmp" "$report_path"
+          done < <(
+            jq -r '
+              to_entries[]
+              | .key as $platform
+              | (.value.AdditionalSPDXs // [])
+              | to_entries[]
+              | [$platform, (.key | tostring)]
+              | @tsv
+            ' image-sboms.json
+          )
+
+          if [[ "$stage_count" -eq 0 ]]; then
+            echo "No BuildKit build-stage SBOMs were attached to $IMAGE_REF"
+            exit 0
+          fi
+
+          jq -s '
+            .[0] as $runtime
+            | reduce .[1:][] as $build_stage (
+                $runtime;
+                .Results = ((.Results // []) + ($build_stage.Results // []))
+              )
+          ' trivy-image-vulnerability.json build-stage-vulnerability/*.json \
+            > trivy-image-vulnerability.json.tmp
+          mv trivy-image-vulnerability.json.tmp trivy-image-vulnerability.json
       - name: Upload image vulnerability evidence
         uses: actions/upload-artifact@v7
         with:
@@ -365,3 +429,19 @@ jobs:
           TRIVY_VEX: ${{ needs.build.outputs.vex-attached == 'true' && 'oci' || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
+      - name: Enforce build-stage vulnerability threshold
+        if: ${{ inputs.sbom-scan-stage && inputs.fail-on-vulnerability }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          reports=(build-stage-vulnerability/*.json)
+          if [[ "${#reports[@]}" -eq 0 ]]; then
+            echo "No BuildKit build-stage SBOMs were attached; no build-stage threshold to enforce"
+            exit 0
+          fi
+
+          jq -e '
+            [ .Results[]?.Vulnerabilities[]? ] | length == 0
+          ' "${reports[@]}" > /dev/null

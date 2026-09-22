@@ -128,13 +128,16 @@ jobs:
 ```
 
 This records build-stage dependencies in image-associated SBOM evidence without
-copying them into the runtime image. It does not change the runtime image
-vulnerability report; use the language workflow's dependency scan for source
-and build dependency findings. This is commonly needed for static JavaScript
-frontends, whose final image contains generated assets but no package manifest
-or `node_modules`. It is normally unnecessary for Go binaries and Python
-images that retain their application dependency inventory in the final stage.
-Enable it for any language only when a multi-stage Dockerfile discards
+copying them into the runtime image. When enabled, the Docker vulnerability
+artifact combines the runtime-image findings with the build-stage SBOM findings;
+build-stage targets are prefixed with `build-stage-sbom:<platform>:`. The
+existing `fail-on-vulnerability` threshold applies to both scopes, but only for
+callers that enable `sbom-scan-stage`. It also forces an image SBOM attestation,
+even when `image-sbom` is otherwise `false`. This is commonly needed for static
+JavaScript frontends, whose final image contains generated assets but no package
+manifest or `node_modules`. It is normally unnecessary for Go binaries and
+Python images that retain their application dependency inventory in the final
+stage. Enable it for any language only when a multi-stage Dockerfile discards
 dependency information that is required as build evidence.
 
 Some of these workflows are configured as [starter workflows][starter-workflows]
