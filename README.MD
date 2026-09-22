@@ -101,6 +101,42 @@ The repository includes:
 - [`trivy-cache-update`](.github/workflows/trivy-cache-update.yaml): update
   trivy cache image.
 
+## Docker SBOM build-stage coverage
+
+The `docker` workflow creates a BuildKit SBOM attestation by default. BuildKit
+scans only the final stage unless the Dockerfile explicitly declares the
+special build argument below. Declare it before the first `FROM` instruction:
+
+```dockerfile
+# syntax=docker/dockerfile:1
+ARG BUILDKIT_SBOM_SCAN_STAGE
+
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
+# Build-stage dependencies, such as Yarn packages, are included in the SBOM
+# when the caller enables sbom-scan-stage.
+```
+
+Then opt in from the caller workflow:
+
+```yaml
+jobs:
+  docker-build:
+    uses: zaphiro-technologies/github-workflows/.github/workflows/docker.yaml@<immutable-version>
+    secrets: inherit
+    with:
+      sbom-scan-stage: true
+```
+
+This records build-stage dependencies in image-associated SBOM evidence without
+copying them into the runtime image. It does not change the runtime image
+vulnerability report; use the language workflow's dependency scan for source
+and build dependency findings. This is commonly needed for static JavaScript
+frontends, whose final image contains generated assets but no package manifest
+or `node_modules`. It is normally unnecessary for Go binaries and Python
+images that retain their application dependency inventory in the final stage.
+Enable it for any language only when a multi-stage Dockerfile discards
+dependency information that is required as build evidence.
+
 Some of these workflows are configured as [starter workflows][starter-workflows]
 in the [`.github`][.github] repository, so that you can add them at any time
 from the actions page.
