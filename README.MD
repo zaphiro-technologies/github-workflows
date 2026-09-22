@@ -50,7 +50,8 @@ The repository includes:
   reviewers must verify the product and component scope before changing a
   statement to `not_affected`.
 - [`docker`](.github/workflows/docker.yaml): build and push Docker images,
-  publish BuildKit SBOM/provenance attestations, and scan the pushed image by
+  publish BuildKit SBOM/provenance attestations and a discoverable consolidated
+  OCI SBOM referrer, and scan the pushed image by
   its immutable digest. The workflow exposes the image, digest, image reference,
   target platforms, and machine-readable vulnerability evidence as outputs or
   artifacts. For multi-stage images, Dockerfiles must explicitly declare
@@ -131,6 +132,9 @@ This records build-stage dependencies in image-associated SBOM evidence without
 copying them into the runtime image. When enabled, the Docker vulnerability
 artifact combines the runtime-image findings with the build-stage SBOM findings;
 build-stage targets are prefixed with `build-stage-sbom:<platform>:`. The
+workflow also publishes a consolidated SPDX SBOM as an OCI referrer, so
+`trivy image --sbom-sources oci` can discover the runtime and build-stage
+packages from the image reference. The
 existing `fail-on-vulnerability` threshold applies to both scopes, but only for
 callers that enable `sbom-scan-stage`. It also forces an image SBOM attestation,
 even when `image-sbom` is otherwise `false`. This is commonly needed for static

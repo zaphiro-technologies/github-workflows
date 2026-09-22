@@ -273,8 +273,57 @@ jobs:
           test -s image-index.json
           echo "Published image: ${IMAGE_NAME}@${IMAGE_DIGEST}"
       - name: Install ORAS
-        if: ${{ inputs.vex-attestation && hashFiles(inputs.vex-path) != '' }}
+        if: ${{ inputs.image-sbom || inputs.sbom-scan-stage || (inputs.vex-attestation && hashFiles(inputs.vex-path) != '') }}
         uses: oras-project/setup-oras@1d808f7d7f6995cc68b7bf507bfe5c5446e1dc9d # v2.0.1
+
+      - name: Attach OCI SBOM referrer
+        if: ${{ inputs.image-sbom || inputs.sbom-scan-stage }}
+        env:
+          IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
+        run: |
+          set -euo pipefail
+
+          docker buildx imagetools inspect "$IMAGE_REF" \
+            --format '{{json .SBOM}}' > image-sboms.json
+          test -s image-sboms.json
+          jq -e '
+            to_entries
+            | map(.value | [.SPDX, (.AdditionalSPDXs // [])[]?])
+            | add
+            | length > 0
+          ' image-sboms.json > /dev/null
+
+          jq --arg image_ref "$IMAGE_REF" '
+            to_entries
+            | map(.value | [.SPDX, (.AdditionalSPDXs // [])[]?])
+            | add
+            | {
+                SPDXID: "SPDXRef-DOCUMENT",
+                spdxVersion: "SPDX-2.3",
+                dataLicense: "CC0-1.0",
+                name: ($image_ref + " SBOM"),
+                documentNamespace: ("urn:oci:sbom:" + ($image_ref | gsub("[^A-Za-z0-9.-]"; "-"))),
+                creationInfo: {
+                  created: (now | todateiso8601),
+                  creators: ["Tool: github-workflows/docker.yaml"]
+                },
+                packages: (
+                  map(.packages // [])
+                  | add
+                  | unique_by([.name, .versionInfo])
+                ),
+                files: [],
+                relationships: []
+              }
+          ' image-sboms.json > image-sbom.spdx.json
+
+          test -s image-sbom.spdx.json
+          oras attach \
+            --artifact-type application/spdx+json \
+            --annotation 'org.opencontainers.image.title=Consolidated image SBOM' \
+            "$IMAGE_REF" \
+            image-sbom.spdx.json:application/spdx+json
+
       - name: Attach unsigned OpenVEX referrer
         id: attach-vex
         if: ${{ inputs.vex-attestation && hashFiles(inputs.vex-path) != '' }}
