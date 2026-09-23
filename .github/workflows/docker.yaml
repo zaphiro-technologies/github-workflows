@@ -247,7 +247,7 @@ jobs:
           sbom: ${{ inputs.image-sbom || inputs.sbom-scan-stage }}
           provenance: ${{ inputs.provenance && 'mode=max' || 'false' }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min,ignore-error=true
           secrets: |
             GH_TOKEN=${{ steps.generate-token.outputs.token }}
           build-args: |
