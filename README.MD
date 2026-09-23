@@ -144,6 +144,22 @@ Python images that retain their application dependency inventory in the final
 stage. Enable it for any language only when a multi-stage Dockerfile discards
 dependency information that is required as build evidence.
 
+For images whose application dependencies are used only during a JavaScript
+build, the normal `trivy image` filesystem scan reports only the final runtime
+image. Extract the runtime and build-stage dependency vulnerabilities from the
+published image SBOM with:
+
+```bash
+trivy image \
+  --scanners vuln \
+  --sbom-sources oci \
+  "ghcr.io/zaphiro-technologies/documentation-test:1.1.3"
+```
+
+The image must have been built with `sbom-scan-stage: true`. The
+`--sbom-sources oci` option is required; without it, Trivy does not consume the
+OCI SBOM referrer and cannot report dependencies discarded from the final image.
+
 Some of these workflows are configured as [starter workflows][starter-workflows]
 in the [`.github`][.github] repository, so that you can add them at any time
 from the actions page.

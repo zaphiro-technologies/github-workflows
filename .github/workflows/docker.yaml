@@ -131,7 +131,7 @@ jobs:
     outputs:
       tags: ${{ steps.meta.outputs.tags }}
       image: ${{ steps.image-name.outputs.name }}
-      digest: ${{ steps.build.outputs.digest }}
+      digest: ${{ github.event_name != 'pull_request' && steps.build.outputs.digest || '' }}
       image-ref: ${{ steps.image-ref.outputs.ref }}
       platforms: ${{ inputs.platforms }}
       vex-attached: ${{ steps.attach-vex.outcome == 'success' }}
@@ -261,23 +261,33 @@ jobs:
         id: image-name
         run: |
           echo "name=ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name || github.event.repository.name }}" >> "$GITHUB_OUTPUT"
-      - name: Set immutable image reference
+      - name: Set image reference
         id: image-ref
         env:
+          EVENT_NAME: ${{ github.event_name }}
           IMAGE_NAME: ${{ steps.image-name.outputs.name }}
           IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
         run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            image_ref=$(printf '%s\n' "$IMAGE_TAGS" | sed -n '1p')
+            test -n "$image_ref"
+            echo "ref=$image_ref" >> "$GITHUB_OUTPUT"
+            echo "Using mutable PR image reference: $image_ref"
+            exit 0
+          fi
+
           test -n "$IMAGE_DIGEST"
           echo "ref=${IMAGE_NAME}@${IMAGE_DIGEST}" >> "$GITHUB_OUTPUT"
           docker buildx imagetools inspect "${IMAGE_NAME}@${IMAGE_DIGEST}" --format '{{json .}}' > image-index.json
           test -s image-index.json
           echo "Published image: ${IMAGE_NAME}@${IMAGE_DIGEST}"
       - name: Install ORAS
-        if: ${{ inputs.image-sbom || inputs.sbom-scan-stage || (inputs.vex-attestation && hashFiles(inputs.vex-path) != '') }}
+        if: ${{ github.event_name != 'pull_request' && (inputs.image-sbom || inputs.sbom-scan-stage || (inputs.vex-attestation && hashFiles(inputs.vex-path) != '')) }}
         uses: oras-project/setup-oras@1d808f7d7f6995cc68b7bf507bfe5c5446e1dc9d # v2.0.1
 
       - name: Attach OCI SBOM referrer
-        if: ${{ inputs.image-sbom || inputs.sbom-scan-stage }}
+        if: ${{ github.event_name != 'pull_request' && (inputs.image-sbom || inputs.sbom-scan-stage) }}
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
         run: |
@@ -326,7 +336,7 @@ jobs:
 
       - name: Attach unsigned OpenVEX referrer
         id: attach-vex
-        if: ${{ inputs.vex-attestation && hashFiles(inputs.vex-path) != '' }}
+        if: ${{ github.event_name != 'pull_request' && inputs.vex-attestation && hashFiles(inputs.vex-path) != '' }}
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
           VEX_PATH: ${{ inputs.vex-path }}
@@ -355,6 +365,7 @@ jobs:
             "$IMAGE_REF" \
             "$VEX_PATH.in-toto.json:application/vnd.in-toto+json"
       - name: Upload image manifest evidence
+        if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v7
         with:
           name: image-manifest-${{ github.run_id }}
