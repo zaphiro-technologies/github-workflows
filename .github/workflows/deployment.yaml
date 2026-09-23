@@ -120,7 +120,7 @@ jobs:
         with:
           token: ${{ steps.generate-token.outputs.token }}
           repository: ${{ github.repository_owner }}/${{ needs.split-environment.outputs.is-corporate == 'true' && 'corporate-apps' || 'k8s-deployments' }}
-          ref: main
+          ref: test-wf
       - name: Resolve image repository
         id: repository-name
         run: |
