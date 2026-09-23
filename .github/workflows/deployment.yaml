@@ -44,6 +44,11 @@ on:
         required: true
         type: string
         description: Environment name for the deployment
+      deployment-branch:
+        required: false
+        type: string
+        default: main
+        description: Branch in the deployment repository to commit changes to
 
 jobs:
   split-environment:
@@ -241,5 +246,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
           commit_message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
-          branch: main
+          branch: ${{ inputs.deployment-branch }}
           file_pattern: ${{ needs.split-environment.outputs.is-corporate == 'true' && format('argocd/{0}.yaml', inputs.app-name) || 'kubernetes/**/*.yaml' }}
