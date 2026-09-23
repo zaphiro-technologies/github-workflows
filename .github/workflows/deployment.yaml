@@ -178,7 +178,8 @@ jobs:
               ;;
           esac
 
-          DIGEST=$(docker buildx imagetools inspect "$IMAGE_REFERENCE" --format '{{.Digest}}')
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE_REFERENCE" \
+            --format '{{json .Manifest}}' | jq -r '.digest // empty')
           if [[ ! "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
             echo "Could not resolve an OCI digest for $IMAGE_REFERENCE" >&2
             exit 1
