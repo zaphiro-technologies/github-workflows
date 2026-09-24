@@ -235,10 +235,10 @@ Repositories can schedule
 [`dependabot-vex`](.github/workflows/dependabot-vex.yaml) to create or update a
 pull request containing OpenVEX candidates for currently dismissed Dependabot
 alerts. The caller may provide explicit product PURLs or let the workflow derive
-the default GHCR product PURL. The caller must grant the called workflow
-`contents`, `pull-requests`, and `vulnerability-alerts` permissions. The caller
-only needs read access for its `GITHUB_TOKEN`; the workflow creates a separate
-GitHub App token for repository changes:
+the default GHCR product PURL. The caller only needs read access for its
+`GITHUB_TOKEN`; the workflow creates a separate GitHub App token with the
+permissions required to read Dependabot alerts and create the candidate pull
+request:
 
 ```yaml
 name: Dependabot VEX
@@ -252,7 +252,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-      vulnerability-alerts: read
     uses: zaphiro-technologies/github-workflows/.github/workflows/dependabot-vex.yaml@<immutable-version>
     with:
       # Optional: defaults to the repository's GHCR image.

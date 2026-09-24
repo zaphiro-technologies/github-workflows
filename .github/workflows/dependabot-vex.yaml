@@ -78,7 +78,6 @@ on:
 permissions:
   contents: read
   pull-requests: read
-  vulnerability-alerts: read
 
 concurrency:
   group: ${{ github.repository }}-dependabot-vex-${{ inputs.vex-path }}
