@@ -513,14 +513,46 @@ jobs:
           fi
 
           echo "Build-stage Trivy vulnerability summary:"
-          for report in "${reports[@]}"; do
+          jq -s '
+            [ .[] | .Results[]? as $result
+              | ($result.Vulnerabilities // [])[]
+              | {
+                  class: ($result.Class // null),
+                  type: ($result.Type // null),
+                  vulnerability: .
+                }
+            ]
+            | group_by([.class, .type])
+            | {
+                Results: map({
+                  Target: "build-stage-sbom:all-platforms",
+                  Class: .[0].class,
+                  Type: .[0].type,
+                  Vulnerabilities: (
+                    map(.vulnerability)
+                    | unique_by([
+                        .VulnerabilityID,
+                        .PkgName,
+                        .InstalledVersion,
+                        .FixedVersion,
+                        .Status
+                      ])
+                  )
+                })
+              }
+          ' "${reports[@]}" > build-stage-vulnerability-summary.json
+
+          if jq -e '[.Results[]?.Vulnerabilities[]?] | length > 0' \
+            build-stage-vulnerability-summary.json >/dev/null; then
             trivy convert \
               --format table \
               --report all \
               --scanners vuln \
               --severity MEDIUM,HIGH,CRITICAL \
-              "$report"
-          done
+              build-stage-vulnerability-summary.json
+          else
+            echo "No build-stage vulnerabilities found"
+          fi
 
           jq -s -e '
             [ .[] | .Results[]?.Vulnerabilities[]? ] | length == 0
