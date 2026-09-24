@@ -81,13 +81,15 @@ permissions:
   vulnerability-alerts: read
 
 concurrency:
-  group: ${{ github.repository }}-dependabot-vex
+  group: ${{ github.repository }}-dependabot-vex-${{ inputs.vex-path }}
   cancel-in-progress: true
 
 jobs:
-  generate:
-    name: Generate reviewed VEX candidates
+  discover:
+    name: Discover reviewed VEX candidates
     runs-on: ubuntu-latest
+    outputs:
+      vulnerability-ids: ${{ steps.vex.outputs.vulnerability-ids }}
     steps:
       - name: Checkout base branch
         uses: actions/checkout@v7.0.1
@@ -116,6 +118,45 @@ jobs:
           vex-path: ${{ inputs.vex-path }}
           dismissal-ledger-path: ${{ inputs.dismissal-ledger-path }}
           base-branch: ${{ inputs.base-branch }}
+
+  generate:
+    name: Generate VEX candidate (${{ matrix.vulnerability-id }})
+    needs: discover
+    if: ${{ needs.discover.outputs.vulnerability-ids != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        vulnerability-id: ${{ fromJSON(needs.discover.outputs.vulnerability-ids) }}
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.base-branch }}
+
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+          permission-vulnerability-alerts: write
+
+      - name: Generate Dependabot VEX candidate
+        id: vex
+        uses: zaphiro-technologies/dependabot-vex-action@initial-version
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          product-purls: ${{ inputs.product-purls }}
+          image-name: ${{ inputs.image-name }}
+          vex-path: ${{ inputs.vex-path }}
+          dismissal-ledger-path: ${{ inputs.dismissal-ledger-path }}
+          base-branch: ${{ inputs.base-branch }}
+          vulnerability-id: ${{ matrix.vulnerability-id }}
 
       - name: Create VEX pull request
         if: ${{ steps.vex.outputs.changed == 'true' }}
