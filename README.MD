@@ -51,10 +51,10 @@ The repository includes:
   statement to `not_affected`.
 - [`docker`](.github/workflows/docker.yaml): build and push Docker images,
   publish BuildKit SBOM/provenance attestations and a discoverable consolidated
-  OCI SBOM referrer, and scan the pushed image by
-  its immutable digest. The workflow exposes the image, digest, image reference,
-  target platforms, and machine-readable vulnerability evidence as outputs or
-  artifacts. For multi-stage images, Dockerfiles must explicitly declare
+  OCI SBOM referrer, and scan the pushed image by its immutable digest. The
+  workflow exposes the image, digest, image reference, target platforms, and
+  machine-readable vulnerability evidence as outputs or artifacts. For
+  multi-stage images, Dockerfiles must explicitly declare
   `BUILDKIT_SBOM_SCAN_STAGE` when build-stage dependencies are part of the
   application evidence. Supports optional Docker Hub login for builds that need
   authenticated base image pulls; callers can pass `DOCKER_USER` and
@@ -75,38 +75,37 @@ The repository includes:
   applications. The workflow can auto-fix lint issues on same-repository pull
   requests, optionally pull DVC datasets, upload the build artifact and a
   machine-readable dependency SBOM, and scan for code quality and
-  vulnerabilities. The dependency SBOM describes the packages used to create
-  a bundled frontend; it is distinct from the runtime image SBOM.
+  vulnerabilities. The dependency SBOM describes the packages used to create a
+  bundled frontend; it is distinct from the runtime image SBOM.
 - [`license`](.github/workflows/license.yaml): add licensing information in file
   headers and check dependencies licensing compatibility.
 - [`lint`](.github/workflows/markdown.yaml): lint all Markdown and Yaml files.
   In case of markdown documents, checks that the links referenced in the
   documents are valid. If `skip-spell-check: false`, also, a spell checker is
   executed.
-- [`new-release`](.github/workflows/new-release.yaml): opt-in release owner
-  that updates the version, creates the release tag, generates application
-  dependency evidence, binds it to the exact successful tagged Docker build and
-  immutable OCI index digest, and assembles a draft release after the
-  tag-triggered Docker workflow succeeds. The tag triggers each repository's
-  Docker workflow, which builds the image using the tag. It deliberately exposes
-  no Docker configuration; Docker defaults and repository-specific settings
-  belong to `docker`.
+- [`new-release`](.github/workflows/new-release.yaml): opt-in release owner that
+  updates the version, creates the release tag, generates application dependency
+  evidence, binds it to the exact successful tagged Docker build and immutable
+  OCI index digest, and assembles a draft release after the tag-triggered Docker
+  workflow succeeds. The tag triggers each repository's Docker workflow, which
+  builds the image using the tag. It deliberately exposes no Docker
+  configuration; Docker defaults and repository-specific settings belong to
+  `docker`.
 - [`python`](.github/workflows/python.yaml): lint, test python applications. The
   workflow includes authentication to GitHub Container Registry in case tests
   rely on private images. The workflow also scans for vulnerabilities.
 - [`release-notes`](.github/workflows/release-notes.yaml): automatically updates
   release notes using PR titles and labels on release creation or publication,
-  editing an existing release or creating one when needed.
-  It does not publish SBOM evidence; that responsibility belongs to
-  `new-release`.
+  editing an existing release or creating one when needed. It does not publish
+  SBOM evidence; that responsibility belongs to `new-release`.
 - [`trivy-cache-update`](.github/workflows/trivy-cache-update.yaml): update
   trivy cache image.
 
 ## Docker SBOM build-stage coverage
 
 The `docker` workflow creates a BuildKit SBOM attestation by default. BuildKit
-scans only the final stage unless the Dockerfile explicitly declares the
-special build argument below. Declare it before the first `FROM` instruction:
+scans only the final stage unless the Dockerfile explicitly declares the special
+build argument below. Declare it before the first `FROM` instruction:
 
 ```dockerfile
 # syntax=docker/dockerfile:1
@@ -134,15 +133,15 @@ artifact combines the runtime-image findings with the build-stage SBOM findings;
 build-stage targets are prefixed with `build-stage-sbom:<platform>:`. The
 workflow also publishes a consolidated SPDX SBOM as an OCI referrer, so
 `trivy image --sbom-sources oci` can discover the runtime and build-stage
-packages from the image reference. The
-existing `fail-on-vulnerability` threshold applies to both scopes, but only for
-callers that enable `sbom-scan-stage`. It also forces an image SBOM attestation,
-even when `image-sbom` is otherwise `false`. This is commonly needed for static
-JavaScript frontends, whose final image contains generated assets but no package
-manifest or `node_modules`. It is normally unnecessary for Go binaries and
-Python images that retain their application dependency inventory in the final
-stage. Enable it for any language only when a multi-stage Dockerfile discards
-dependency information that is required as build evidence.
+packages from the image reference. The existing `fail-on-vulnerability`
+threshold applies to both scopes, but only for callers that enable
+`sbom-scan-stage`. It also forces an image SBOM attestation, even when
+`image-sbom` is otherwise `false`. This is commonly needed for static JavaScript
+frontends, whose final image contains generated assets but no package manifest
+or `node_modules`. It is normally unnecessary for Go binaries and Python images
+that retain their application dependency inventory in the final stage. Enable it
+for any language only when a multi-stage Dockerfile discards dependency
+information that is required as build evidence.
 
 For images whose application dependencies are used only during a JavaScript
 build, the normal `trivy image` filesystem scan reports only the final runtime
@@ -197,17 +196,16 @@ from the actions page.
    ```
 
    Production callers should use an immutable release tag or commit SHA. You can
-   also test it from a branch, in which case you can replace the version with the
-   branch name.
+   also test it from a branch, in which case you can replace the version with
+   the branch name.
 
 ## Managed immutable releases
 
-Repositories adopting [`new-release`](.github/workflows/new-release.yaml)
-should add a small `workflow_dispatch` wrapper that calls the reusable workflow.
+Repositories adopting [`new-release`](.github/workflows/new-release.yaml) should
+add a small `workflow_dispatch` wrapper that calls the reusable workflow.
 Repositories that do not adopt the workflow can continue using `release-notes`
 for notes, but need to migrate to `new-release` to assemble managed release
-evidence.
-The selected workflow branch is the release source; only `main` and
+evidence. The selected workflow branch is the release source; only `main` and
 `release/**` are accepted, so patch releases can be created from an older
 release branch without allowing feature-branch releases.
 
@@ -222,24 +220,25 @@ jobs:
     secrets: inherit
 ```
 
-The managed release binds its evidence to the successful Docker workflow run
-for the release tag and source revision. The draft release contains the
+The managed release binds its evidence to the successful Docker workflow run for
+the release tag and source revision. The draft release contains the
 multi-platform `image-index.json`, a `release-manifest.json` recording the
 immutable OCI index digest and evidence hashes, and `checksums.txt`. When the
-dependency scan is enabled, it also includes the application SBOM,
-vulnerability report, Trivy VEX configuration, and repository-owned VEX
-document when present. OCI VEX referrers remain unsigned in this workflow;
-signatures are planned as a separate change.
+dependency scan is enabled, it also includes the application SBOM, vulnerability
+report, Trivy VEX configuration, and repository-owned VEX document when present.
+OCI VEX referrers remain unsigned in this workflow; signatures are planned as a
+separate change.
 
 ## Dependabot VEX candidates
 
-Repositories can schedule [`dependabot-vex`](.github/workflows/dependabot-vex.yaml)
-to create or update a pull request containing OpenVEX candidates for currently
-dismissed Dependabot alerts. The caller may provide explicit product PURLs or
-let the workflow derive the default GHCR product PURL. The caller must grant
-the called workflow `contents`, `pull-requests`, and `vulnerability-alerts`
-permissions. The caller only needs read access for its `GITHUB_TOKEN`; the
-workflow creates a separate GitHub App token for repository changes:
+Repositories can schedule
+[`dependabot-vex`](.github/workflows/dependabot-vex.yaml) to create or update a
+pull request containing OpenVEX candidates for currently dismissed Dependabot
+alerts. The caller may provide explicit product PURLs or let the workflow derive
+the default GHCR product PURL. The caller must grant the called workflow
+`contents`, `pull-requests`, and `vulnerability-alerts` permissions. The caller
+only needs read access for its `GITHUB_TOKEN`; the workflow creates a separate
+GitHub App token for repository changes:
 
 ```yaml
 name: Dependabot VEX
