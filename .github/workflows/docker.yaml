@@ -131,7 +131,7 @@ jobs:
     outputs:
       tags: ${{ steps.meta.outputs.tags }}
       image: ${{ steps.image-name.outputs.name }}
-      digest: ${{ github.event_name != 'pull_request' && steps.build.outputs.digest || '' }}
+      digest: ${{ steps.build.outputs.digest }}
       image-ref: ${{ steps.image-ref.outputs.ref }}
       platforms: ${{ inputs.platforms }}
       vex-attached: ${{ steps.attach-vex.outcome == 'success' }}
@@ -522,6 +522,6 @@ jobs:
               "$report"
           done
 
-          jq -e '
-            [ .Results[]?.Vulnerabilities[]? ] | length == 0
+          jq -s -e '
+            [ .[] | .Results[]?.Vulnerabilities[]? ] | length == 0
           ' "${reports[@]}" > /dev/null

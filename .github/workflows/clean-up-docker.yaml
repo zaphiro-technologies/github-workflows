@@ -40,4 +40,4 @@ jobs:
           package: ${{ inputs.image-name || github.event.repository.name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           delete-tags: pr-${{ github.event.pull_request.number }}
-          delete-untagged: true
+          delete-orphaned-images: true

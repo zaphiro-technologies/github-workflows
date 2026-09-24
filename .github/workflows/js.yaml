@@ -213,6 +213,7 @@ jobs:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Upload build artifact
+        if: ${{ inputs.upload-artefacts }}
         uses: actions/upload-pages-artifact@v5
         with:
           path: ${{ inputs.upload-artefacts-dir }}
