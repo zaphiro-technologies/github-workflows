@@ -44,6 +44,11 @@ on:
         required: true
         type: string
         description: Environment name for the deployment
+      deployment-branch:
+        required: false
+        type: string
+        default: main
+        description: Branch in the deployment repository to commit changes to
 
 jobs:
   split-environment:
@@ -115,9 +120,8 @@ jobs:
         with:
           token: ${{ steps.generate-token.outputs.token }}
           repository: ${{ github.repository_owner }}/${{ needs.split-environment.outputs.is-corporate == 'true' && 'corporate-apps' || 'k8s-deployments' }}
-          ref: main
+          ref: test-wf
       - name: Resolve image repository
-        if: github.ref_type != 'tag'
         id: repository-name
         run: |
           repository="${{ inputs.ghcr-repository }}"
@@ -139,35 +143,49 @@ jobs:
           else
             echo "repository=$(yq '.platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.repository' kubernetes/${{env.CLUSTER}}/values-platforms.yaml)" >> "$GITHUB_OUTPUT"
           fi
-      - name: Get digest for image tag if not git tag
-        if: github.ref_type != 'tag'
-        id: digest
-        # Use github APIs to get the digest of the image tag
-        uses: actions/github-script@v9
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4.6.0
         with:
-          script: |
-            const {IMAGE_TAG} = process.env
-            const repository_name = "${{steps.repository-name.outputs.repository}}"
-            // Check IMAGE_TAG is not empty
-            if (!IMAGE_TAG) {
-              return core.setFailed("No valid tag found");
-            }
-            for await (const versions of github.paginate.iterator(
-              github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg, {
-                package_type: "container",
-                package_name: repository_name.split("/").pop(),
-                org: "${{github.repository_owner}}",
-                state: "active"
-                })) {
-              // Check if tag is in tags list
-              for (const version of versions.data) {
-                console.log(version)
-                if (version.metadata.container.tags.includes(IMAGE_TAG)) {
-                  return core.exportVariable('DIGEST', version.name);
-                }
-              }
-            }
-            core.setFailed("Image tag not found");
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get digest from image tag
+        id: digest
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          REPOSITORY: ${{ steps.repository-name.outputs.repository }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$IMAGE_TAG" ]]; then
+            echo "No valid image tag found" >&2
+            exit 1
+          fi
+          if [[ -z "$REPOSITORY" ]]; then
+            echo "No image repository found" >&2
+            exit 1
+          fi
+
+          case "$REPOSITORY" in
+            ghcr.io/*)
+              IMAGE_REFERENCE="${REPOSITORY}:${IMAGE_TAG}"
+              ;;
+            */*)
+              IMAGE_REFERENCE="ghcr.io/${REPOSITORY}:${IMAGE_TAG}"
+              ;;
+            *)
+              IMAGE_REFERENCE="ghcr.io/${OWNER}/${REPOSITORY}:${IMAGE_TAG}"
+              ;;
+          esac
+
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE_REFERENCE" \
+            --format '{{json .Manifest}}' | jq -r '.digest // empty')
+          if [[ ! "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "Could not resolve an OCI digest for $IMAGE_REFERENCE" >&2
+            exit 1
+          fi
+          echo "DIGEST=$DIGEST" >> "$GITHUB_ENV"
+          echo "Resolved $IMAGE_REFERENCE to $DIGEST"
       - name: Concat digest to tag
         if: env.DIGEST != ''
         run: |
@@ -229,5 +247,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
           commit_message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
-          branch: main
+          branch: ${{ inputs.deployment-branch }}
           file_pattern: ${{ needs.split-environment.outputs.is-corporate == 'true' && format('argocd/{0}.yaml', inputs.app-name) || 'kubernetes/**/*.yaml' }}
