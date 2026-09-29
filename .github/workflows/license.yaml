@@ -1,4 +1,4 @@
-# Copyright 2024 Zaphiro Technologies
+# Copyright 2026 Zaphiro Technologies
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,11 +33,12 @@ on:
         required: false
         default: true
         type: boolean
-        description: True to skip license fix
+        description: True to skip license header fix
       license-config-path:
         required: false
         default: ".github/config/.licenserc.yaml"
         type: string
+        description: Path to the license-eye configuration file.
       repositories:
         required: false
         type: string
@@ -56,8 +57,11 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
-          repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          repositories: github-workflows,${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
           permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+          permission-workflows: write
       - uses: actions/checkout@v7.0.1
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -69,7 +73,6 @@ jobs:
         with:
           config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
           mode: fix
-          # log: debug # optional: set the log level. The default value is `info`.
       - name: Apply Changes
         if: ${{ ! inputs.skip-fix || inputs.skip-fix == '' }}
         uses: stefanzweifel/git-auto-commit-action@v7.2.0
@@ -78,36 +81,10 @@ jobs:
           commit_user_email: bot@zaphiro.ch
           commit_message: "Automatic application of license header"
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
-      # golang license check set-up
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('go.mod') != '' }}
-        name: Set up Go (Go project)
-        uses: actions/setup-go@v7
+      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') }}
+        name: Check licenses
+        uses: zaphiro-technologies/license-checker@license-action-test
         with:
-          go-version-file: go.mod
-      # javascript license check set-up
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && hashFiles('package.json') != '' }}
-        name: Set up Go (non-Go project)
-        uses: actions/setup-go@v7
-        with:
-          go-version: ">=1.20.0"
-      # golang & javascript license check
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') && (hashFiles('package.json') != '' || hashFiles('go.mod') != '') }}
-        name: Check Go/Javascript Dependencies' License
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          go install github.com/apache/skywalking-eyes/cmd/license-eye@v0.8.0
-          license-eye -c ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }} dep check
-      # NOTE: we are not using the action
-      # apache/skywalking-eyes/dependency@v0.6.0
-      # since it uses a old version of golang.
-      # The file `.github/config/.licenserc.yaml` is required, or it will fail.
-      # python license check set-up
-      - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') &&(hashFiles('requirements.txt') != '' || hashFiles('pyproject.toml') != '') }}
-        name: Check Python dependencies' License
-        run: |
-          pip install poetry
-          pip install poetry-plugin-export
-          poetry export -f requirements.txt --without-hashes --without dev -o /tmp/reqs.txt
-          pip install licensecheck
-          licensecheck --only-licenses mit apache bsd psf-2.0 mpl lgpl --show-only-failing --zero --requirements-paths /tmp/reqs.txt
+          config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
+          token: ${{ github.token }}
+          log: debug
