@@ -15,22 +15,79 @@
 name: Publish new release
 
 concurrency:
-  group: ${{github.repository}}-new-release
+  group: ${{ github.repository }}-new-release
   cancel-in-progress: false
 
+env:
+  TRIVY_DISABLE_VEX_NOTICE: "true"
+
 on:
-  workflow_dispatch: # Allow manual triggering
-  workflow_call:
+  workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to be created (when empty, it will be automatically computed)"
+        description: Tag to create without the leading v (empty computes the next patch)
         required: false
         type: string
         default: ""
+      dependency-scan:
+        description: Generate source dependency SBOM and vulnerability evidence
+        required: false
+        type: boolean
+        default: true
+      vex-path:
+        description: Optional repository-owned VEX document used by source vulnerability scans
+        required: false
+        type: string
+        default: .vex/dependabot.openvex.json
+      dependency-scan-skip-dirs:
+        description: Comma-separated directories excluded from source dependency scanning
+        required: false
+        type: string
+        default: vendor,.github,node_modules
+  workflow_call:
+    inputs:
+      tag:
+        description: Tag to create without the leading v (empty computes the next patch)
+        required: false
+        type: string
+        default: ""
+      dependency-scan:
+        description: Generate source dependency SBOM and vulnerability evidence
+        required: false
+        type: boolean
+        default: true
+      vex-path:
+        description: Optional repository-owned VEX document used by source vulnerability scans
+        required: false
+        type: string
+        default: .vex/dependabot.openvex.json
+      dependency-scan-skip-dirs:
+        description: Comma-separated directories excluded from source dependency scanning
+        required: false
+        type: string
+        default: vendor,.github,node_modules
+    outputs:
+      release-tag:
+        description: Published release tag without the leading v
+        value: ${{ jobs.prepare-release.outputs.tag }}
+    secrets:
+      APP_ID:
+        required: true
+      APP_SECRET:
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
 jobs:
-  create-new-release:
+  prepare-release:
+    name: Prepare release
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') }}
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      revision: ${{ steps.create-tag.outputs.revision }}
     steps:
       - uses: actions/create-github-app-token@v3
         id: generate-token
@@ -40,60 +97,357 @@ jobs:
           permission-contents: write
       - uses: actions/checkout@v7.0.1
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
-      - name: "Validate semver"
-        if: ${{ inputs.tag != '' }}
+      - name: Compute and validate version
+        id: version
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
         run: |
+          set -euo pipefail
           regex='^([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?)?$'
 
-          if [[ "${{ inputs.tag }}" =~ $regex ]]; then
-              echo "${{ inputs.tag }} is a valid SemVer."
-              echo "NEWTAG=${{ inputs.tag }}" >> $GITHUB_ENV
+          if [[ -n "$REQUESTED_TAG" ]]; then
+            NEWTAG="$REQUESTED_TAG"
           else
-              echo "${{ inputs.tag }} is NOT a valid SemVer."
-              exit 1
+            PREVTAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+            PREVVERSION="${PREVTAG#v}"
+            PREVVERSION="${PREVVERSION%%[-+]*}"
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$PREVVERSION"
+            NEWTAG="${MAJOR}.${MINOR}.$((PATCH + 1))"
           fi
-      - name: "Get previous tag and compute next version"
-        id: version
-        if: ${{ inputs.tag == '' }}
-        shell: bash
-        run: |
-          # Get previous tag or use fallback
-          PREVTAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
-          echo "previous_tag=${PREVTAG}" >> $GITHUB_OUTPUT
 
-          # Parse and increment patch version
-          IFS='.' read -r MAJOR MINOR PATCH <<< "${PREVTAG#v}"
-          PATCH=$((PATCH + 1))
-          NEWTAG="${MAJOR}.${MINOR}.${PATCH}"
-          echo "patch=${NEWTAG}" >> $GITHUB_OUTPUT
-      - name: "Set tag"
-        if: ${{ inputs.tag == '' }}
-        run: |
-          echo "NEWTAG=${{ steps.version.outputs.patch }}" >> $GITHUB_ENV
-      - name: "Update version using make"
-        run: |
-          make release TAG=${{ env.NEWTAG }}
-      - name: Commit version changes
-        run: |
-          git config --global user.name 'Bot'
-          git config --global user.email 'bot@zaphiro.ch'
-          git commit -am "Automated tag changes [dependabot skip]" || echo "No changes to commit"
-      - name: Create New Tag
-        run: |
-          git tag -a "v${{ env.NEWTAG }}" -m "Release v${{ env.NEWTAG }}"
-          git push --follow-tags
-      - name: Publish Release
+          if [[ ! "$NEWTAG" =~ $regex ]]; then
+            echo "$NEWTAG is not a valid SemVer" >&2
+            exit 1
+          fi
+
+          if git rev-parse --verify "refs/tags/v${NEWTAG}" >/dev/null 2>&1; then
+            echo "Tag v${NEWTAG} already exists" >&2
+            exit 1
+          fi
+
+          echo "tag=$NEWTAG" >> "$GITHUB_OUTPUT"
+      - name: Check release does not already exist
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          RELEASE_TAG: v${{ steps.version.outputs.tag }}
         run: |
-          # GitHub auto-creates releases for tags, so edit the existing one
-          gh release edit "v${{ env.NEWTAG }}" \
-            --title "Release v${{ env.NEWTAG }}" \
-            --generate-notes \
-            2>/dev/null || \
-          gh release create "v${{ env.NEWTAG }}" \
-            --title "Release v${{ env.NEWTAG }}" \
-            --generate-notes
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists" >&2
+            exit 1
+          fi
+      - name: Update version using make
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: make release TAG="$RELEASE_TAG"
+      - name: Commit version changes
+        env:
+          RELEASE_BRANCH: ${{ github.ref_name }}
+        run: |
+          git config user.name 'Bot'
+          git config user.email 'bot@zaphiro.ch'
+          git commit -am "Automated tag changes [dependabot skip]" || echo "No changes to commit"
+          git push origin "HEAD:$RELEASE_BRANCH"
+      - name: Create release tag
+        id: create-tag
+        env:
+          RELEASE_TAG: v${{ steps.version.outputs.tag }}
+        run: |
+          git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  wait-for-docker-build:
+    name: Wait for tagged Docker build
+    needs: prepare-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@v3
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          permission-actions: read
+          permission-checks: read
+          permission-contents: read
+      - name: Wait for Docker build
+        uses: lewagon/wait-on-check-action@v1.9.1
+        with:
+          ref: refs/tags/v${{ needs.prepare-release.outputs.tag }}
+          check-name: "docker-build / build"
+          allowed-conclusions: success
+          checks-discovery-timeout: 300
+          wait-interval: 20
+          repo-token: ${{ steps.generate-token.outputs.token }}
+
+  assemble-evidence:
+    name: Assemble source evidence and draft release
+    needs:
+      - prepare-release
+      - wait-for-docker-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/create-github-app-token@v3
+        id: generate-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_SECRET }}
+          permission-contents: write
+          permission-actions: read
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: refs/tags/v${{ needs.prepare-release.outputs.tag }}
+          token: ${{ steps.generate-token.outputs.token }}
+          fetch-depth: 0
+      - name: Download tagged Docker image evidence
+        id: docker_evidence
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          RELEASE_TAG: v${{ needs.prepare-release.outputs.tag }}
+          SOURCE_REVISION: ${{ needs.prepare-release.outputs.revision }}
+        run: |
+          set -euo pipefail
+
+          candidate_runs=()
+          while IFS= read -r run_id; do
+            [[ -n "$run_id" ]] && candidate_runs+=("$run_id")
+          done < <(
+            gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --commit "$SOURCE_REVISION" \
+              --limit 100 \
+              --json databaseId,event,headBranch,headSha \
+              | jq -r --arg tag "$RELEASE_TAG" --arg sha "$SOURCE_REVISION" \
+                '.[] | select(.event == "push" and (.headBranch == $tag or .headBranch == null) and .headSha == $sha) | .databaseId'
+          )
+
+          if [[ "${#candidate_runs[@]}" -eq 0 ]]; then
+            echo "No tag-triggered workflow run found for $RELEASE_TAG at $SOURCE_REVISION" >&2
+            exit 1
+          fi
+
+          docker_run_id=""
+          for run_id in "${candidate_runs[@]}"; do
+            evidence_dir="docker-evidence-$run_id"
+            if ! gh run download "$run_id" \
+              --repo "$GITHUB_REPOSITORY" \
+              --name "image-manifest-$run_id" \
+              --dir "$evidence_dir" >/dev/null 2>&1; then
+              continue
+            fi
+
+            image_index_path=$(find "$evidence_dir" -type f -name image-index.json -print -quit)
+            if [[ -z "$image_index_path" ]]; then
+              continue
+            fi
+            if [[ -n "$docker_run_id" ]]; then
+              echo "More than one tagged Docker workflow run contains image evidence" >&2
+              exit 1
+            fi
+            docker_run_id="$run_id"
+            cp "$image_index_path" image-index.json
+          done
+
+          if [[ -z "$docker_run_id" || ! -s image-index.json ]]; then
+            echo "Could not download image-index.json from a tagged Docker run for $RELEASE_TAG at $SOURCE_REVISION" >&2
+            exit 1
+          fi
+
+          image_name=$(jq -r '.Name // .name // empty' image-index.json)
+          image_name="${image_name%@*}"
+          image_digest=$(jq -r '.Digest // .digest // .manifest.digest // empty' image-index.json)
+          if [[ -z "$image_name" || ! "$image_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "image-index.json does not contain a valid OCI image name and index digest" >&2
+            exit 1
+          fi
+
+          echo "docker_run_id=$docker_run_id" >> "$GITHUB_OUTPUT"
+          echo "image_name=$image_name" >> "$GITHUB_OUTPUT"
+          echo "image_digest=$image_digest" >> "$GITHUB_OUTPUT"
+          echo "image_ref=$image_name@$image_digest" >> "$GITHUB_OUTPUT"
+          echo "Bound release evidence to Docker run $docker_run_id and image $image_name@$image_digest"
+      - name: Prepare Trivy VEX configuration
+        if: ${{ inputs.dependency-scan }}
+        env:
+          VEX_PATH: ${{ inputs.vex-path }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$VEX_PATH" && -f "$VEX_PATH" ]]; then
+            jq -n --arg vex "$VEX_PATH" \
+              '{vulnerability: {vex: [$vex]}}' > trivy-vex-config.yaml
+            echo "Prepared Trivy configuration with VEX: $VEX_PATH"
+          else
+            jq -n '{vulnerability: {vex: []}}' > trivy-vex-config.yaml
+            echo "No repository-owned VEX file found; prepared an empty VEX configuration"
+          fi
+      - name: Preserve VEX evidence
+        id: vex_evidence
+        if: ${{ inputs.dependency-scan }}
+        env:
+          VEX_PATH: ${{ inputs.vex-path }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$VEX_PATH" && -f "$VEX_PATH" ]]; then
+            jq empty "$VEX_PATH"
+            cp -- "$VEX_PATH" release-vex.openvex.json
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Generate application dependency SBOM
+        if: ${{ inputs.dependency-scan }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.dependency-scan-skip-dirs || 'vendor,.github,node_modules' }}
+          format: cyclonedx
+          output: application-dependency-sbom.cdx.json
+          exit-code: "0"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+      - name: Generate application dependency vulnerability evidence
+        if: ${{ inputs.dependency-scan }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.dependency-scan-skip-dirs || 'vendor,.github,node_modules' }}
+          scanners: vuln
+          format: json
+          output: application-dependency-vulnerability.json
+          exit-code: "0"
+          trivy-config: trivy-vex-config.yaml
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+      - name: Assess application dependency security threshold (advisory)
+        if: ${{ inputs.dependency-scan }}
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: ${{ inputs.dependency-scan-skip-dirs || 'vendor,.github,node_modules' }}
+          scanners: vuln,secret,misconfig
+          exit-code: "1"
+          severity: MEDIUM,HIGH,CRITICAL
+          skip-setup-trivy: true
+          trivy-config: trivy-vex-config.yaml
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+      - name: Create release manifest and checksums
+        env:
+          RELEASE_TAG: v${{ needs.prepare-release.outputs.tag }}
+          DEPENDENCY_SCAN: ${{ inputs.dependency-scan }}
+          DOCKER_RUN_ID: ${{ steps.docker_evidence.outputs.docker_run_id }}
+          IMAGE_NAME: ${{ steps.docker_evidence.outputs.image_name }}
+          IMAGE_DIGEST: ${{ steps.docker_evidence.outputs.image_digest }}
+          IMAGE_REF: ${{ steps.docker_evidence.outputs.image_ref }}
+          VEX_PRESENT: ${{ steps.vex_evidence.outputs.present || 'false' }}
+        run: |
+          set -euo pipefail
+          SOURCE_REVISION=$(git rev-parse HEAD)
+          DEPENDENCY_SBOM_SHA=""
+          DEPENDENCY_VULN_SHA=""
+          VEX_SHA=""
+          TRIVY_CONFIG_SHA=""
+          if [[ "$DEPENDENCY_SCAN" == "true" ]]; then
+            DEPENDENCY_SBOM_SHA=$(sha256sum application-dependency-sbom.cdx.json | cut -d' ' -f1)
+            DEPENDENCY_VULN_SHA=$(sha256sum application-dependency-vulnerability.json | cut -d' ' -f1)
+            TRIVY_CONFIG_SHA=$(sha256sum trivy-vex-config.yaml | cut -d' ' -f1)
+            if [[ "$VEX_PRESENT" == "true" ]]; then
+              VEX_SHA=$(sha256sum release-vex.openvex.json | cut -d' ' -f1)
+            fi
+          fi
+          IMAGE_INDEX_SHA=$(sha256sum image-index.json | cut -d' ' -f1)
+
+          jq -n \
+            --arg release_tag "$RELEASE_TAG" \
+            --arg source_revision "$SOURCE_REVISION" \
+            --arg workflow_run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --arg docker_run_id "$DOCKER_RUN_ID" \
+            --arg docker_run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$DOCKER_RUN_ID" \
+            --arg image_name "$IMAGE_NAME" \
+            --arg image_digest "$IMAGE_DIGEST" \
+            --arg image_ref "$IMAGE_REF" \
+            --arg image_index_sha "$IMAGE_INDEX_SHA" \
+            --arg dependency_sbom_sha "$DEPENDENCY_SBOM_SHA" \
+            --arg dependency_vulnerability_sha "$DEPENDENCY_VULN_SHA" \
+            --arg vex_sha "$VEX_SHA" \
+            --arg trivy_config_sha "$TRIVY_CONFIG_SHA" \
+            --arg dependency_scan "$DEPENDENCY_SCAN" \
+            --arg vex_present "$VEX_PRESENT" \
+            '{schema_version: 2, release_tag: $release_tag, source_revision: $source_revision, workflow_run: $workflow_run, docker_build_run_id: $docker_run_id, docker_build_run: $docker_run, image: {name: $image_name, reference: $image_ref, index_digest: $image_digest, index_json_sha256: $image_index_sha}, evidence: {application_dependency_scan: ($dependency_scan == "true"), application_dependency_sbom_sha256: $dependency_sbom_sha, application_dependency_vulnerability_sha256: $dependency_vulnerability_sha, vex_present: ($vex_present == "true"), vex_sha256: $vex_sha, trivy_config_sha256: $trivy_config_sha}}' \
+            > release-manifest.json
+
+          checksum_files=(release-manifest.json image-index.json)
+          if [[ "$DEPENDENCY_SCAN" == "true" ]]; then
+            checksum_files+=(application-dependency-sbom.cdx.json application-dependency-vulnerability.json trivy-vex-config.yaml)
+            if [[ "$VEX_PRESENT" == "true" ]]; then
+              checksum_files+=(release-vex.openvex.json)
+            fi
+          fi
+          sha256sum "${checksum_files[@]}" > checksums.txt
+      - name: Upload release evidence artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-evidence-${{ needs.prepare-release.outputs.tag }}
+          path: |
+            image-index.json
+            release-manifest.json
+            checksums.txt
+          if-no-files-found: error
+          retention-days: 20
+      - name: Upload source dependency evidence artifact
+        if: ${{ inputs.dependency-scan }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-source-evidence-${{ needs.prepare-release.outputs.tag }}
+          path: |
+            application-dependency-sbom.cdx.json
+            application-dependency-vulnerability.json
+            trivy-vex-config.yaml
+          if-no-files-found: error
+          retention-days: 20
+      - name: Upload VEX evidence artifact
+        if: ${{ inputs.dependency-scan && steps.vex_evidence.outputs.present == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-vex-evidence-${{ needs.prepare-release.outputs.tag }}
+          path: release-vex.openvex.json
+          if-no-files-found: error
+          retention-days: 20
+      - name: Create draft release and attach evidence
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          RELEASE_TAG: v${{ needs.prepare-release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            if [[ "$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq '.isDraft')" != "true" ]]; then
+              echo "Release $RELEASE_TAG is already published" >&2
+              exit 1
+            fi
+          else
+            gh release create "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$RELEASE_TAG" \
+              --notes "" \
+              --draft
+          fi
+
+          assets=(release-manifest.json checksums.txt image-index.json)
+          if [[ "${{ inputs.dependency-scan }}" == "true" ]]; then
+            assets+=(application-dependency-sbom.cdx.json application-dependency-vulnerability.json trivy-vex-config.yaml)
+          fi
+          if [[ "${{ steps.vex_evidence.outputs.present }}" == "true" ]]; then
+            assets+=(release-vex.openvex.json)
+          fi
+          gh release upload "$RELEASE_TAG" "${assets[@]}" --repo "$GITHUB_REPOSITORY"

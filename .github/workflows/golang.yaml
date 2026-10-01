@@ -18,6 +18,9 @@ concurrency:
   group: ${{github.repository}}-${{ github.ref_name }}-go
   cancel-in-progress: true
 
+env:
+  TRIVY_DISABLE_VEX_NOTICE: "true"
+
 # Permissions needed
 # permissions:
 #   # Give the default GITHUB_TOKEN write permission to commit and push the
@@ -48,6 +51,11 @@ on:
         default: true
         type: boolean
         description: False to skip vulnerability-scan exec
+      vex-path:
+        required: false
+        default: .vex/dependabot.openvex.json
+        type: string
+        description: Optional repository-owned VEX document used by filesystem scans
       vulnerability-scan-skip-dirs:
         required: false
         default: "vendor,.github"
@@ -211,6 +219,8 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
+          permission-actions: read
+          permission-contents: read
       - uses: actions/checkout@v7.0.1
       - run: git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
       - uses: actions/setup-go@v7
@@ -227,13 +237,42 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Run benchmark
         shell: bash
-        run: make ci-bench | tee output.txt
-      # Download previous benchmark result from cache (if exists)
+        run: |
+          set -o pipefail
+          make ci-bench | tee output.txt
+      # Find the newest base-branch run that published benchmark data.
+      - name: Find benchmark baseline
+        id: benchmark-baseline
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          BASE_BRANCH: ${{ github.base_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          baseline_run_id=$(gh api --paginate \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts?name=benchmark-result&per_page=100" \
+            | jq -rs --arg branch "$BASE_BRANCH" '
+              [ .[] | .artifacts[]
+                | select(.expired == false and .workflow_run.head_branch == $branch)
+              ]
+              | sort_by(.created_at)
+              | last
+              | .workflow_run.id // empty
+            ')
+
+          if [[ -n "$baseline_run_id" ]]; then
+            echo "run-id=$baseline_run_id" >> "$GITHUB_OUTPUT"
+            echo "Using benchmark baseline from $BASE_BRANCH run $baseline_run_id"
+          else
+            echo "No benchmark baseline found on $BASE_BRANCH; storing an initial result"
+          fi
       - name: Download benchmark report from base branch
+        if: ${{ steps.benchmark-baseline.outputs.run-id != '' }}
         uses: actions/download-artifact@v8
-        continue-on-error: true
         with:
           name: benchmark-result
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.benchmark-baseline.outputs.run-id }}
           github-token: ${{ steps.generate-token.outputs.token }}
       # Run `github-action-benchmark` action
       - name: Store benchmark result
@@ -276,6 +315,7 @@ jobs:
           hide-progress: true
           output: trivy.txt
         env:
+          TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Publish Trivy Output to Summary
@@ -303,5 +343,6 @@ jobs:
           # On a subsequent call to the action we know trivy is already installed so can skip this
           skip-setup-trivy: true
         env:
+          TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
