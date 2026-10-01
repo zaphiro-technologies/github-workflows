@@ -33,7 +33,8 @@ agents to handle CI/CD processes, project management, and code quality checks.
   containerized applications to various environments.
 - **Docker Build** (`docker.yaml`): Reusable workflow to build and push Docker
   images. Callers can configure BuildKit cache mode, cache error handling, and
-  cache import/export timeout. Trivy scans the first generated image tag and
+  cache import/export timeout. Docker metadata creates a raw tag for every Git
+  tag, including non-SemVer tags. Trivy scans the first generated image tag and
   fails early with a clear error when Docker metadata produces no tag.
 - **Publish New Release** (`new-release.yaml`): Orchestrates the creation of new
   software releases, including tagging and release artifact generation.
