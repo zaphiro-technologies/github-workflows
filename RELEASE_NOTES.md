@@ -4,6 +4,7 @@
 
 ### Features
 
+- docker wf: make docker buildKit cache configurable (PR #349 by @chicco785)
 - update graphify workflow (PR #344 by @AntonioCeppellini)
 - Add Graphify code graph update workflow (PR #334 by @AntonioCeppellini)
 - python wf: add SQL files and env.example files to changes detection (PR #330
