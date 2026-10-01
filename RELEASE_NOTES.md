@@ -4,7 +4,7 @@
 
 ### Features
 
-- Make docker build kit cache configurable (PR #349 by @chicco785)
+- docker wf: make docker buildKit cache configurable (PR #349 by @chicco785)
 - update graphify workflow (PR #344 by @AntonioCeppellini)
 - Add Graphify code graph update workflow (PR #334 by @AntonioCeppellini)
 - js & docker workflow: allow to use private repos during lint & build (PR #304
