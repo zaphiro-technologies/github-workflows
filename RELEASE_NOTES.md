@@ -7,6 +7,8 @@
 - docker wf: make docker buildKit cache configurable (PR #349 by @chicco785)
 - update graphify workflow (PR #344 by @AntonioCeppellini)
 - Add Graphify code graph update workflow (PR #334 by @AntonioCeppellini)
+- python wf: add SQL files and env.example files to changes detection (PR #330
+  by @chicco785)
 - js & docker workflow: allow to use private repos during lint & build (PR #304
   by @chicco785)
 - Support Corporate deployments (PR #300 by @cosimomeli)
