@@ -178,7 +178,7 @@ jobs:
       - name: Configure AWS Credentials
         if: ${{ inputs.pull-dvc-datasets }}
         id: creds
-        uses: aws-actions/configure-aws-credentials@v6.2.3
+        uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
           aws-region: eu-south-1
           role-to-assume: arn:aws:iam::058264335177:role/zaphiro-github-role-demo
@@ -187,6 +187,8 @@ jobs:
         if: ${{ inputs.pull-dvc-datasets }}
         run: |
           pipx install 'dvc[s3]==3.67.0'
+          # sqltrie 0.11.2 uses a private API removed in pygtrie 2.6.
+          pipx runpip dvc install 'pygtrie<2.6'
       - name: Set-up credentials
         if: ${{ inputs.pull-dvc-datasets }}
         env:
@@ -208,7 +210,7 @@ jobs:
           if-no-files-found: error
       - name: SonarCloud Code Scan
         if: ${{ inputs.code-scan }}
-        uses: SonarSource/sonarqube-scan-action@v8.2.1
+        uses: SonarSource/sonarqube-scan-action@v8.2.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

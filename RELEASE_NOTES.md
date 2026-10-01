@@ -1,9 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-08-01
+## 0.0.3-dev - 2026-09-21
 
 ### Features
 
+- update graphify workflow (PR #344 by @AntonioCeppellini)
+- Add Graphify code graph update workflow (PR #334 by @AntonioCeppellini)
 - js & docker workflow: allow to use private repos during lint & build (PR #304
   by @chicco785)
 - Support Corporate deployments (PR #300 by @cosimomeli)
@@ -61,6 +63,7 @@
 
 ### Bug Fixes
 
+- fix(release): preserve generated changelog (PR #335 by @tejo)
 - deployment: update tag only where the app entry already exists (PR #321 by
   @cosimomeli)
 - markdown wf: fix chrome for puppeteer (PR #299 by @chicco785)
@@ -91,6 +94,7 @@
 
 ### Continuous Integration
 
+- fix(ci): constrain pygtrie for DVC (PR #337 by @tejo)
 - Add 3-day Dependabot cooldown (PR #294 by @chicco785)
 - Separate issue management from project management (PR #236 by @chicco785)
 - new-release workflow: delegate to makefile the update of project files (PR
@@ -110,13 +114,25 @@
 
 ### Dependencies
 
+- Bump apache/skywalking-eyes from 0.8.0 to 0.9.0 (PR #338 by @dependabot[bot])
+- Bump reviewdog/action-actionlint from 1.73.2 to 1.73.4 (PR #339 by
+  @dependabot[bot])
+- Bump aws-actions/configure-aws-credentials from 6.2.3 to 6.2.4 (PR #340 by
+  @dependabot[bot])
+- Bump reviewdog/action-actionlint from 1.73.1 to 1.73.2 (PR #332 by
+  @dependabot[bot])
+- Bump reviewdog/action-actionlint from 1.73.0 to 1.73.1 (PR #329 by
+  @dependabot[bot])
+- Bump umbrelladocs/action-linkspector from 1.5.4 to 1.5.5 (PR #327 by
+  @dependabot[bot])
+- Bump docker/login-action from 4.5.1 to 4.6.0 (PR #328 by @dependabot[bot])
+- Bump docker/login-action from 4 to 4.5.1 (PR #323 by @dependabot[bot])
 - Bump actions/setup-python from 6.3.0 to 7.0.0 (PR #322 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.72.0 to 1.73.0 (PR #324 by
   @dependabot[bot])
 - Bump aws-actions/configure-aws-credentials from 6.2.2 to 6.2.3 (PR #325 by
   @dependabot[bot])
 - Bump actions/checkout from 7.0.0 to 7.0.1 (PR #326 by @dependabot[bot])
-- Bump docker/login-action from 4 to 4.5.1 (PR #323 by @dependabot[bot])
 - Bump actions/setup-python from 6 to 6.3.0 (PR #316 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1 to 1.72.0 (PR #317 by
   @dependabot[bot])
