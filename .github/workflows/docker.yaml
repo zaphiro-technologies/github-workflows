@@ -59,6 +59,21 @@ on:
         description: Platform to build for, comma separated
         type: string
         default: linux/amd64,linux/arm64
+      cache-mode:
+        required: false
+        description: BuildKit cache export mode; min exports final image layers and max includes intermediate layers
+        type: string
+        default: max
+      cache-ignore-error:
+        required: false
+        description: Continue successfully if exporting the BuildKit cache fails
+        type: boolean
+        default: false
+      cache-timeout:
+        required: false
+        description: Maximum duration for importing or exporting the BuildKit cache
+        type: string
+        default: 10m
       vulnerability-scan:
         required: false
         default: true
@@ -246,8 +261,8 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           sbom: ${{ inputs.image-sbom || inputs.sbom-scan-stage }}
           provenance: ${{ inputs.provenance && 'mode=max' || 'false' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=min,ignore-error=true
+          cache-from: type=gha,timeout=${{ inputs.cache-timeout }}
+          cache-to: type=gha,mode=${{ inputs.cache-mode }},ignore-error=${{ inputs.cache-ignore-error }},timeout=${{ inputs.cache-timeout }}
           secrets: |
             GH_TOKEN=${{ steps.generate-token.outputs.token }}
           build-args: |

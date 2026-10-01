@@ -1,11 +1,14 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-09-21
+## 0.0.3-dev - 2026-10-01
 
 ### Features
 
+- docker wf: make docker buildKit cache configurable (PR #349 by @chicco785)
 - update graphify workflow (PR #344 by @AntonioCeppellini)
 - Add Graphify code graph update workflow (PR #334 by @AntonioCeppellini)
+- python wf: add SQL files and env.example files to changes detection (PR #330
+  by @chicco785)
 - js & docker workflow: allow to use private repos during lint & build (PR #304
   by @chicco785)
 - Support Corporate deployments (PR #300 by @cosimomeli)
@@ -114,6 +117,10 @@
 
 ### Dependencies
 
+- Bump SonarSource/sonarqube-scan-action from 8.2.1 to 8.2.2 (PR #345 by
+  @dependabot[bot])
+- Bump aws-actions/configure-aws-credentials from 6.2.4 to 6.3.0 (PR #346 by
+  @dependabot[bot])
 - Bump apache/skywalking-eyes from 0.8.0 to 0.9.0 (PR #338 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.73.2 to 1.73.4 (PR #339 by
   @dependabot[bot])
