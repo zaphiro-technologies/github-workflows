@@ -32,7 +32,8 @@ agents to handle CI/CD processes, project management, and code quality checks.
 - **Container Deployment** (`deployment.yaml`): Reusable workflow for deploying
   containerized applications to various environments.
 - **Docker Build** (`docker.yaml`): Reusable workflow to build and push Docker
-  images.
+  images. Callers can configure BuildKit cache mode, cache error handling, and
+  cache import/export timeout.
 - **Publish New Release** (`new-release.yaml`): Orchestrates the creation of new
   software releases, including tagging and release artifact generation.
 
