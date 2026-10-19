@@ -87,4 +87,4 @@ jobs:
         with:
           config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
           token: ${{ github.token }}
-          log: debug
+          log: info
