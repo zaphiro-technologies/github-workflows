@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-10-18
+## 0.0.3-dev - 2026-10-20
 
 ### Features
 
@@ -341,6 +341,8 @@
 
 ### Refactoring
 
+- license workflow: replace license-eye with custom license checkers (PR #282 by
+  @chicco785)
 - Replace PAT secrets with github app tokens (PR #204 by @chicco785)
 - Reduce number of wf run when pr are in draft mode (PR #160 by @chicco785)
 
