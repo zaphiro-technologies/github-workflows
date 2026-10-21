@@ -109,7 +109,7 @@ jobs:
 
       - name: Generate Dependabot VEX candidates
         id: vex
-        uses: zaphiro-technologies/dependabot-vex-action@initial-version
+        uses: zaphiro-technologies/dependabot-vex-action@v1
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           product-purls: ${{ inputs.product-purls }}
@@ -147,7 +147,7 @@ jobs:
 
       - name: Generate Dependabot VEX candidate
         id: vex
-        uses: zaphiro-technologies/dependabot-vex-action@initial-version
+        uses: zaphiro-technologies/dependabot-vex-action@v1
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           product-purls: ${{ inputs.product-purls }}
