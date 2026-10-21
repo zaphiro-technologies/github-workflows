@@ -1,14 +1,14 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-10-01
+## 0.0.3-dev - 2026-10-20
 
 ### Features
 
+- python wf: add SQL files and env.example files to changes detection (PR #330
+  by @chicco785)
 - docker wf: make docker buildKit cache configurable (PR #349 by @chicco785)
 - update graphify workflow (PR #344 by @AntonioCeppellini)
 - Add Graphify code graph update workflow (PR #334 by @AntonioCeppellini)
-- python wf: add SQL files and env.example files to changes detection (PR #330
-  by @chicco785)
 - js & docker workflow: allow to use private repos during lint & build (PR #304
   by @chicco785)
 - Support Corporate deployments (PR #300 by @cosimomeli)
@@ -117,6 +117,9 @@
 
 ### Dependencies
 
+- Bump actions/setup-node from 7.0.0 to 7.1.0 (PR #354 by @dependabot[bot])
+- Bump SonarSource/sonarqube-scan-action from 8.2.2 to 8.3.0 (PR #351 by
+  @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 8.2.1 to 8.2.2 (PR #345 by
   @dependabot[bot])
 - Bump aws-actions/configure-aws-credentials from 6.2.4 to 6.3.0 (PR #346 by
@@ -338,6 +341,8 @@
 
 ### Refactoring
 
+- license workflow: replace license-eye with custom license checkers (PR #282 by
+  @chicco785)
 - Replace PAT secrets with github app tokens (PR #204 by @chicco785)
 - Reduce number of wf run when pr are in draft mode (PR #160 by @chicco785)
 
