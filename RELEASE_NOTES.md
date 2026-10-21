@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-10-20
+## 0.0.3-dev - 2026-10-21
 
 ### Features
 
@@ -107,6 +107,7 @@
 
 ### Security
 
+- Gate release evidence on tagged Docker build (PR #342 by @chicco785)
 - Workflow hardening: markdown / python / license / deployment / golang /
   release-note / new-release (PR #268 by @chicco785)
 - Workflow hardening: check-pr / docker / add-to-project (PR #269 by @chicco785)
