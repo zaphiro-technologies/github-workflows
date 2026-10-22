@@ -66,6 +66,7 @@
 
 ### Bug Fixes
 
+- Fix release notes version detection (PR #358 by @chicco785)
 - Fix Trivy image reference propagation (PR #357 by @chicco785)
 - fix(release): preserve generated changelog (PR #335 by @tejo)
 - deployment: update tag only where the app entry already exists (PR #321 by
