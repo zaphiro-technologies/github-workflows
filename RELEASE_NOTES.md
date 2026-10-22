@@ -1,6 +1,10 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-10-22
+## 1.0.1-dev - 2026-10-22
+
+- no changes
+
+## 1.0.0 - 2026-10-22
 
 ### Features
 
