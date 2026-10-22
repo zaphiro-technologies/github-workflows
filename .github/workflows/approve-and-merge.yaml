@@ -35,7 +35,7 @@ jobs:
       - uses: actions/create-github-app-token@v3
         id: generate-token
         with:
-          app-id: ${{ secrets.APP_ID }}
+          client-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
       - name: Approve & Merge Dependabot PRs
         env:
@@ -91,12 +91,10 @@ jobs:
 
           echo "Fetching open Dependabot PRs older than 3 days and newer than 30 days ..."
 
-          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title,labels,headRefName --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while IFS= read -r pr; do
+          gh pr list --repo "$GITHUB_REPOSITORY" --author app/dependabot --state open --json number,createdAt,title,labels --jq '.[] | select((.createdAt | fromdateiso8601) < (now - 259200))' | jq -c '.' | while IFS= read -r pr; do
             number=$(echo "$pr" | jq -r '.number')
             title=$(echo "$pr" | jq -r '.title')
             labels=$(echo "$pr" | jq -r '[.labels[].name] | join(",")')
-            branch=$(echo "$pr" | jq -r '.headRefName')
-
             echo "👉 Processing PR #$number: $title"
 
             if echo "$labels" | grep -q "auto-approved"; then
