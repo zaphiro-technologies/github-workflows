@@ -29,6 +29,7 @@ on:
       - main
   release:
     types:
+      - created
       - published
   workflow_call:
     inputs:
@@ -40,7 +41,7 @@ on:
         required: false
         default: false
         type: boolean
-        description: True to skip sbom exec
+        description: Deprecated compatibility input; SBOM publication belongs to the release owner
 
 concurrency:
   group: ${{ github.ref_name }}-release
@@ -74,6 +75,8 @@ jobs:
     needs: check_reviews
     name: Release Notes
     runs-on: ubuntu-latest
+    env:
+      CONFIGURATION: ${{ inputs.config-release-path || '.github/config/release-config.json' }}
     permissions:
       contents: write
       pull-requests: read
@@ -98,11 +101,19 @@ jobs:
           ref: ${{ github.ref }}
           token: ${{ steps.generate-token.outputs.token }}
           fetch-depth: 0
-      - name: "Get Previous tag"
+      - name: "Get latest semantic version tag"
         id: previoustag
         shell: bash
         run: |
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+          # A GitHub Action may also have a floating major tag (for example,
+          # `1`) pointing at the same commit as its release tag (`1.0.0`).
+          # `git describe` can select the floating tag, which is not a SemVer
+          # version and would make the version calculation fall back to 0.0.0.
+          TAG=$(git tag --merged HEAD --list \
+            | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | tail -n1 || true)
+          TAG=${TAG:-0.0.0}
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
       - name: "Get next minor version"
         id: semvers
@@ -123,12 +134,6 @@ jobs:
 
           NEXT_PATCH="$MAJOR.$MINOR.$((PATCH + 1))"
           echo "patch=$NEXT_PATCH" >> "$GITHUB_OUTPUT"
-      - name: Select configuration
-        if: ${{ github.event_name == 'workflow_call' }}
-        run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
-      - name: Select configuration
-        if: ${{ github.event_name != 'workflow_call' }}
-        run: echo "CONFIGURATION='.github/config/release-config.json'" >> $GITHUB_ENV
       - name: Get Pull Request Number
         if: ${{ github.event.review.state == 'approved' }}
         run: echo "PULL_NUMBER=$(echo "$GITHUB_REF" | awk -F / '{print $3}')" >> $GITHUB_ENV
@@ -140,7 +145,7 @@ jobs:
         run: |
           jq --arg match "myPR" \
             --arg replace "$PR" \
-            'walk(if . == $match then $replace else . end)' < ${{ env.CONFIGURATION }} > .github/config/release-config-temp.json
+            'walk(if . == $match then $replace else . end)' < "$CONFIGURATION" > .github/config/release-config-temp.json
           more .github/config/release-config-temp.json
       - name: "Build Changelog"
         id: build_changelog_1
@@ -237,27 +242,13 @@ jobs:
           file_pattern: RELEASE_NOTES.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
-        name: Generate SBOM
-        # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
-        with:
-          scan-type: fs
-          scan-ref: "."
-          format: "cyclonedx"
-          output: "cyclonedx-sbom.json"
-      - if: ${{ ! inputs.skip-sbom || inputs.skip-sbom == '' }}
-        name: Upload SBOM as a Github artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: trivy-sbom-report
-          path: "${{ github.workspace }}/cyclonedx-sbom.json"
-          retention-days: 20 # 90 is the default
 
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    env:
+      CONFIGURATION: ${{ inputs.config-release-path || '.github/config/release-config.json' }}
     permissions:
       contents: write
       pull-requests: read
@@ -266,17 +257,11 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
-      - name: Select configuration
-        if: ${{ github.event_name == 'workflow_call' }}
-        run: echo "CONFIGURATION=${{ inputs.config-release-path }}" >> $GITHUB_ENV
-      - name: Select configuration
-        if: ${{ github.event_name != 'workflow_call' }}
-        run: echo "CONFIGURATION=.github/config/release-config.json" >> $GITHUB_ENV
       - name: "Build Changelog"
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v6
         with:
-          configuration: ${{env.CONFIGURATION}}
+          configuration: ${{ env.CONFIGURATION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
@@ -294,30 +279,5 @@ jobs:
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release edit "$RELEASE_TAG" "${release_args[@]}"
           else
-            gh release create "$RELEASE_TAG" "${release_args[@]}"
+            gh release create "$RELEASE_TAG" "${release_args[@]}" --draft
           fi
-
-  release-sbom:
-    name: Release SBOM
-    if: ${{ github.event_name == 'release' && (! inputs.skip-sbom || inputs.skip-sbom == '') }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-      - name: Generate SBOM
-        # trivy-action v0.35.0 (safe version)
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
-        with:
-          scan-type: fs
-          scan-ref: "."
-          format: "cyclonedx"
-          output: "cyclonedx-sbom.json"
-      - name: Attach SBOM to Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ github.event.release.tag_name }}" cyclonedx-sbom.json --repo "$GITHUB_REPOSITORY" --clobber

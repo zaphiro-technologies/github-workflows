@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-10-20
+## 0.0.3-dev - 2026-10-22
 
 ### Features
 
@@ -66,6 +66,8 @@
 
 ### Bug Fixes
 
+- Fix release notes version detection (PR #358 by @chicco785)
+- Fix Trivy image reference propagation (PR #357 by @chicco785)
 - fix(release): preserve generated changelog (PR #335 by @tejo)
 - deployment: update tag only where the app entry already exists (PR #321 by
   @cosimomeli)
@@ -107,6 +109,7 @@
 
 ### Security
 
+- Gate release evidence on tagged Docker build (PR #342 by @chicco785)
 - Workflow hardening: markdown / python / license / deployment / golang /
   release-note / new-release (PR #268 by @chicco785)
 - Workflow hardening: check-pr / docker / add-to-project (PR #269 by @chicco785)

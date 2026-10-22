@@ -83,7 +83,7 @@ jobs:
       - run: git config --global "url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf" "https://github.com/"
       - if: ${{ (!inputs.skip-dependency || inputs.skip-dependency == '') }}
         name: Check licenses
-        uses: zaphiro-technologies/license-checker@license-action-test
+        uses: zaphiro-technologies/license-checker@v1
         with:
           config: ${{ inputs.license-config-path || '.github/config/.licenserc.yaml' }}
           token: ${{ github.token }}
