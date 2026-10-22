@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 0.0.3-dev - 2026-10-21
+## 0.0.3-dev - 2026-10-22
 
 ### Features
 
@@ -66,6 +66,7 @@
 
 ### Bug Fixes
 
+- Fix Trivy image reference propagation (PR #357 by @chicco785)
 - fix(release): preserve generated changelog (PR #335 by @tejo)
 - deployment: update tag only where the app entry already exists (PR #321 by
   @cosimomeli)

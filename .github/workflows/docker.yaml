@@ -410,6 +410,27 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Resolve image reference for scanning
+        id: scan-image
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name || github.event.repository.name }}
+          IMAGE_DIGEST: ${{ needs.build.outputs.digest }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            test -n "$PR_NUMBER"
+            image_ref="${IMAGE_NAME}:pr-${PR_NUMBER}"
+          else
+            test -n "$IMAGE_DIGEST"
+            image_ref="${IMAGE_NAME}@${IMAGE_DIGEST}"
+          fi
+
+          echo "ref=$image_ref" >> "$GITHUB_OUTPUT"
+          echo "Resolved image reference from the repository and build metadata."
       - name: Checkout VEX document for build-stage scanning
         if: ${{ inputs.sbom-scan-stage && needs.build.outputs.vex-attached == 'true' }}
         uses: actions/checkout@v7.0.1
@@ -422,7 +443,7 @@ jobs:
         with:
           version: v0.73.0
           scan-type: image
-          image-ref: ${{ needs.build.outputs.image-ref }}
+          image-ref: ${{ steps.scan-image.outputs.ref }}
           scanners: vuln
           format: json
           output: trivy-image-vulnerability.json
@@ -438,7 +459,7 @@ jobs:
         if: ${{ inputs.sbom-scan-stage }}
         shell: bash
         env:
-          IMAGE_REF: ${{ needs.build.outputs.image-ref }}
+          IMAGE_REF: ${{ steps.scan-image.outputs.ref }}
           VEX_PATH: ${{ needs.build.outputs.vex-attached == 'true' && inputs.vex-path || '' }}
         run: |
           set -euo pipefail
@@ -503,7 +524,7 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: image
-          image-ref: ${{ needs.build.outputs.image-ref }}
+          image-ref: ${{ steps.scan-image.outputs.ref }}
           scanners: "vuln,secret,misconfig"
           exit-code: "1"
           severity: MEDIUM,HIGH,CRITICAL
