@@ -120,6 +120,8 @@
 
 ### Dependencies
 
+- Bump reviewdog/action-actionlint from 1.73.4 to 1.80.3 (PR #355 by
+  @dependabot[bot])
 - Bump actions/setup-node from 7.0.0 to 7.1.0 (PR #354 by @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 8.2.2 to 8.3.0 (PR #351 by
   @dependabot[bot])
