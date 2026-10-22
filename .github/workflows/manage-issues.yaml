@@ -99,6 +99,8 @@ jobs:
           CURSOR=""
           while :; do
             if [ -z "$CURSOR" ]; then
+              # GraphQL variables are intentionally passed through to GitHub.
+              # shellcheck disable=SC2016
               QUERY='
                 query($owner: String!, $repo: String!) {
                   repository(owner: $owner, name: $repo) {
@@ -109,7 +111,6 @@ jobs:
                       }
                       nodes {
                         number
-                        title
                         createdAt
                         updatedAt
                         labels(first: 20) {
@@ -136,6 +137,8 @@ jobs:
                 }
               '
             else
+              # GraphQL variables are intentionally passed through to GitHub.
+              # shellcheck disable=SC2016
               QUERY='
                 query($owner: String!, $repo: String!, $cursor: String!) {
                   repository(owner: $owner, name: $repo) {
@@ -183,7 +186,6 @@ jobs:
             # Process issues from this page
             echo "$PAGE" | jq -c '.data.repository.issues.nodes[]' | while read -r issue; do
               NUMBER=$(echo "$issue" | jq -r '.number')
-              TITLE=$(echo "$issue" | jq -r '.title')
               CREATED_AT=$(echo "$issue" | jq -r '.createdAt')
               UPDATED_AT=$(echo "$issue" | jq -r '.updatedAt')  # updatedAt changes on comments, label changes (including from this workflow), edits, etc., so bot actions can reset staleness.
               
@@ -335,6 +337,8 @@ jobs:
           CURSOR=""
           while :; do
             if [ -z "$CURSOR" ]; then
+              # GraphQL variables are intentionally passed through to GitHub.
+              # shellcheck disable=SC2016
               QUERY='
                 query($owner: String!, $repo: String!) {
                   repository(owner: $owner, name: $repo) {
@@ -361,6 +365,8 @@ jobs:
                 }
               '
             else
+              # GraphQL variables are intentionally passed through to GitHub.
+              # shellcheck disable=SC2016
               QUERY='
                 query($owner: String!, $repo: String!) {
                   repository(owner: $owner, name: $repo) {
