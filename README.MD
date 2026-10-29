@@ -101,6 +101,46 @@ The repository includes:
 - [`trivy-cache-update`](.github/workflows/trivy-cache-update.yaml): update
   trivy cache image.
 
+## Go benchmark comparisons
+
+The `golang` workflow runs `make ci-bench` for the baseline and candidate
+sequentially on the **same runner**, using the Go toolchain selected by the
+candidate's `go.mod`. Pull requests compare against their base SHA; pushes
+compare against the pre-push SHA. Manual runs, tags, and new branches fall back
+to the candidate's first parent. A repository's initial commit records results
+without comparison. Both revisions must provide the `ci-bench` Make target.
+
+This roughly doubles benchmark execution time, but avoids comparing different
+GitHub-hosted CPU models. Compose resources are isolated with a job-specific
+`COMPOSE_PROJECT_NAME` and removed between revisions, including named volumes.
+Benchmark Make targets must honor that environment variable rather than force a
+different Compose project name.
+
+The existing `alert-threshold-benchmark` input is unchanged: `150%` fails when a
+cost exceeds 1.5 times its baseline, or throughput falls below its baseline
+divided by 1.5. `ns/op`, `B/op`, and `allocs/op` are lower-is-better; `MB/s` is
+higher-is-better. Repeated samples use their median. Results are matched by
+package, benchmark name, and unit, ignoring the processor-count suffix. New and
+removed metrics are reported but not gated. Other custom metrics remain in the
+raw output and are not gated.
+
+Results appear in check annotations and the job summary, without posting PR
+comments or requiring PR write permissions. The `benchmark-comparison` artifact
+contains runner details and the comparison report, including on regression
+failures. Full command logs remain in the job console, where GitHub masks
+secrets, rather than uploading unmasked logs as artifacts. Historical
+`benchmark-result` artifacts are no longer downloaded or produced; old artifacts
+need no migration. Callers do not need workflow input changes. Validate the
+shared workflow from a branch before rolling it out; callers pinned to immutable
+versions must update their workflow reference to adopt the change.
+
+Local regression checks (Docker is stubbed; no running services are touched):
+
+```bash
+python3 -m pip install PyYAML==6.0.3
+python3 -m unittest discover -s __tests__ -p test_go_benchmark.py -v
+```
+
 ## Docker SBOM build-stage coverage
 
 The `docker` workflow creates a BuildKit SBOM attestation by default. BuildKit
