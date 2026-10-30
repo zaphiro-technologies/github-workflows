@@ -1,8 +1,11 @@
 # GitHub Workflows Release Notes
 
-## 1.0.1-dev - 2026-10-22
+## 1.0.1-dev - 2026-10-29
 
-- no changes
+### Bug Fixes
+
+- release-notes: fix next release tag generation for the note (PR #366 by
+  @chicco785)
 
 ## 1.0.0 - 2026-10-22
 

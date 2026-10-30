@@ -107,10 +107,11 @@ jobs:
         run: |
           # A GitHub Action may also have a floating major tag (for example,
           # `1`) pointing at the same commit as its release tag (`1.0.0`).
-          # `git describe` can select the floating tag, which is not a SemVer
-          # version and would make the version calculation fall back to 0.0.0.
+          # Release tags may also include a suffix (for example,
+          # `13.1.4-1.1.0`); keep those and calculate the next version from
+          # their major.minor.patch portion.
           TAG=$(git tag --merged HEAD --list \
-            | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' \
+            | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' \
             | sort -V \
             | tail -n1 || true)
           TAG=${TAG:-0.0.0}
