@@ -1,11 +1,16 @@
 # GitHub Workflows Release Notes
 
-## 1.0.1-dev - 2026-10-29
+## 1.0.1-dev - 2026-10-30
 
 ### Bug Fixes
 
 - release-notes: fix next release tag generation for the note (PR #366 by
   @chicco785)
+- Fix same-runner Go benchmarks and throughput alerts (PR #365 by @tejo)
+
+### Continuous Integration
+
+- Fix same-runner Go benchmarks and throughput alerts (PR #365 by @tejo)
 
 ## 1.0.0 - 2026-10-22
 
