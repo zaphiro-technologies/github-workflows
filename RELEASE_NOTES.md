@@ -1,11 +1,17 @@
 # GitHub Workflows Release Notes
 
-## 1.0.1-dev - 2026-10-29
+## 1.0.1-dev - 2026-10-31
 
 ### Bug Fixes
 
 - release-notes: fix next release tag generation for the note (PR #366 by
   @chicco785)
+
+### Dependencies
+
+- Bump actions/setup-python from 7.0.0 to 7.1.0 (PR #364 by @dependabot[bot])
+- Bump stefanzweifel/git-auto-commit-action from 7.2.0 to 7.2.1 (PR #362 by
+  @dependabot[bot])
 
 ## 1.0.0 - 2026-10-22
 
