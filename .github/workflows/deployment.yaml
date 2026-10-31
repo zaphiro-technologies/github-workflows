@@ -144,7 +144,7 @@ jobs:
             echo "repository=$(yq '.platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.repository' kubernetes/${{env.CLUSTER}}/values-platforms.yaml)" >> "$GITHUB_OUTPUT"
           fi
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4.6.0
+        uses: docker/login-action@v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
