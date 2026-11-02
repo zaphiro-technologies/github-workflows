@@ -144,7 +144,7 @@ jobs:
             echo "repository=$(yq '.platforms.${{env.PLATFORM}}.${{inputs.app-name}}.image.repository' kubernetes/${{env.CLUSTER}}/values-platforms.yaml)" >> "$GITHUB_OUTPUT"
           fi
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v4.6.0
+        uses: docker/login-action@v4.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -244,7 +244,7 @@ jobs:
           yq -i '(.spec.source.helm.parameters[] | select(.name == strenv(PARAMETER_NAME)).value) = strenv(IMAGE_TAG)' \
             "$TARGET_FILE"
       - name: Commit & Push changed tag
-        uses: stefanzweifel/git-auto-commit-action@v7.2.0
+        uses: stefanzweifel/git-auto-commit-action@v7.2.1
         with:
           commit_message: "Deploy tag ${{env.IMAGE_TAG}} to ${{github.repository}} on ${{inputs.environment}}"
           branch: ${{ inputs.deployment-branch }}
