@@ -8,10 +8,6 @@
   @chicco785)
 - Fix same-runner Go benchmarks and throughput alerts (PR #365 by @tejo)
 
-### Continuous Integration
-
-- Fix same-runner Go benchmarks and throughput alerts (PR #365 by @tejo)
-
 ### Dependencies
 
 - Bump reviewdog/action-actionlint from 1.80.3 to 1.80.8 (PR #361 by
