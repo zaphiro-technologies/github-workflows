@@ -1,20 +1,21 @@
 # GitHub Workflows Release Notes
 
-## 1.0.1-dev - 2026-10-31
+## 1.0.1-dev - 2026-11-03
 
 ### Bug Fixes
 
 - release-notes: fix next release tag generation for the note (PR #366 by
   @chicco785)
+- Fix same-runner Go benchmarks and throughput alerts (PR #365 by @tejo)
 
 ### Dependencies
 
+- Bump reviewdog/action-actionlint from 1.80.3 to 1.80.8 (PR #361 by
+  @dependabot[bot])
 - Bump docker/login-action from 4.6.0 to 4.7.0 (PR #363 by @dependabot[bot])
 - Bump stefanzweifel/git-auto-commit-action from 7.2.0 to 7.2.1 (PR #362 by
   @dependabot[bot])
 - Bump actions/setup-python from 7.0.0 to 7.1.0 (PR #364 by @dependabot[bot])
-- Bump reviewdog/action-actionlint from 1.80.3 to 1.80.8 (PR #361 by
-  @dependabot[bot])
 
 ## 1.0.0 - 2026-10-22
 

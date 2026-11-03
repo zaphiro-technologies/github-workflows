@@ -212,6 +212,8 @@ jobs:
     if: ${{ needs.changes.outputs.files_changed == 'true' && ! inputs.skip-benchmark}}
     env:
       GOPRIVATE: github.com/zaphiro-technologies/*
+      GOTOOLCHAIN: local
+      COMPOSE_PROJECT_NAME: benchmark-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/create-github-app-token@v3
         id: generate-token
@@ -219,9 +221,10 @@ jobs:
           client-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_SECRET }}
           repositories: ${{ github.event.repository.name }}${{ inputs.repositories && format(',{0}', inputs.repositories) || '' }}
-          permission-actions: read
           permission-contents: read
       - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
       - run: git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com/.insteadOf https://github.com/
       - uses: actions/setup-go@v7
         with:
@@ -235,68 +238,175 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run benchmark
+      - name: Prepare same-runner baseline
+        id: benchmark-baseline
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BENCHMARK_RESULTS: ${{ runner.temp }}/go-benchmark-results
+        run: |
+          set -euo pipefail
+          echo "BENCHMARK_RESULTS=$BENCHMARK_RESULTS" >> "$GITHUB_ENV"
+          mkdir -p "$BENCHMARK_RESULTS"
+
+          # Only remove Compose resources owned by this benchmark job.
+          cat > "$RUNNER_TEMP/cleanup-go-benchmark.sh" <<'SH'
+          set -euo pipefail
+          docker ps -aq --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME" \
+            | xargs -r docker rm --force --volumes
+          docker volume ls -q --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME" \
+            | xargs -r docker volume rm
+          docker network ls -q --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME" \
+            | xargs -r docker network rm
+          SH
+
+          # Pushes compare with the pre-push commit; manual/tag runs use HEAD^.
+          if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]]; then
+            BASE_SHA=$(git rev-parse --verify HEAD^ 2>/dev/null || true)
+          fi
+          if [[ -n "$BASE_SHA" ]]; then
+            if ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+              git fetch --no-tags origin "$BASE_SHA"
+            fi
+            base_dir="$RUNNER_TEMP/go-benchmark-base"
+            git worktree add --detach "$base_dir" "$BASE_SHA"
+            echo "directory=$base_dir" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No parent commit; recording initial benchmark results"
+          fi
+          echo "sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          {
+            printf 'candidate=%s\nbase=%s\n' "$(git rev-parse HEAD)" "$BASE_SHA"
+            go version
+            lscpu
+          } > "$BENCHMARK_RESULTS/environment.txt"
+      - name: Run baseline benchmark
+        if: ${{ steps.benchmark-baseline.outputs.sha != '' }}
+        working-directory: ${{ steps.benchmark-baseline.outputs.directory }}
         shell: bash
         run: |
           set -o pipefail
-          make ci-bench | tee output.txt
-      # Find the newest base-branch run that published benchmark data.
-      - name: Find benchmark baseline
-        id: benchmark-baseline
-        env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-          BASE_BRANCH: ${{ github.base_ref || github.ref_name }}
+          make ci-bench 2>&1 | tee "$BENCHMARK_RESULTS/base.txt"
+      - name: Clean baseline services
+        if: ${{ always() && steps.benchmark-baseline.outcome == 'success' }}
+        run: bash "$RUNNER_TEMP/cleanup-go-benchmark.sh"
+      - name: Run candidate benchmark
+        shell: bash
         run: |
-          set -euo pipefail
+          set -o pipefail
+          make ci-bench 2>&1 | tee "$BENCHMARK_RESULTS/head.txt"
+      - name: Clean candidate services
+        if: ${{ always() && steps.benchmark-baseline.outcome == 'success' }}
+        run: bash "$RUNNER_TEMP/cleanup-go-benchmark.sh"
+      # Inline because reusable workflows execute in the caller's checkout.
+      - name: Compare benchmark results
+        id: compare-benchmarks
+        shell: bash
+        env:
+          BASE_SHA: ${{ steps.benchmark-baseline.outputs.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          ALERT_THRESHOLD: ${{ inputs.alert-threshold-benchmark }}
+        run: |
+          python3 <<'PY'
+          import math
+          import os
+          import re
+          import statistics
+          from pathlib import Path
 
-          baseline_run_id=$(gh api --paginate \
-            "repos/$GITHUB_REPOSITORY/actions/artifacts?name=benchmark-result&per_page=100" \
-            | jq -rs --arg branch "$BASE_BRANCH" '
-              [ .[] | .artifacts[]
-                | select(.expired == false and .workflow_run.head_branch == $branch)
+          # Go's standard throughput metric has the opposite direction to costs.
+          METRICS = {"ns/op": False, "B/op": False, "allocs/op": False, "MB/s": True}
+
+          def parse_results(text):
+              package = ""
+              samples = {}
+              for line in text.splitlines():
+                  if line.startswith("pkg: "):
+                      package = line[5:].strip()
+                  fields = line.split()
+                  if len(fields) < 4 or not fields[0].startswith("Benchmark") or not fields[1].isdigit():
+                      continue
+                  name = re.sub(r"-\d+$", "", fields[0])
+                  for raw, unit in zip(fields[2::2], fields[3::2]):
+                      if unit not in METRICS:
+                          continue
+                      value = float(raw)
+                      if not math.isfinite(value) or value < 0:
+                          raise ValueError(f"Invalid {unit} value for {name}: {raw}")
+                      samples.setdefault((package, name, unit), []).append(value)
+              return {key: statistics.median(values) for key, values in samples.items()}
+
+          def parse_threshold(text):
+              if not text.endswith("%"):
+                  raise ValueError("Benchmark threshold must be a percentage, such as 150%")
+              threshold = float(text[:-1]) / 100
+              if not math.isfinite(threshold) or threshold < 1:
+                  raise ValueError("Benchmark threshold must be at least 100%")
+              return threshold
+
+          def compare_results(base, head, threshold):
+              rows = []
+              regressions = []
+              for key, current in sorted(head.items()):
+                  previous = base.get(key)
+                  ratio = None
+                  if previous is not None:
+                      numerator, denominator = (previous, current) if METRICS[key[2]] else (current, previous)
+                      ratio = numerator / denominator if denominator else (math.inf if numerator else 1)
+                  regression = ratio is not None and ratio > threshold
+                  rows.append((key, previous, current, ratio, regression))
+                  if regression:
+                      regressions.append(key)
+              return rows, regressions
+
+          def main():
+              directory = Path(os.environ["BENCHMARK_RESULTS"])
+              base_file = directory / "base.txt"
+              base = parse_results(base_file.read_text()) if base_file.exists() else {}
+              head = parse_results((directory / "head.txt").read_text())
+              rows, regressions = compare_results(base, head, parse_threshold(os.environ["ALERT_THRESHOLD"]))
+              report = [
+                  "## Go benchmark comparison",
+                  "",
+                  f"Base: `{os.environ['BASE_SHA'] or 'none'}`; candidate: `{os.environ['HEAD_SHA']}`.",
+                  f"Same runner and Go toolchain; regression threshold: {os.environ['ALERT_THRESHOLD']}.",
+                  "Repeated samples use the median. Ratios above the threshold are worse, including throughput decreases.",
+                  "",
+                  "| Benchmark | Metric | Base | Candidate | Regression ratio | Status |",
+                  "| --- | --- | ---: | ---: | ---: | --- |",
               ]
-              | sort_by(.created_at)
-              | last
-              | .workflow_run.id // empty
-            ')
+              for (package, name, unit), previous, current, ratio, regression in rows:
+                  label = f"{package}: {name}".replace("|", r"\|")
+                  old = "—" if previous is None else f"{previous:g}"
+                  relative = "—" if ratio is None else f"{ratio:.2f}x"
+                  status = "REGRESSION" if regression else ("new" if previous is None else "pass")
+                  report.append(f"| `{label}` | {unit} | {old} | {current:g} | {relative} | {status} |")
+                  if regression:
+                      print(f"::error::{label} ({unit}): {old} -> {current:g}, {relative} worse")
+              compared = len(base.keys() & head.keys())
+              removed = len(base.keys() - head.keys())
+              report.extend(["", f"{compared} metrics compared; {len(head) - compared} new; {removed} removed."])
+              if not compared:
+                  print("::notice::No comparable benchmark metrics; results are recorded without a regression gate")
+              content = "\n".join(report) + "\n"
+              (directory / "comparison.md").write_text(content)
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+                  summary.write(content)
+              return bool(regressions)
 
-          if [[ -n "$baseline_run_id" ]]; then
-            echo "run-id=$baseline_run_id" >> "$GITHUB_OUTPUT"
-            echo "Using benchmark baseline from $BASE_BRANCH run $baseline_run_id"
-          else
-            echo "No benchmark baseline found on $BASE_BRANCH; storing an initial result"
-          fi
-      - name: Download benchmark report from base branch
-        if: ${{ steps.benchmark-baseline.outputs.run-id != '' }}
-        uses: actions/download-artifact@v8
-        with:
-          name: benchmark-result
-          repository: ${{ github.repository }}
-          run-id: ${{ steps.benchmark-baseline.outputs.run-id }}
-          github-token: ${{ steps.generate-token.outputs.token }}
-      # Run `github-action-benchmark` action
-      - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
-        with:
-          # What benchmark tool the output.txt came from
-          tool: "go"
-          # Where the output from the benchmark tool is stored
-          output-file-path: output.txt
-          # Where the previous data file is stored
-          external-data-json-path: benchmark-data.json
-          # Workflow will fail when an alert happens
-          fail-on-alert: true
-          # Enable alert commit comment
-          comment-on-alert: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          alert-threshold: ${{ inputs.alert-threshold-benchmark }}
-          summary-always: true
-      - name: Upload code coverage for ref branch
-        if: ${{ ! github.event.pull_request }}
+          if __name__ == "__main__":
+              raise SystemExit(main())
+          PY
+      - name: Upload benchmark comparison
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
-          name: benchmark-result
-          path: benchmark-data.json
+          name: benchmark-comparison
+          # Command logs stay in the console, where GitHub masks secrets.
+          path: |
+            ${{ env.BENCHMARK_RESULTS }}/comparison.md
+            ${{ env.BENCHMARK_RESULTS }}/environment.txt
+          if-no-files-found: ignore
           retention-days: 400
   vulnerability:
     needs: changes
