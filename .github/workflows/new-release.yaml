@@ -300,8 +300,10 @@ jobs:
           fi
       - name: Generate application dependency SBOM
         if: ${{ inputs.dependency-scan }}
+        # trivy-action v0.36.0 (safe version)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
+          version: v0.76.1
           scan-type: fs
           scan-ref: .
           skip-dirs: ${{ inputs.dependency-scan-skip-dirs || 'vendor,.github,node_modules' }}
@@ -313,6 +315,7 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Generate application dependency vulnerability evidence
         if: ${{ inputs.dependency-scan }}
+        # trivy-action v0.36.0 (safe version)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
@@ -323,12 +326,15 @@ jobs:
           output: application-dependency-vulnerability.json
           exit-code: "0"
           trivy-config: trivy-vex-config.yaml
+          # On a subsequent call to the action we know trivy is already installed so can skip this
+          skip-setup-trivy: true
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
       - name: Assess application dependency security threshold (advisory)
         if: ${{ inputs.dependency-scan }}
         continue-on-error: true
+        # trivy-action v0.36.0 (safe version)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
@@ -337,6 +343,7 @@ jobs:
           scanners: vuln,secret,misconfig
           exit-code: "1"
           severity: MEDIUM,HIGH,CRITICAL
+          # On a subsequent call to the action we know trivy is already installed so can skip this
           skip-setup-trivy: true
           trivy-config: trivy-vex-config.yaml
         env:
