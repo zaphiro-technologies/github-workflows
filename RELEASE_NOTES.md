@@ -2,6 +2,10 @@
 
 ## 1.0.1-dev - 2026-11-05
 
+### Features
+
+- docker: skip builds for VEX-only pull requests (PR #372 by @chicco785)
+
 ### Bug Fixes
 
 - Fix same-runner Go benchmarks and throughput alerts (PR #365 by @tejo)

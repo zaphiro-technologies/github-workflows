@@ -66,7 +66,8 @@ The repository includes:
   When `.vex/dependabot.openvex.json` exists, the workflow attaches it as an
   unsigned OCI referrer and scans the same immutable image reference with OCI
   VEX discovery. Image signing is intentionally deferred to a separate change.
-  Callers need `packages: write`.
+  Pull requests that change only files under `.vex/` skip the image build and
+  scan. Callers need `packages: write` and `pull-requests: read`.
 - [`golang`](.github/workflows/golang.yaml): lint, test and benchmark Go
   Applications. The workflow includes authentication to GitHub Container
   Registry in case tests rely on private images. The workflow also scans for

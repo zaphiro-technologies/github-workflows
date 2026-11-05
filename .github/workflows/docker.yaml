@@ -134,11 +134,26 @@ jobs:
   check:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' || (github.actor != 'dependabot[bot]' && !github.event.pull_request.draft) || contains(github.event.pull_request.labels.*.name, 'docker') }}
+    permissions:
+      pull-requests: read
+    outputs:
+      build-required: ${{ github.event_name != 'pull_request' || steps.filter.outputs.non-vex == 'true' }}
     steps:
+      - name: Check for changes outside .vex
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          predicate-quantifier: every
+          filters: |
+            non-vex:
+              - '**'
+              - '!.vex/**'
       - run: |
-          echo "docker build is required"
+          echo "Docker build required: ${{ github.event_name != 'pull_request' || steps.filter.outputs.non-vex == 'true' }}"
   build:
     needs: check
+    if: ${{ needs.check.outputs.build-required == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
