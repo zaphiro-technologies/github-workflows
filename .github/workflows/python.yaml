@@ -229,9 +229,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - name: Run Trivy vulnerability scanner (for summary)
-        # trivy-action v0.35.0 (safe version)
+        # trivy-action v0.36.0 (safe version)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
+          version: v0.76.1
           scan-type: fs
           scan-ref: .
           skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
@@ -255,7 +256,7 @@ jobs:
           fi
       # this comes as last or scan results won't be uploaded
       - name: Run Trivy vulnerability scanner (security treshold)
-        # trivy-action v0.35.0 (safe version)
+        # trivy-action v0.36.0 (safe version)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs

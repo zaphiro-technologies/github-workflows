@@ -1,15 +1,16 @@
 # GitHub Workflows Release Notes
 
-## 1.0.1-dev - 2026-11-03
+## 1.0.1-dev - 2026-11-05
 
 ### Bug Fixes
 
+- Fix same-runner Go benchmarks and throughput alerts (PR #365 by @tejo)
 - release-notes: fix next release tag generation for the note (PR #366 by
   @chicco785)
-- Fix same-runner Go benchmarks and throughput alerts (PR #365 by @tejo)
 
 ### Dependencies
 
+- trivy: update to v0.76.1 across all workflows (PR #371 by @chicco785)
 - Bump reviewdog/action-actionlint from 1.80.3 to 1.80.8 (PR #361 by
   @dependabot[bot])
 - Bump docker/login-action from 4.6.0 to 4.7.0 (PR #363 by @dependabot[bot])

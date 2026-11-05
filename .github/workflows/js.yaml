@@ -202,8 +202,10 @@ jobs:
           yarn build
       - name: Generate JavaScript dependency SBOM
         if: ${{ inputs.dependency-sbom }}
+        # trivy-action v0.36.0 (safe version)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
+          version: v0.76.1
           scan-type: fs
           scan-ref: .
           skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
@@ -241,6 +243,7 @@ jobs:
         # trivy-action v0.36.0 (safe version)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
+          version: v0.76.1
           scan-type: fs
           scan-ref: .
           skip-dirs: ${{ inputs.vulnerability-scan-skip-dirs }}
@@ -269,6 +272,8 @@ jobs:
           scanners: "vuln,secret,misconfig"
           hide-progress: true
           output: trivy.txt
+          # On a subsequent call to the action we know trivy is already installed so can skip this
+          skip-setup-trivy: true
         env:
           TRIVY_VEX: ${{ hashFiles(inputs.vex-path) != '' && inputs.vex-path || '' }}
           TRIVY_SKIP_DB_UPDATE: true
