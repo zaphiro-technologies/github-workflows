@@ -560,6 +560,9 @@ jobs:
             ]
             | group_by([.class, .type])
             | {
+                SchemaVersion: 2,
+                ArtifactName: "build-stage-sbom:all-platforms",
+                ArtifactType: "sbom",
                 Results: map({
                   Target: "build-stage-sbom:all-platforms",
                   Class: .[0].class,
