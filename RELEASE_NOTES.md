@@ -15,6 +15,7 @@
 ### Dependencies
 
 - trivy: update to v0.76.1 across all workflows (PR #371 by @chicco785)
+- Bump actions/setup-python from 6 to 7 (PR #367 by @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.80.3 to 1.80.8 (PR #361 by
   @dependabot[bot])
 - Bump docker/login-action from 4.6.0 to 4.7.0 (PR #363 by @dependabot[bot])
