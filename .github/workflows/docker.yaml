@@ -149,6 +149,8 @@ jobs:
             non-vex:
               - '**'
               - '!.vex/**'
+              - '!*.MD'
+              - '!*.md'
       - run: |
           echo "Docker build required: ${{ github.event_name != 'pull_request' || steps.filter.outputs.non-vex == 'true' }}"
   build:
