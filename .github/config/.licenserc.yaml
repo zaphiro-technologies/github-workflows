@@ -8,6 +8,7 @@ header:
 
   paths-ignore:
     - ".github/config"
+    - ".github/aw"
     - "**/*.{md,MD}"
     - "LICENSE"
     - "NOTICE"
