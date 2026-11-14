@@ -1,6 +1,6 @@
 # GitHub Workflows Release Notes
 
-## 1.0.1-dev - 2026-11-07
+## 1.0.1-dev - 2026-11-14
 
 ### Features
 
@@ -14,14 +14,17 @@
 
 ### Dependencies
 
+- Bump reviewdog/action-actionlint from 1.81.1 to 1.83.0 (PR #374 by
+  @dependabot[bot])
+- Bump docker/login-action from 4.7.0 to 4.8.0 (PR #373 by @dependabot[bot])
+- Bump DavidAnson/markdownlint-cli2-action from 24 to 25 (PR #368 by
+  @dependabot[bot])
 - Bump SonarSource/sonarqube-scan-action from 8.3.0 to 8.4.1 (PR #369 by
   @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.80.8 to 1.81.1 (PR #370 by
   @dependabot[bot])
 - Bump actions/setup-python from 6 to 7 (PR #367 by @dependabot[bot])
 - trivy: update to v0.76.1 across all workflows (PR #371 by @chicco785)
-- Bump DavidAnson/markdownlint-cli2-action from 24 to 25 (PR #368 by
-  @dependabot[bot])
 - Bump reviewdog/action-actionlint from 1.80.3 to 1.80.8 (PR #361 by
   @dependabot[bot])
 - Bump docker/login-action from 4.6.0 to 4.7.0 (PR #363 by @dependabot[bot])
