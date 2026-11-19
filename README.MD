@@ -270,6 +270,43 @@ report, Trivy VEX configuration, and repository-owned VEX document when present.
 OCI VEX referrers remain unsigned in this workflow; signatures are planned as a
 separate change.
 
+## Uploading SBOMs to BOMHort
+
+`docker`, `js` and `new-release` send their consolidated image SPDX or source
+CycloneDX file to the BOMHort bucket in the manager account from the job that
+generates it. The Docker
+document includes BuildKit build-stage evidence when stage scanning is enabled.
+The existing OCI referrers, GitHub artifacts and release assets are still published.
+
+Uploads are available to all repositories, workflows and refs in
+`zaphiro-technologies`, including pull request runs when GitHub grants an OIDC
+token. Grant `id-token: write` on the job calling the shared workflow and
+retain its other required permissions. For example, add the following to a
+Docker caller job that uses `docker.yaml@main`:
+
+```yaml
+permissions:
+  contents: read
+  packages: write
+  pull-requests: read
+  id-token: write
+```
+
+The SBOM-generating jobs request `id-token: write`. Each caller in a nested
+call must grant that permission or GitHub rejects the invocation. When an
+upload runs, an OIDC, IAM or S3 error fails the generating job. The AWS
+credentials are temporary and scoped to the upload step.
+
+Objects are written to `s3://zaphiro-bomhort-manager/sboms/github-actions/zaphiro-technologies/<repository>/<run-id>-<run-attempt>-<sha256>-<filename>`.
+BOMHort treats `github-actions` as the source cluster, the organization as the
+namespace and the repository as the project. The upload role can only put SBOM
+objects under this prefix.
+
+BOMHort 0.8.0's S3 watcher requires `.spdx.json` or `_spdx.json` keys. CycloneDX
+documents use the S3 suffix `.cdx_spdx.json` to pass this filter. The workflow
+keeps the original CycloneDX JSON and its media type, and BOMHort detects the
+format from the content.
+
 ## Dependabot VEX candidates
 
 Repositories can schedule
