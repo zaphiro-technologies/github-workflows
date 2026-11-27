@@ -140,6 +140,11 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     if: ${{ needs.changes.outputs.files_changed == 'true' }}
+    permissions:
+      contents: read
+      packages: read
+      pull-requests: read
+      id-token: write
     steps:
       - uses: actions/create-github-app-token@v3
         id: generate-token
@@ -233,6 +238,39 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Assume the manager SBOM upload role
+        id: bomhort-credentials
+        if: ${{ inputs.dependency-sbom && github.repository_owner == 'zaphiro-technologies' }}
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          aws-region: eu-south-1
+          role-to-assume: arn:aws:iam::899023559885:role/zaphiro-github-role-bomhort-manager
+          allowed-account-ids: "899023559885"
+          role-session-name: bomhort-${{ github.run_id }}-${{ github.run_attempt }}
+          role-duration-seconds: 900
+          translate-env-variables: false
+          output-credentials: true
+          output-env-credentials: false
+      - name: Upload SBOM to BOMHort
+        if: ${{ inputs.dependency-sbom && github.repository_owner == 'zaphiro-technologies' }}
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ steps.bomhort-credentials.outputs.aws-access-key-id }}
+          AWS_SECRET_ACCESS_KEY: ${{ steps.bomhort-credentials.outputs.aws-secret-access-key }}
+          AWS_SESSION_TOKEN: ${{ steps.bomhort-credentials.outputs.aws-session-token }}
+        run: |
+          set -euo pipefail
+          file=javascript-dependency-sbom.cdx.json
+          [[ -f "$file" && ! -L "$file" && -s "$file" ]]
+          # The BOMHort 0.8 S3 watcher requires an SPDX suffix. Keep the CycloneDX bytes.
+          object_name="${file%.json}_spdx.json"
+          checksum=$(sha256sum -- "$file" | cut -d' ' -f1)
+          repository=$(printf '%s' "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+          key="sboms/github-actions/$repository/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${checksum}-${object_name}"
+          aws s3api put-object --region eu-south-1 --bucket zaphiro-bomhort-manager \
+            --key "$key" --body "$file" --content-type application/vnd.cyclonedx+json \
+            --expected-bucket-owner 899023559885 --no-cli-pager >/dev/null
+          echo "Uploaded s3://zaphiro-bomhort-manager/$key"
   vulnerability:
     needs: changes
     if: ${{ inputs.vulnerability-scan}}
