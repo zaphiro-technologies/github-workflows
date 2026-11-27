@@ -245,7 +245,7 @@ jobs:
         with:
           aws-region: eu-south-1
           role-to-assume: arn:aws:iam::899023559885:role/zaphiro-github-role-bomhort-manager
-          allowed-account-ids: '899023559885'
+          allowed-account-ids: "899023559885"
           role-session-name: bomhort-${{ github.run_id }}-${{ github.run_attempt }}
           role-duration-seconds: 900
           translate-env-variables: false
