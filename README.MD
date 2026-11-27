@@ -274,15 +274,15 @@ separate change.
 
 `docker`, `js` and `new-release` send their consolidated image SPDX or source
 CycloneDX file to the BOMHort bucket in the manager account from the job that
-generates it. The Docker
-document includes BuildKit build-stage evidence when stage scanning is enabled.
-The existing OCI referrers, GitHub artifacts and release assets are still published.
+generates it. The Docker document includes BuildKit build-stage evidence when
+stage scanning is enabled. The existing OCI referrers, GitHub artifacts and
+release assets are still published.
 
 Uploads are available to all repositories, workflows and refs in
 `zaphiro-technologies`, including pull request runs when GitHub grants an OIDC
-token. Grant `id-token: write` on the job calling the shared workflow and
-retain its other required permissions. For example, add the following to a
-Docker caller job that uses `docker.yaml@main`:
+token. Grant `id-token: write` on the job calling the shared workflow and retain
+its other required permissions. For example, add the following to a Docker
+caller job that uses `docker.yaml@main`:
 
 ```yaml
 permissions:
@@ -292,12 +292,13 @@ permissions:
   id-token: write
 ```
 
-The SBOM-generating jobs request `id-token: write`. Each caller in a nested
-call must grant that permission or GitHub rejects the invocation. When an
-upload runs, an OIDC, IAM or S3 error fails the generating job. The AWS
-credentials are temporary and scoped to the upload step.
+The SBOM-generating jobs request `id-token: write`. Each caller in a nested call
+must grant that permission or GitHub rejects the invocation. When an upload
+runs, an OIDC, IAM or S3 error fails the generating job. The AWS credentials are
+temporary and scoped to the upload step.
 
-Objects are written to `s3://zaphiro-bomhort-manager/sboms/github-actions/zaphiro-technologies/<repository>/<run-id>-<run-attempt>-<sha256>-<filename>`.
+Objects are written to
+`s3://zaphiro-bomhort-manager/sboms/github-actions/zaphiro-technologies/<repository>/<run-id>-<run-attempt>-<sha256>-<filename>`.
 BOMHort treats `github-actions` as the source cluster, the organization as the
 namespace and the repository as the project. The upload role can only put SBOM
 objects under this prefix.
